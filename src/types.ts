@@ -1,0 +1,145 @@
+export interface User {
+    id: string;
+    name: string;
+    email: string;
+    avatar: string;
+}
+
+export type Provider = 'google_drive' | 'google_photos' | 'onedrive';
+
+export interface GlobalItemTypes {
+    id: string;
+    name: string;
+    webUrl: string;
+    type: 'folder' | 'file';
+    from: Provider;
+    iconLink: string;
+    downloadUrl: string;
+
+    image?: string;
+}
+
+export interface GetFilesReturn {
+    files: Array<GlobalItemTypes>;
+    nextPageToken?: string
+};
+
+export interface DriveList {
+    kind: string;
+    incompleteSearch: boolean;
+    files: DriveItem[];
+}
+
+export interface DriveItem {
+    kind: string;
+    fileExtension: string;
+    copyRequiresWriterPermission: boolean;
+    md5Checksum: string;
+    writersCanShare: boolean;
+    viewedByMe: boolean;
+    mimeType: string;
+    parents: string[];
+    thumbnailLink: string;
+    iconLink: string;
+    shared: boolean;
+    headRevisionId: string;
+    webViewLink: string;
+    webContentLink: string;
+    size: string;
+    viewersCanCopyContent: boolean;
+    hasThumbnail: boolean;
+    spaces: string[];
+    id: string;
+    name: string;
+    starred: boolean;
+    trashed: boolean;
+    explicitlyTrashed: boolean;
+    createdTime: string;
+    modifiedTime: string;
+    modifiedByMeTime: string;
+    quotaBytesUsed: string;
+    version: string;
+    originalFilename: string;
+    ownedByMe: boolean;
+    fullFileExtension: string;
+    isAppAuthorized: boolean;
+    thumbnailVersion: string;
+    modifiedByMe: boolean;
+    permissionIds: string[];
+    imageMediaMetadata: ImageMediaMetadata;
+    linkShareMetadata: LinkShareMetadata;
+}
+
+interface LinkShareMetadata {
+    securityUpdateEligible: boolean;
+    securityUpdateEnabled: boolean;
+}
+
+interface ImageMediaMetadata {
+    width: number;
+    height: number;
+    rotation: number;
+    time: string;
+}
+
+interface OneDriveParentReference {
+    driveType: string;
+    driveId: string;
+    id: string;
+    path: string;
+}
+
+export interface OneDriveItem {
+    '@microsoft.graph.downloadUrl': string;
+    createdDateTime: string;
+    eTag: string;
+    id: string;
+    lastModifiedDateTime: string;
+    name: string;
+    webUrl: string;
+    cTag: string;
+    size: number;
+    file: {
+        mimeType: string,
+        hashes: {
+            quickXorHash: string
+        }
+    };
+    parentReference: OneDriveParentReference;
+    folder?: {
+        childCount: number;
+    }
+    video?: {}
+}
+
+export interface PhotosItem {
+    id: string;
+    productUrl: string;
+    baseUrl: string;
+    mimeType: string;
+    mediaMetadata: PhotosMediaMetadata;
+    filename: string;
+}
+
+interface PhotosMediaMetadata {
+    creationTime: string;
+    width: string;
+    height: string;
+}
+
+export interface ProviderObject {
+    id: Provider;
+    name: string;
+    image: string;
+}
+
+export interface TranferFileSchema {
+    name: string;
+    path?: string;
+    downloadUrl: string;
+}
+
+export interface IDeleteFilesParam {
+    id: string;
+    name: string;
+}
