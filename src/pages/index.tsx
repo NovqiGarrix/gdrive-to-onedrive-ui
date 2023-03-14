@@ -7,7 +7,7 @@ import { DeleteFilesModal, FilesContainerWrapper, Navbar } from "../components";
 
 const Home: NextPage = () => {
   return (
-    <div className="bg-bg min-h-screen pb-10">
+    <div className="bg-bg pb-8">
       <Head>
         <title>infile.io | Manage your files in one place</title>
         <meta name="description" content="Manage your files in one place" />

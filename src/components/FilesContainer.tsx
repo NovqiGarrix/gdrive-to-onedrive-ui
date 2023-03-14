@@ -256,7 +256,7 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
       <div
         // id={`infinite-scroll-parent-${provider}`}
         ref={infiniteScrollScrollRef}
-        className="bg-white rounded-2xl lg:rounded-3xl h-screen max-h-96 md:max-h-[520px] lg:max-h-full p-5 md:p-8 overflow-y-auto overflow-x-hidden"
+        className="bg-white rounded-2xl lg:rounded-3xl h-full min-h-[80vh] max-h-[80vh] p-5 md:p-8 overflow-y-auto overflow-x-hidden"
       >
         <div className="flex flex-col items-start justify-start">
           <div className="flex items-center justify-between w-full">
@@ -321,7 +321,7 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
                   onDrop={onDrop}
                   onDragOver={onDragOver}
                   className={classNames(
-                    "grid grid-cols-2 gap-3 aspect-square",
+                    "grid grid-cols-2 gap-3",
                     provider.id === "google_photos"
                       ? "md:grid-cols-3"
                       : "md:grid-cols-4"

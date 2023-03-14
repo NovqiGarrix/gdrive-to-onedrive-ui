@@ -40,7 +40,7 @@ const FilesContainerWrapper: FunctionComponent = () => {
   return (
     <div
       ref={ref}
-      className="h-full lg:min-h-screen flex flex-col space-y-5 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-3 lg:divide-x lg:divide-bg"
+      className="flex flex-col space-y-5 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-3 lg:divide-x lg:divide-bg"
     >
       {initialUsedProviders.map((provider) => (
         <FilesContainer key={provider.id} provider={provider.id} />
