@@ -163,10 +163,10 @@ const DeleteFilesModal: FunctionComponent<IDeleteFilesModalProps> = (props) => {
                       });
                     }}
                     disabled={isLoading}
-                    className="inline-flex w-full justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 sm:ml-3 sm:w-auto"
+                    className="inline-flex w-full justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 sm:ml-3 sm:w-auto focus:outline-none"
                   >
                     {isLoading ? (
-                      <LoadingIcon className="w-5 h-5 text-white" />
+                      <LoadingIcon fill="#fff" className="w-5 h-5" />
                     ) : (
                       <span>Delete</span>
                     )}
@@ -174,9 +174,9 @@ const DeleteFilesModal: FunctionComponent<IDeleteFilesModalProps> = (props) => {
                   <button
                     type="button"
                     disabled={isLoading}
-                    className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto"
                     onClick={closeModal}
                     ref={cancelButtonRef}
+                    className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto"
                   >
                     Cancel
                   </button>

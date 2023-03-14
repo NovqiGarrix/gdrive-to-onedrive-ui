@@ -4,12 +4,13 @@ import classNames from "../utils/classNames";
 
 interface IconComponentProps {
   className?: string;
+  fill?: string;
   width?: number;
   height?: number;
 }
 
 const LoadingIcon: FunctionComponent<IconComponentProps> = (props) => {
-  const { className, width = 18, height = 18 } = props;
+  const { className, width = 18, height = 18, fill } = props;
 
   return (
     <svg
@@ -18,6 +19,7 @@ const LoadingIcon: FunctionComponent<IconComponentProps> = (props) => {
       viewBox="0 0 16 16"
       xmlns="http://www.w3.org/2000/svg"
       className={classNames(className || "", "animate-spin")}
+      fill={fill}
     >
       <path
         fillRule="evenodd"
