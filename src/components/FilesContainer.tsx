@@ -102,6 +102,7 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
     queryFn: () => getFiles(debounceQuery, undefined, path),
     queryKey: ["files", provider.id, debounceQuery, path],
     retry: false,
+    staleTime: Infinity,
     keepPreviousData: true,
     refetchOnWindowFocus: process.env.NODE_ENV === "production",
 
