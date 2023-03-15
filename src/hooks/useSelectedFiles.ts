@@ -34,6 +34,8 @@ const useSelectedFiles = create<ISelectedFiles>((set, get) => ({
             return;
         }
 
+        console.log({ addedFiles, file });
+
         set((state) => ({ files: [...state.files, file] }))
     },
 

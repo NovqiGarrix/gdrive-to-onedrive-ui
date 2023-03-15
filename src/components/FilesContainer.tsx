@@ -57,6 +57,8 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
   const queryClient = useQueryClient();
 
   const selectedFiles = useSelectedFiles((s) => s.files);
+  console.log(selectedFiles);
+
   const openModalFunc = useDeleteFilesModalState((s) => s.openModal);
 
   const hasProvider = useUsedProviders((state) => state.has);
@@ -164,12 +166,15 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
     event.preventDefault();
 
     try {
-      const { file, providerId } = JSON.parse(
+      const selectedFiles = JSON.parse(
         event.dataTransfer.getData("text/plain")
       );
+      console.log(selectedFiles);
+
+      if (!selectedFiles.length) return;
 
       const providerTarget = getProviders()
-        .filter((provider) => provider.id !== providerId)
+        .filter((provider) => provider.id !== selectedFiles[0].providerId)
         .at(0);
 
       if (!providerTarget) {
@@ -179,7 +184,12 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
         return;
       }
 
-      await tranferFileFunc({ ...file, path }, providerTarget.id);
+      toast(
+        `Transferring ${selectedFiles.length} files to ${providerTarget.name}`
+      );
+      for (const file of selectedFiles) {
+        await tranferFileFunc({ ...file, path }, providerTarget.id);
+      }
 
       setSearchQuery("");
       await queryClient.invalidateQueries([
@@ -369,7 +379,11 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
                       {file.type === "folder" ? (
                         <Folder path={path} setPath={setPath} file={file} />
                       ) : (
-                        <File providerId={provider.id} file={file} />
+                        <File
+                          file={file}
+                          providerId={provider.id}
+                          selectedFiles={selectedFiles}
+                        />
                       )}
                     </Fragment>
                   ))}

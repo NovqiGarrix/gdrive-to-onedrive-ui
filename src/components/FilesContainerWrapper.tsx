@@ -16,24 +16,32 @@ const FilesContainerWrapper: FunctionComponent = () => {
   const cleanSelectedFiles = useSelectedFiles((s) => s.cleanFiles);
 
   useEffect(() => {
-    if (!ref.current) return;
-
-    const wrapperEl = ref.current;
+    const el = ref.current;
 
     const handleMouseDown = (e: MouseEvent) => {
       const target = e.target as HTMLElement | null;
       if (!target) return;
 
-      if (!target.id.startsWith("file-")) {
-        if (!selectedFiles.length) return;
-        cleanSelectedFiles();
+      let shouldClean = !target.id.startsWith("file-");
+
+      if (target.nodeName === "IMG" || target.nodeName === "SPAN") {
+        const parentEl = target.parentElement;
+        const parentElOfParentEl = parentEl?.parentElement;
+
+        shouldClean = !parentElOfParentEl?.id.startsWith("file-");
+      } else if (target.nodeName === "DIV") {
+        const parentEl = target.parentElement;
+        shouldClean = !parentEl?.id.startsWith("file-");
       }
+
+      if (!shouldClean || !selectedFiles.length) return;
+      cleanSelectedFiles();
     };
 
-    wrapperEl.addEventListener("mousedown", handleMouseDown);
+    el?.addEventListener("mousedown", handleMouseDown);
 
     return () => {
-      wrapperEl.removeEventListener("mousedown", handleMouseDown);
+      el?.removeEventListener("mousedown", handleMouseDown);
     };
   }, [cleanSelectedFiles, selectedFiles.length]);
 

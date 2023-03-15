@@ -27,7 +27,7 @@ export default function toGlobalTypes(data: any, provider: Provider): GlobalItem
                 type: 'file',
                 webUrl: d.productUrl,
                 iconLink: getIconExtensionUrl(d.filename),
-                image: `${d.baseUrl}=d`,
+                image: `${d.baseUrl}=w500-h500`,
                 downloadUrl: `${d.baseUrl}=d`
             }
         }

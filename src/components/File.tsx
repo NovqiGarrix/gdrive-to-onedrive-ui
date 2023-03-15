@@ -1,4 +1,10 @@
-import { DragEvent, FunctionComponent, MouseEvent, useCallback } from "react";
+import {
+  DragEvent,
+  FunctionComponent,
+  MouseEvent,
+  useCallback,
+  useMemo,
+} from "react";
 
 import Image from "next/image";
 
@@ -9,25 +15,28 @@ import useSelectedFiles from "../hooks/useSelectedFiles";
 interface IFileProps {
   providerId: Provider;
   file: GlobalItemTypes;
+  selectedFiles: GlobalItemTypes[];
 }
 
 const File: FunctionComponent<IFileProps> = (props) => {
-  const { file, providerId } = props;
+  const { file, providerId, selectedFiles } = props;
+
+  const isActive = useMemo(
+    () => selectedFiles.find((f) => f.id === file.id),
+    [file.id, selectedFiles]
+  );
 
   const addSelectedFile = useSelectedFiles((state) => state.addFile);
   const replaceAllSelectedFiles = useSelectedFiles(
     (state) => state.replaceAllFiles
   );
 
-  const onDragStart = useCallback(
-    (event: DragEvent<HTMLButtonElement>) => {
-      event.dataTransfer.setData(
-        "text/plain",
-        JSON.stringify({ file, providerId })
-      );
-    },
-    [file, providerId]
-  );
+  const onDragStart = useCallback((event: DragEvent<HTMLButtonElement>) => {
+    event.dataTransfer.setData(
+      "text/plain",
+      JSON.stringify(useSelectedFiles.getState().files)
+    );
+  }, []);
 
   function onClick(event: MouseEvent<HTMLButtonElement>) {
     if (event.ctrlKey) {
@@ -43,16 +52,27 @@ const File: FunctionComponent<IFileProps> = (props) => {
       type="button"
       onClick={onClick}
       id={`file-${file.id}`}
+      data-file={true}
       onDragStart={onDragStart}
       className={classNames(
-        "rounded-lg relative border-2 overflow-hidden flex items-center justify-center h-[133px] md:h-[162px] lg:h-[150px] focus:outline-none focus:border-indigo-200 focus:bg-indigo-200/5",
+        "py-1 px-2 rounded-lg relative overflow-hidden focus:outline-none bg-indigo-50/60 hover:bg-indigo-100/50 focus:bg-indigo-100/80",
         providerId === "google_photos"
-          ? "h-[133px] md:h-[218px] lg:h-[180px]"
-          : "h-[133px] md:h-[162px] lg:h-[150px]"
+          ? "h-[190px]"
+          : "h-[133px] md:h-[162px] lg:h-[150px]",
+        isActive ? "bg-indigo-100/80" : "bg-indigo-50/60"
       )}
     >
+      <div className="w-full flex items-center p-2">
+        <div className="w-5 flex-shrink-0 mr-1.5">
+          <Image src={file.iconLink} width={500} height={500} alt={file.name} />
+        </div>
+        <span className="text-gray-700 font-medium text-xs text-ellipsis overflow-hidden whitespace-nowrap">
+          {file.name}
+        </span>
+      </div>
+
       {file.image ? (
-        <div className="w-full h-full">
+        <div className="w-full h-3/4">
           <Image
             src={file.image}
             width={1000}
@@ -73,7 +93,7 @@ const File: FunctionComponent<IFileProps> = (props) => {
               parent?.classList.remove("w-full", "h-full");
               parent?.classList.add("-mt-5", "w-16");
             }}
-            className="rounded-t-md object-cover object-center w-full h-full"
+            className="rounded-md object-cover object-center w-full h-full"
           />
         </div>
       ) : (
@@ -81,14 +101,6 @@ const File: FunctionComponent<IFileProps> = (props) => {
           <Image src={file.iconLink} width={500} height={500} alt={file.name} />
         </div>
       )}
-      <div className="w-full absolute rounded-b-md bottom-0 bg-white h-9 md:h-[25%] flex items-center p-3">
-        <div className="w-4 flex-shrink-0 mr-1.5">
-          <Image src={file.iconLink} width={500} height={500} alt={file.name} />
-        </div>
-        <span className="text-darken font-medium text-xs text-ellipsis overflow-hidden whitespace-nowrap">
-          {file.name}
-        </span>
-      </div>
     </button>
   );
 };
