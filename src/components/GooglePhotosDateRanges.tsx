@@ -1,4 +1,4 @@
-import { FunctionComponent } from "react";
+import { FunctionComponent, useMemo } from "react";
 
 import Datepicker from "react-tailwindcss-datepicker";
 import type { DateValueType } from "react-tailwindcss-datepicker/dist/types";
@@ -13,21 +13,19 @@ const GooglePhotosDateRanges: FunctionComponent = () => {
   const setStartDate = useGooglePhotosFilter((s) => s.setStartDate);
 
   function onChange(value: DateValueType) {
-    const startDateAsDate = value?.startDate ? new Date(value.startDate) : null;
-    const endDateAsDate = value?.endDate ? new Date(value.endDate) : null;
-
-    if (startDateAsDate) {
-      setStartDate(startDateAsDate);
-    }
-
-    if (endDateAsDate) {
-      setEndDate(endDateAsDate);
-    }
+    setStartDate(value?.startDate);
+    setEndDate(value?.endDate);
   }
+
+  const maxDate = useMemo(() => new Date(), []);
 
   return (
     <div>
-      <Datepicker onChange={onChange} value={{ startDate, endDate }} />
+      <Datepicker
+        maxDate={maxDate}
+        onChange={onChange}
+        value={{ startDate, endDate }}
+      />
     </div>
   );
 };

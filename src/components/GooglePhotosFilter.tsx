@@ -31,6 +31,8 @@ const GooglePhotosFilter: FunctionComponent<IGooglePhotosFilterProps> = (
   );
 
   function onSubmit() {
+    console.log({ startDate, endDate });
+
     setFormmatedFilters({
       contentCategories,
       dateRanges: {

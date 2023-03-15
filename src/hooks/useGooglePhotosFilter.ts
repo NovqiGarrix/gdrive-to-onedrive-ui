@@ -1,4 +1,6 @@
 import { create } from "zustand";
+import type { DateType } from "react-tailwindcss-datepicker/dist/types";
+
 import { GooglePhotosFilter } from "../types";
 
 interface IGooglePhotosFilter {
@@ -22,10 +24,10 @@ interface IGooglePhotosFilter {
     setIncludeArchived: (isIncludeArchived: boolean) => void;
 
     startDate: Date | null;
-    setStartDate: (startDate: Date) => void;
+    setStartDate: (startDate: DateType | undefined) => void;
 
     endDate: Date | null;
-    setEndDate: (endDate: Date) => void;
+    setEndDate: (endDate: DateType | undefined) => void;
 
     formattedFilters: GooglePhotosFilter | undefined;
     setFormmatedFilters: (formattedFilters: GooglePhotosFilter) => void;
@@ -74,12 +76,12 @@ const useGooglePhotosFilter = create<IGooglePhotosFilter>((set) => ({
 
     startDate: null,
     setStartDate(startDate) {
-        set({ startDate });
+        set({ startDate: startDate ? new Date(startDate) : null });
     },
 
     endDate: null,
     setEndDate(endDate) {
-        set({ endDate });
+        set({ endDate: endDate ? new Date(endDate) : null });
     },
 
     formattedFilters: undefined,
