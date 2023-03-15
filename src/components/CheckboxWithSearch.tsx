@@ -120,7 +120,7 @@ const CheckboxWithSearch: FunctionComponent<ICheckboxWithSearchProps> = (
             onClick={() => onListClick(data)}
             className="w-full flex group items-center justify-between pr-3 hover:bg-indigo-600 py-2 cursor-pointer"
           >
-            <p className="text-sm pl-3 text-left w-full group-hover:text-white text-gray-900">
+            <p className="text-sm pl-3 text-left w-full select-none group-hover:text-white text-gray-900">
               {uppercaseFirstLetter(data)}
             </p>
 
