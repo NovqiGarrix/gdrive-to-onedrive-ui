@@ -19,8 +19,8 @@ const useUsedProviders = create<IUsedProviders>((set, get) => ({
 
     // PROVIDERS[0] = Google Drive
     // PROVIDERS[2] = OneDrive
-    usedProviders: new Set([PROVIDERS[0], PROVIDERS[2]]),
-    initialUsedProviders: new Set([PROVIDERS[0], PROVIDERS[2]]),
+    usedProviders: new Set([PROVIDERS[1], PROVIDERS[2]]),
+    initialUsedProviders: new Set([PROVIDERS[1], PROVIDERS[2]]),
 
     replaceProvider(prev, next) {
         const usedProviders = get().usedProviders;

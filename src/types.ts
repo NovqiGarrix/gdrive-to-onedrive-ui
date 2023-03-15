@@ -143,3 +143,14 @@ export interface IDeleteFilesParam {
     id: string;
     name: string;
 }
+
+export interface GooglePhotosFilter {
+    mediaTypes?: Array<string>;
+    contentCategories?: Array<string>;
+    dateRanges?: {
+        startDate?: Date;
+        endDate?: Date;
+    },
+    includeArchivedMedia?: boolean;
+    includeFavorites?: boolean;
+}

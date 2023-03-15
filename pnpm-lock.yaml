@@ -3,12 +3,14 @@ lockfileVersion: 5.4
 specifiers:
   '@headlessui/react': ^1.7.13
   '@heroicons/react': ^2.0.16
+  '@tailwindcss/forms': ^0.5.3
   '@tanstack/react-query': ^4.26.1
   '@types/node': 18.7.14
   '@types/react': 18.0.28
   autoprefixer: ^10.4.13
   concurrently: ^7.6.0
   daisyui: ^2.51.3
+  dayjs: ^1.11.7
   eslint: ^8.28.0
   eslint-config-next: 12.2.5
   eslint-plugin-react-hooks: 0.0.0-experimental-a8875eab7-20230310
@@ -18,6 +20,7 @@ specifiers:
   react-dom: 0.0.0-experimental-a8875eab7-20230310
   react-hot-toast: ^2.4.0
   react-infinite-scroll-hook: ^4.1.1
+  react-tailwindcss-datepicker: ^1.5.1
   tailwindcss: ^3.2.4
   typescript: 4.8.2
   zustand: ^4.3.6
@@ -25,13 +28,16 @@ specifiers:
 dependencies:
   '@headlessui/react': 1.7.13_iklglp3zbuckvpeokcdncmpnhm
   '@heroicons/react': 2.0.16_kprbdlc4ys3ehb6d2iypim5egi
+  '@tailwindcss/forms': 0.5.3_tailwindcss@3.2.4
   '@tanstack/react-query': 4.26.1_iklglp3zbuckvpeokcdncmpnhm
   daisyui: 2.51.3_2lwn2upnx27dqeg6hqdu7sq75m
+  dayjs: 1.11.7
   next: 13.0.5_iklglp3zbuckvpeokcdncmpnhm
   react: 0.0.0-experimental-a8875eab7-20230310
   react-dom: 0.0.0-experimental-a8875eab7-20230310_kprbdlc4ys3ehb6d2iypim5egi
   react-hot-toast: 2.4.0_yg4beh3utw56zbpc7vpnbt3sqa
   react-infinite-scroll-hook: 4.1.1_kprbdlc4ys3ehb6d2iypim5egi
+  react-tailwindcss-datepicker: 1.5.1_5dvrnictibth3y5un2kttje7zy
   zustand: 4.3.6_kprbdlc4ys3ehb6d2iypim5egi
 
 devDependencies:
@@ -273,6 +279,15 @@ packages:
     resolution: {integrity: sha512-4C7nX/dvpzB7za4Ql9K81xK3HPxCpHMgwTZVyf+9JQ6VUbn9jjZVN7/Nkdz/Ugzs2CSjqnL/UPXroiVBVHUWUw==}
     dependencies:
       tslib: 2.4.1
+    dev: false
+
+  /@tailwindcss/forms/0.5.3_tailwindcss@3.2.4:
+    resolution: {integrity: sha512-y5mb86JUoiUgBjY/o6FJSFZSEttfb3Q5gllE4xoKjAAD+vBrnIhE4dViwUuow3va8mpH4s9jyUbUbrRGoRdc2Q==}
+    peerDependencies:
+      tailwindcss: '>=3.0.0 || >= 3.0.0-alpha.1'
+    dependencies:
+      mini-svg-data-uri: 1.4.4
+      tailwindcss: 3.2.4_postcss@8.4.19
     dev: false
 
   /@tanstack/query-core/4.26.1:
@@ -712,6 +727,10 @@ packages:
     resolution: {integrity: sha512-dDCnyH2WnnKusqvZZ6+jA1O51Ibt8ZMRNkDZdyAyK4YfbDwa/cEmuztzG5pk6hqlp9aSBPYcjOlktquahGwGeA==}
     engines: {node: '>=0.11'}
     dev: true
+
+  /dayjs/1.11.7:
+    resolution: {integrity: sha512-+Yw9U6YO5TQohxLcIkrXBeY73WP3ejHWVvx8XCk3gxvQDCTEmS48ZrSZCKciI7Bhl/uCMyxYtE9UqRILmFphkQ==}
+    dev: false
 
   /debug/2.6.9:
     resolution: {integrity: sha512-bC7ElrdJaJnPbAP+1EotYvqZsb3ecl5wi6Bfi6BJTUcNowp6cvspg0jXznRTKDjm/E7AdgFBVeAPVMNcKGsHMA==}
@@ -1611,6 +1630,11 @@ packages:
       braces: 3.0.2
       picomatch: 2.3.1
 
+  /mini-svg-data-uri/1.4.4:
+    resolution: {integrity: sha512-r9deDe9p5FJUPZAk3A59wGH7Ii9YrjjWw0jmw/liSbHl2CHiyXj6FcDXDu2K3TjVAXqiJdaw3xxwlZZr9E6nHg==}
+    hasBin: true
+    dev: false
+
   /minimatch/3.1.2:
     resolution: {integrity: sha512-J7p63hRiAjw1NDEww1W7i37+ByIrOWO5XQQAzZ3VOcL0PNybwpfmV/N05zFAzwQ9USyEcX6t3UO+K5aqBQOIHw==}
     dependencies:
@@ -1973,6 +1997,16 @@ packages:
   /react-is/16.13.1:
     resolution: {integrity: sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==}
     dev: true
+
+  /react-tailwindcss-datepicker/1.5.1_5dvrnictibth3y5un2kttje7zy:
+    resolution: {integrity: sha512-IbNw3Lu2dwkRYOlYr3ffOwEbLiVz+QufaYbwiy0ToeLmx7ZUt0CPh3HfwVQGNS1/o4D/+8Rl4WHNsLd+wVb5Mg==}
+    peerDependencies:
+      dayjs: ^1.11.6
+      react: ^17.0.2 || ^18.2.0
+    dependencies:
+      dayjs: 1.11.7
+      react: 0.0.0-experimental-a8875eab7-20230310
+    dev: false
 
   /react/0.0.0-experimental-a8875eab7-20230310:
     resolution: {integrity: sha512-gT3Ag0to4AZSE7A4dR2ReJ01/Es1BCx/4ePWeYya7x/orOEqAPxzmhvpf8Lbj6ztDZ7PYJVbtw97zsQKAOtV4g==}

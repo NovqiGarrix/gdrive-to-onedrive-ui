@@ -10,13 +10,16 @@
   "dependencies": {
     "@headlessui/react": "^1.7.13",
     "@heroicons/react": "^2.0.16",
+    "@tailwindcss/forms": "^0.5.3",
     "@tanstack/react-query": "^4.26.1",
     "daisyui": "^2.51.3",
+    "dayjs": "^1.11.7",
     "next": "13.0.5",
     "react": "0.0.0-experimental-a8875eab7-20230310",
     "react-dom": "0.0.0-experimental-a8875eab7-20230310",
     "react-hot-toast": "^2.4.0",
     "react-infinite-scroll-hook": "^4.1.1",
+    "react-tailwindcss-datepicker": "^1.5.1",
     "zustand": "^4.3.6"
   },
   "devDependencies": {

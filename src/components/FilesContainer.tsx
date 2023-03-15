@@ -19,6 +19,7 @@ import { PROVIDERS } from "../constants";
 import classNames from "../utils/classNames";
 import type {
   GetFilesReturn,
+  GooglePhotosFilter as IGooglePhotosFilter,
   Provider,
   ProviderObject,
   TranferFileSchema,
@@ -28,6 +29,7 @@ import type { HttpErrorExeption } from "../exeptions/httpErrorExeption";
 import useSearchQuery from "../hooks/useSearchQuery";
 import useUsedProviders from "../hooks/useUsedProviders";
 import useSelectedFiles from "../hooks/useSelectedFiles";
+import useGooglePhotosFilter from "../hooks/useGooglePhotosFilter";
 import useDeleteFilesModalState from "../hooks/useDeleteFilesModalState";
 
 import authApi from "../apis/auth.api";
@@ -42,6 +44,7 @@ import LoadingIcon from "./LoadingIcon";
 import Breadcrumbs from "./Breadcrumbs";
 import ProviderLogout from "./ProviderLogout";
 import SelectProvider from "./SelectProvider";
+import GooglePhotosFilter from "./GooglePhotosFilter";
 
 interface IFilesContainerProps {
   provider: string;
@@ -67,16 +70,23 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
   const previousProvider = useRef<ProviderObject>(provider);
 
   const [path, setPath] = useState<undefined | string>(undefined);
+
   const { debounceQuery, searchQuery, setSearchQuery } = useSearchQuery();
+  const googlePhotosFilters = useGooglePhotosFilter((s) => s.formattedFilters);
 
   const getFiles = useCallback(
-    (query?: string, nextPageToken?: string, path?: string) => {
+    (
+      query?: string,
+      nextPageToken?: string,
+      path?: string,
+      filters?: IGooglePhotosFilter
+    ) => {
       switch (provider.id) {
         case "google_drive":
           return googledriveApi.getFiles(query, nextPageToken);
 
         case "google_photos":
-          return googlephotosApi.getFiles(nextPageToken);
+          return googlephotosApi.getFiles(nextPageToken, filters);
 
         case "onedrive":
           return onedriveApi.getFiles({ query, nextPageToken, path });
@@ -99,10 +109,20 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
     GetFilesReturn,
     HttpErrorExeption
   >({
-    queryFn: () => getFiles(debounceQuery, undefined, path),
-    queryKey: ["files", provider.id, debounceQuery, path],
+    queryFn: () =>
+      getFiles(debounceQuery, undefined, path, googlePhotosFilters),
+    queryKey: [
+      "files",
+      provider.id,
+      debounceQuery,
+      path,
+      provider.id === "google_photos"
+        ? JSON.stringify(googlePhotosFilters)
+        : undefined,
+    ].filter(Boolean),
     retry: false,
     keepPreviousData: true,
+    refetchOnMount: false,
     refetchOnWindowFocus: process.env.NODE_ENV === "production",
 
     onSuccess(data) {
@@ -179,7 +199,12 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
   async function getMoreDataFunc() {
     if (!data.nextPageToken) return;
 
-    const nextFiles = await getFiles(debounceQuery, data.nextPageToken, path);
+    const nextFiles = await getFiles(
+      debounceQuery,
+      data.nextPageToken,
+      path,
+      googlePhotosFilters
+    );
     setData((prev) => ({
       ...prev,
       files: [...prev.files, ...nextFiles.files],
@@ -249,6 +274,7 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
     return () => {
       containerEl.removeEventListener("keydown", handleKeydown);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedFiles.length]);
 
   return (
@@ -272,8 +298,19 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
           </div>
 
           <div className="w-full mt-3">
-            <Search searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
-            <hr className="w-full bg-bg-2" />
+            {provider.id === "google_photos" ? (
+              <GooglePhotosFilter
+                isLoading={!!(isLoading && googlePhotosFilters)}
+              />
+            ) : (
+              <Fragment>
+                <Search
+                  searchQuery={searchQuery}
+                  setSearchQuery={setSearchQuery}
+                />
+                <hr className="w-full bg-bg-2" />
+              </Fragment>
+            )}
           </div>
         </div>
 
@@ -351,8 +388,8 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
                 ) : null}
               </div>
             ) : (
-              <div>
-                <h3 className="text-sm text-dark">You do not have any files</h3>
+              <div className="mt-3 h-[70%] flex items-center justify-center">
+                <h3 className="text-sm text-dark">Nothing to show :(</h3>
               </div>
             )}
           </Fragment>

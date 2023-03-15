@@ -1,18 +1,12 @@
-import {
-  FunctionComponent,
-  Fragment,
-  useState,
-  Dispatch,
-  SetStateAction,
-} from "react";
+import { FunctionComponent, Fragment } from "react";
 
 import Image from "next/image";
 import { Listbox, Transition } from "@headlessui/react";
 import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/20/solid";
 
-import type { Provider, ProviderObject } from "../types";
 import { PROVIDERS } from "../constants";
 import classNames from "../utils/classNames";
+import type { ProviderObject } from "../types";
 import useUsedProviders from "../hooks/useUsedProviders";
 
 interface ISelectProviderProps {

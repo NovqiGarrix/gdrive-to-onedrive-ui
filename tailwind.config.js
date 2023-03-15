@@ -2,6 +2,7 @@ module.exports = {
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx}",
     "./src/components/**/*.{js,ts,jsx,tsx}",
+    "./node_modules/react-tailwindcss-datepicker/dist/index.esm.js"
   ],
   darkMode: "class", // or 'media' or 'class'
   theme: {
@@ -27,5 +28,5 @@ module.exports = {
       scale: ["active", "group-hover"],
     },
   },
-  plugins: [require("daisyui")],
+  plugins: [require("daisyui"), require("@tailwindcss/forms")({ strategy: "class" })],
 };
