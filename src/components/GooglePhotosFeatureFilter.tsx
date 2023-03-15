@@ -2,10 +2,8 @@ import { FunctionComponent } from "react";
 import useGooglePhotosFilter from "../hooks/useGooglePhotosFilter";
 
 const GooglePhotosFeatureFilter: FunctionComponent = () => {
-  const includeFavorites = useGooglePhotosFilter((s) => s.isIncludeFavorites);
-  const setIncludeFavorites = useGooglePhotosFilter(
-    (s) => s.setIncludeFavorites
-  );
+  const onlyFavorites = useGooglePhotosFilter((s) => s.onlyFavorites);
+  const setIncludeFavorites = useGooglePhotosFilter((s) => s.setOFavorites);
 
   const includeArchived = useGooglePhotosFilter((s) => s.isIncludeArchived);
   const setIncludeArchived = useGooglePhotosFilter((s) => s.setIncludeArchived);
@@ -16,7 +14,7 @@ const GooglePhotosFeatureFilter: FunctionComponent = () => {
         <input
           type="checkbox"
           id="include-favorites"
-          checked={includeFavorites}
+          checked={onlyFavorites}
           onChange={(e) => setIncludeFavorites(e.target.checked)}
           className="form-checkbox h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
         />

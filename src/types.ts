@@ -152,5 +152,5 @@ export interface GooglePhotosFilter {
         endDate?: Date;
     },
     includeArchivedMedia?: boolean;
-    includeFavorites?: boolean;
+    onlyFavorites?: boolean;
 }

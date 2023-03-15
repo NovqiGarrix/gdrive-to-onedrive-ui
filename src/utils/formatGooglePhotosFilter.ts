@@ -49,7 +49,7 @@ export default function formatGooglePhotosFilter(filter: GooglePhotosFilter) {
         })
     }
 
-    const featureFilter = filter?.includeFavorites ? JSON.stringify({
+    const featureFilter = filter?.onlyFavorites ? JSON.stringify({
         "featureFilter": {
             "includedFeatures": [
                 "FAVORITES"

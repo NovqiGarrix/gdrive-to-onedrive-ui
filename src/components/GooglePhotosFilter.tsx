@@ -24,7 +24,7 @@ const GooglePhotosFilter: FunctionComponent<IGooglePhotosFilterProps> = (
   const startDate = useGooglePhotosFilter((s) => s.startDate);
   const mediaTypes = useGooglePhotosFilter((s) => s.mediaTypeFilter);
   const contentCategories = useGooglePhotosFilter((s) => s.contentFilter);
-  const includeFavorites = useGooglePhotosFilter((s) => s.isIncludeFavorites);
+  const onlyFavorites = useGooglePhotosFilter((s) => s.onlyFavorites);
 
   const setFormmatedFilters = useGooglePhotosFilter(
     (s) => s.setFormmatedFilters
@@ -41,7 +41,7 @@ const GooglePhotosFilter: FunctionComponent<IGooglePhotosFilterProps> = (
       },
       mediaTypes,
       includeArchivedMedia,
-      includeFavorites,
+      onlyFavorites,
     });
   }
 

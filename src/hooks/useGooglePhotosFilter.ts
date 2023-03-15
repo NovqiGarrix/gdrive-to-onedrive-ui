@@ -17,8 +17,8 @@ interface IGooglePhotosFilter {
 
     removeMediaTypeFilter: (mediaType: string) => void;
 
-    isIncludeFavorites: boolean | undefined;
-    setIncludeFavorites: (isIncludeFavorites: boolean) => void;
+    onlyFavorites: boolean | undefined;
+    setOFavorites: (onlyFavorites: boolean) => void;
 
     isIncludeArchived: boolean | undefined;
     setIncludeArchived: (isIncludeArchived: boolean) => void;
@@ -64,9 +64,9 @@ const useGooglePhotosFilter = create<IGooglePhotosFilter>((set) => ({
         }));
     },
 
-    isIncludeFavorites: undefined,
-    setIncludeFavorites(isIncludeFavorites) {
-        set({ isIncludeFavorites });
+    onlyFavorites: undefined,
+    setOFavorites(isIncludeFavorites) {
+        set({ onlyFavorites: isIncludeFavorites });
     },
 
     isIncludeArchived: undefined,
