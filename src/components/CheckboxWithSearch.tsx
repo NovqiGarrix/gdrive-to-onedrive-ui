@@ -58,6 +58,8 @@ const CheckboxWithSearch: FunctionComponent<ICheckboxWithSearchProps> = (
     } else {
       removeSelectedData(data);
     }
+
+    setInputQuery("");
   }
 
   function onInputChange(e: ChangeEvent<HTMLInputElement>) {
