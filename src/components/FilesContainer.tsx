@@ -168,6 +168,7 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
       );
 
       if (!selectedFiles.length) return;
+      if (selectedFiles[0].providerId === provider.id) return;
 
       const providerTarget = getProviders()
         .filter((provider) => provider.id !== selectedFiles[0].providerId)
@@ -291,7 +292,6 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
   return (
     <div ref={containerRef}>
       <div
-        // id={`infinite-scroll-parent-${provider}`}
         ref={infiniteScrollScrollRef}
         className="bg-white rounded-2xl lg:rounded-3xl h-full min-h-[80vh] max-h-[80vh] p-5 md:p-8 overflow-y-auto overflow-x-hidden"
       >
