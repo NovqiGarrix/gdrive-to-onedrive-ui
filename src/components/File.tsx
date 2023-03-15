@@ -74,8 +74,7 @@ const File: FunctionComponent<IFileProps> = (props) => {
       data-file={true}
       onDragStart={onDragStart}
       className={classNames(
-        "py-1 px-2 rounded-lg relative overflow-hidden focus:outline-none bg-indigo-50/60 hover:bg-indigo-100/50 focus:bg-indigo-100/90",
-        providerId === "google_photos" ? "h-[200px]" : "h-[160px]",
+        "py-1 px-2 h-[200px] rounded-lg relative overflow-hidden focus:outline-none bg-indigo-50/60 hover:bg-indigo-100/50 focus:bg-indigo-100/90",
         isActive ? "bg-indigo-100/90" : "bg-indigo-50/60"
       )}
     >

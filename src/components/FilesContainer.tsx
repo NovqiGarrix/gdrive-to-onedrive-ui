@@ -364,12 +364,7 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
                 <div
                   onDrop={onDrop}
                   onDragOver={onDragOver}
-                  className={classNames(
-                    "grid grid-cols-2 gap-3",
-                    provider.id === "google_photos"
-                      ? "md:grid-cols-3"
-                      : "md:grid-cols-4"
-                  )}
+                  className={classNames("grid grid-cols-3 gap-3")}
                 >
                   {data.files?.map((file) => (
                     <Fragment key={file.id}>
