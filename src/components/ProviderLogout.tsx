@@ -6,29 +6,23 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Provider } from "../types";
 import authApi from "../apis/auth.api";
 import classNames from "../utils/classNames";
+import useGooglePhotosFilter from "../hooks/useGooglePhotosFilter";
 
 import LoadingIcon from "./LoadingIcon";
 
 interface IProviderLogoutProps {
   providerId: Provider;
   debounceQuery: string;
+  path: string | undefined;
 }
 
 const ProviderLogout: FunctionComponent<IProviderLogoutProps> = (props) => {
-  const { providerId, debounceQuery: searchQuery } = props;
+  const { providerId, debounceQuery: searchQuery, path } = props;
 
   const logoutFunc = useCallback(() => {
     switch (providerId) {
       case "onedrive":
         return authApi.logoutFromMicrosoft();
-
-      case "google_drive":
-        // TODO: Implement logout for Google Drive
-        return (async () => {})();
-
-      case "google_photos":
-        // TODO: Implement logout for Google Photos
-        return (async () => {})();
 
       default:
         throw new Error("Invalid Provider!");
@@ -40,7 +34,17 @@ const ProviderLogout: FunctionComponent<IProviderLogoutProps> = (props) => {
   const { isLoading: isLoggingOut, mutate: logoutMutation } = useMutation({
     mutationFn: logoutFunc,
     async onSuccess() {
-      await queryClient.invalidateQueries(["files", providerId, searchQuery]);
+      await queryClient.invalidateQueries(
+        [
+          "files",
+          providerId,
+          searchQuery,
+          path,
+          providerId === "google_photos"
+            ? JSON.stringify(useGooglePhotosFilter.getState().formattedFilters)
+            : undefined,
+        ].filter(Boolean)
+      );
     },
   });
 

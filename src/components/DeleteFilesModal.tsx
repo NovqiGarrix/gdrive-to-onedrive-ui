@@ -5,25 +5,17 @@ import { Dialog, Transition } from "@headlessui/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 
-import useSelectedFiles from "../hooks/useSelectedFiles";
-
 import onedriveApi from "../apis/onedrive.api";
-import type { IDeleteFilesParam, Provider } from "../types";
+import type { IDeleteFilesParam } from "../types";
 import { HttpErrorExeption } from "../exeptions/httpErrorExeption";
+
+import useSelectedFiles from "../hooks/useSelectedFiles";
+import useGooglePhotosFilter from "../hooks/useGooglePhotosFilter";
 import useDeleteFilesModalState from "../hooks/useDeleteFilesModalState";
 
 import LoadingIcon from "./LoadingIcon";
 
-interface IDeleteFilesModalProps {
-  // open: boolean;
-  // setOpen: () => void;
-  // providerId: Provider;
-  // debounceQuery: string;
-  // path: string | undefined;
-}
-
-const DeleteFilesModal: FunctionComponent<IDeleteFilesModalProps> = (props) => {
-  // const { open = false, setOpen, debounceQuery, path, providerId } = props;
+const DeleteFilesModal: FunctionComponent = () => {
   const cancelButtonRef = useRef(null);
 
   const queryClient = useQueryClient();
@@ -86,12 +78,17 @@ const DeleteFilesModal: FunctionComponent<IDeleteFilesModalProps> = (props) => {
   async function onDelete() {
     await mutateAsync();
 
-    await queryClient.invalidateQueries([
-      "files",
-      providerId,
-      debounceQuery,
-      path,
-    ]);
+    await queryClient.invalidateQueries(
+      [
+        "files",
+        providerId,
+        debounceQuery,
+        path,
+        providerId === "google_photos"
+          ? JSON.stringify(useGooglePhotosFilter.getState().formattedFilters)
+          : undefined,
+      ].filter(Boolean)
+    );
 
     cleanSelectedFiles();
   }

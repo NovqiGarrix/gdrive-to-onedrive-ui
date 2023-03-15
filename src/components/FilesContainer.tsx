@@ -19,7 +19,6 @@ import { PROVIDERS } from "../constants";
 import classNames from "../utils/classNames";
 import type {
   GetFilesReturn,
-  GlobalItemTypes,
   GooglePhotosFilter as IGooglePhotosFilter,
   Provider,
   ProviderObject,
@@ -189,12 +188,17 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
       }
 
       setSearchQuery("");
-      await queryClient.invalidateQueries([
-        "files",
-        providerTarget.id,
-        debounceQuery,
-        path,
-      ]);
+      await queryClient.invalidateQueries(
+        [
+          "files",
+          provider.id,
+          debounceQuery,
+          path,
+          provider.id === "google_photos"
+            ? JSON.stringify(googlePhotosFilters)
+            : undefined,
+        ].filter(Boolean)
+      );
 
       toast.success("File transfered successfully!");
     } catch (error) {
@@ -298,6 +302,7 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
             {/* Logout Component */}
             {!isError && !isLoading && provider.id === "onedrive" ? (
               <ProviderLogout
+                path={path}
                 providerId={provider.id}
                 debounceQuery={debounceQuery}
               />

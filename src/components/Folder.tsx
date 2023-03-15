@@ -20,7 +20,7 @@ const Folder: FunctionComponent<IFolderProps> = (props) => {
     <button
       type="button"
       onDoubleClick={onDoubleClick}
-      className="bg-bg-light p-2 group rounded-lg flex flex-col items-center justify-center space-y-2 h-[133px] md:h-[162px] lg:h-[150px] focus:bg-indigo-100"
+      className="bg-bg-light p-2 group rounded-lg flex flex-col items-center justify-center space-y-2 h-[200px] focus:bg-indigo-100"
       data-tip={file.name}
     >
       <FolderIcon fill="#5f6368" width={25} height={25} />

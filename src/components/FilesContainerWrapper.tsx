@@ -22,16 +22,14 @@ const FilesContainerWrapper: FunctionComponent = () => {
       const target = e.target as HTMLElement | null;
       if (!target) return;
 
-      let shouldClean = !target.id.startsWith("file-");
+      let shouldClean = !target.hasAttribute("data-id");
 
-      if (target.nodeName === "IMG" || target.nodeName === "SPAN") {
+      if (target.nodeName === "IMG") {
         const parentEl = target.parentElement;
         const parentElOfParentEl = parentEl?.parentElement;
+        const parentElOfParentElOfParentEl = parentElOfParentEl?.parentElement;
 
-        shouldClean = !parentElOfParentEl?.id.startsWith("file-");
-      } else if (target.nodeName === "DIV") {
-        const parentEl = target.parentElement;
-        shouldClean = !parentEl?.id.startsWith("file-");
+        shouldClean = !parentElOfParentElOfParentEl?.id.startsWith("file-");
       }
 
       if (!shouldClean || !selectedFiles.length) return;
