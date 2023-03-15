@@ -296,7 +296,7 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
             <SelectProvider provider={provider} onChange={onChangeProvider} />
 
             {/* Logout Component */}
-            {!isError && !isLoading ? (
+            {!isError && !isLoading && provider.id === "onedrive" ? (
               <ProviderLogout
                 providerId={provider.id}
                 debounceQuery={debounceQuery}
