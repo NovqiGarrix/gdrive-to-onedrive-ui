@@ -1,7 +1,9 @@
 import {
+  Dispatch,
   DragEvent,
   FunctionComponent,
   MouseEvent,
+  SetStateAction,
   useCallback,
   useMemo,
 } from "react";
@@ -15,11 +17,12 @@ import useSelectedFiles from "../hooks/useSelectedFiles";
 interface IFileProps {
   providerId: Provider;
   file: GlobalItemTypes;
+  data: GlobalItemTypes[];
   selectedFiles: GlobalItemTypes[];
 }
 
 const File: FunctionComponent<IFileProps> = (props) => {
-  const { file, providerId, selectedFiles } = props;
+  const { file, providerId, selectedFiles, data } = props;
 
   const isActive = useMemo(
     () => selectedFiles.find((f) => f.id === file.id),
@@ -39,7 +42,23 @@ const File: FunctionComponent<IFileProps> = (props) => {
   }, []);
 
   function onClick(event: MouseEvent<HTMLButtonElement>) {
-    if (event.ctrlKey) {
+    if (event.shiftKey) {
+      let firstSelectedFileIndex = data.findIndex(
+        (f) => f.id === selectedFiles[0].id
+      );
+      let lastSelectedFileIndex = data.findIndex((f) => f.id === file.id);
+
+      if (firstSelectedFileIndex > lastSelectedFileIndex) {
+        const temp = firstSelectedFileIndex;
+        firstSelectedFileIndex = lastSelectedFileIndex;
+        lastSelectedFileIndex = temp;
+      }
+
+      const files = data
+        .slice(firstSelectedFileIndex, lastSelectedFileIndex + 1)
+        .map((f) => ({ providerId, ...f }));
+      replaceAllSelectedFiles(files);
+    } else if (event.ctrlKey || event.metaKey) {
       addSelectedFile({ ...file, providerId });
     } else {
       replaceAllSelectedFiles({ ...file, providerId });
@@ -55,11 +74,11 @@ const File: FunctionComponent<IFileProps> = (props) => {
       data-file={true}
       onDragStart={onDragStart}
       className={classNames(
-        "py-1 px-2 rounded-lg relative overflow-hidden focus:outline-none bg-indigo-50/60 hover:bg-indigo-100/50 focus:bg-indigo-100/80",
+        "py-1 px-2 rounded-lg relative overflow-hidden focus:outline-none bg-indigo-50/60 hover:bg-indigo-100/50 focus:bg-indigo-100/90",
         providerId === "google_photos"
           ? "h-[190px]"
           : "h-[133px] md:h-[162px] lg:h-[150px]",
-        isActive ? "bg-indigo-100/80" : "bg-indigo-50/60"
+        isActive ? "bg-indigo-100/90" : "bg-indigo-50/60"
       )}
     >
       <div className="w-full flex items-center p-2">

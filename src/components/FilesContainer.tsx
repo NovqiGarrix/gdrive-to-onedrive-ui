@@ -19,6 +19,7 @@ import { PROVIDERS } from "../constants";
 import classNames from "../utils/classNames";
 import type {
   GetFilesReturn,
+  GlobalItemTypes,
   GooglePhotosFilter as IGooglePhotosFilter,
   Provider,
   ProviderObject,
@@ -70,7 +71,6 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
   );
 
   const previousProvider = useRef<ProviderObject>(provider);
-
   const [path, setPath] = useState<undefined | string>(undefined);
 
   const { debounceQuery, searchQuery, setSearchQuery } = useSearchQuery();
@@ -169,7 +169,6 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
       const selectedFiles = JSON.parse(
         event.dataTransfer.getData("text/plain")
       );
-      console.log(selectedFiles);
 
       if (!selectedFiles.length) return;
 
@@ -381,6 +380,7 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
                       ) : (
                         <File
                           file={file}
+                          data={data.files}
                           providerId={provider.id}
                           selectedFiles={selectedFiles}
                         />

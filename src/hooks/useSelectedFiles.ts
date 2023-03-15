@@ -14,7 +14,7 @@ interface ISelectedFiles {
 
     addFile: (file: File) => void;
 
-    replaceAllFiles: (file: File) => void;
+    replaceAllFiles: (file: File | Array<File>) => void;
 }
 
 const useSelectedFiles = create<ISelectedFiles>((set, get) => ({
@@ -39,7 +39,14 @@ const useSelectedFiles = create<ISelectedFiles>((set, get) => ({
         set((state) => ({ files: [...state.files, file] }))
     },
 
-    replaceAllFiles: (file) => set(({ files: [file] })),
+    replaceAllFiles(file) {
+        if (Array.isArray(file)) {
+            set(({ files: file }))
+            return;
+        }
+
+        set(({ files: [file] }))
+    },
 
 }));
 
