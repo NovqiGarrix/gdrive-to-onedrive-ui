@@ -58,8 +58,6 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
   const queryClient = useQueryClient();
 
   const selectedFiles = useSelectedFiles((s) => s.files);
-  console.log(selectedFiles);
-
   const openModalFunc = useDeleteFilesModalState((s) => s.openModal);
 
   const hasProvider = useUsedProviders((state) => state.has);

@@ -75,9 +75,7 @@ const File: FunctionComponent<IFileProps> = (props) => {
       onDragStart={onDragStart}
       className={classNames(
         "py-1 px-2 rounded-lg relative overflow-hidden focus:outline-none bg-indigo-50/60 hover:bg-indigo-100/50 focus:bg-indigo-100/90",
-        providerId === "google_photos"
-          ? "h-[190px]"
-          : "h-[133px] md:h-[162px] lg:h-[150px]",
+        providerId === "google_photos" ? "h-[200px]" : "h-[160px]",
         isActive ? "bg-indigo-100/90" : "bg-indigo-50/60"
       )}
     >
@@ -90,36 +88,40 @@ const File: FunctionComponent<IFileProps> = (props) => {
         </span>
       </div>
 
-      {file.image ? (
-        <div className="w-full h-3/4">
-          <Image
-            src={file.image}
-            width={1000}
-            height={1000}
-            loading="lazy"
-            alt={file.name}
-            onError={(event) => {
-              const parent = event.currentTarget.parentElement;
-              event.currentTarget.srcset =
-                "/_next/image?url=%2Ficons%2FFILE.webp&w=640&q=75 1x, /_next/image?url=%2Ficons%2FFILE.webp&w=1080&q=75 2x";
+      <div className="w-full h-[70%] mx-auto flex items-center justify-center">
+        {file.image ? (
+          <div className="w-full h-full flex items-center justify-center">
+            {/* <div className="w-16 h-full flex items-center justify-center"> */}
+            <Image
+              src={file.image}
+              width={1000}
+              height={1000}
+              loading="lazy"
+              alt={file.name}
+              onError={(event) => {
+                const parent = event.currentTarget.parentElement;
+                event.currentTarget.srcset =
+                  "/_next/image?url=%2Ficons%2FFILE.webp&w=640&q=75 1x, /_next/image?url=%2Ficons%2FFILE.webp&w=1080&q=75 2x";
 
-              event.currentTarget.classList.remove(
-                "object-cover",
-                "w-full",
-                "h-full"
-              );
+                event.currentTarget.classList.remove("object-cover");
 
-              parent?.classList.remove("w-full", "h-full");
-              parent?.classList.add("-mt-5", "w-16");
-            }}
-            className="rounded-md object-cover object-center w-full h-full"
-          />
-        </div>
-      ) : (
-        <div className="-mt-5 w-16">
-          <Image src={file.iconLink} width={500} height={500} alt={file.name} />
-        </div>
-      )}
+                parent?.classList.remove("w-full", "h-full");
+                parent?.classList.add("w-16");
+              }}
+              className="rounded-md object-cover object-center w-full h-full"
+            />
+          </div>
+        ) : (
+          <div className="-mt-5 w-16">
+            <Image
+              src={file.iconLink}
+              width={500}
+              height={500}
+              alt={file.name}
+            />
+          </div>
+        )}
+      </div>
     </button>
   );
 };
