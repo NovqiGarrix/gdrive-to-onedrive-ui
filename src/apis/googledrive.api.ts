@@ -9,7 +9,7 @@ import { API_URL, defaultOptions } from '.';
 async function getFiles(query?: string, nextPageToken?: string): Promise<GetFilesReturn> {
 
     try {
-        const resp = await fetch(`${API_URL}/api/google/drive/files?query=${query || ''}&fields=*${nextPageToken ? `&next_token=${encodeURIComponent(nextPageToken)}` : ''}`, defaultOptions);
+        const resp = await fetch(`${API_URL}/api/google/drive/files?query=${query ? `name contains '${query}'` : ''}&fields=*${nextPageToken ? `&next_token=${encodeURIComponent(nextPageToken)}` : ''}`, defaultOptions);
         const { data, errors } = await resp.json();
 
         if (!resp.ok) {
