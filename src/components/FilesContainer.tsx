@@ -113,7 +113,7 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
 
   const [authUrl, setAuthUrl] = useState("");
 
-  const { isLoading, isError, error, isFetching } = useQuery<
+  const { isLoading, isError, error } = useQuery<
     GetFilesReturn,
     HttpErrorExeption
   >({
@@ -365,12 +365,30 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
 
         {/* Loading Component */}
         <div className="mt-5 h-full">
-          {isLoading || isFetching ? (
-            <div className="w-full h-full flex items-center justify-center">
-              <LoadingIcon className="w-8 h-8 text-darken" />
+          {isLoading ? (
+            <div className="grid grid-cols-3 gap-3 pb-5">
+              {Array(9)
+                .fill(0)
+                .map((_, i) => (
+                  <div
+                    key={i}
+                    className="bg-indigo-50/60 hover:bg-indigo-100/50 rounded-lg focus:bg-indigo-100/90"
+                  >
+                    <div className="py-1 px-2 animate-pulse h-[200px] relative overflow-hidden focus:outline-none">
+                      <div className="w-full flex items-center p-2">
+                        <div className="w-5 h-5 rounded-full flex-shrink-0 mr-1.5 bg-gray-300"></div>
+                        <div className="w-full h-2 rounded bg-gray-300"></div>
+                      </div>
+
+                      <div className="w-full h-[70%] mt-1.5 rounded mx-auto flex items-center justify-center">
+                        <div className="w-36 h-36 rounded bg-gray-300"></div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
             </div>
           ) : isError ? (
-            error.message === "Unauthorized" ? (
+            error?.message === "Unauthorized" ? (
               <div className="w-full h-[78%] flex flex-col items-center justify-center">
                 <Link
                   href={authUrl}
@@ -385,7 +403,7 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
               </div>
             ) : (
               <div className="text-red-500 mt-3">
-                <p>{error.message}</p>
+                <p>{error?.message}</p>
               </div>
             )
           ) : (
@@ -426,8 +444,10 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
                   ) : null}
                 </div>
               ) : (
-                <div className="mt-3 h-[70%] flex items-center justify-center">
-                  <h3 className="text-sm text-dark">Nothing to show :(</h3>
+                <div className="mt-2">
+                  <h3 className="text-sm text-gray-500">
+                    Your files will appear here
+                  </h3>
                 </div>
               )}
             </Fragment>

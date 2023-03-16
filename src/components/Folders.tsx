@@ -3,6 +3,7 @@ import { Dispatch, FunctionComponent, SetStateAction } from "react";
 import { HttpErrorExeption } from "../exeptions/httpErrorExeption";
 import FolderIcon from "../icons/FolderIcon";
 import { GetFilesFuncParams, GetFilesReturn, ProviderObject } from "../types";
+import LoadingIcon from "./LoadingIcon";
 
 interface IFoldersProps {
   query: string;
@@ -31,21 +32,26 @@ const Folders: FunctionComponent<IFoldersProps> = (props) => {
     setPath(path ? `${path}/${folderName}` : `/${folderName}`);
   }
 
-  if (!data?.files.length) return null;
+  if (!data?.files.length && !isLoading) return null;
 
   return (
     <div className="mt-5 w-full">
-      <h2 className="text-dark font-medium mb-2">Folders</h2>
+      <div className="flex items-start space-x-3">
+        <h2 className="text-dark font-medium mb-2">Folders</h2>
+        {isFetching ? (
+          <LoadingIcon fill="rgb(101 110 127, 1)" className="w-4 h-4 mt-1" />
+        ) : null}
+      </div>
 
-      {isLoading || isFetching ? (
+      {isLoading ? (
         <div className="grid grid-cols-4 gap-3">
           {Array(12)
             .fill(0)
             .map((_, i) => (
               <div key={i} className="rounded-lg bg-indigo-50/60">
                 <div className="animate-pulse flex items-center p-2.5 space-x-2">
-                  <div className="w-5 h-5 bg-gray-400 flex-shrink-0 rounded-full"></div>
-                  <div className="w-full h-2 bg-gray-400 rounded"></div>
+                  <div className="w-5 h-5 bg-gray-300 flex-shrink-0 rounded-full"></div>
+                  <div className="w-full h-2 bg-gray-300 rounded"></div>
                 </div>
               </div>
             ))}
@@ -53,7 +59,7 @@ const Folders: FunctionComponent<IFoldersProps> = (props) => {
       ) : isError ? (
         <div className="w-full">
           <h2 className="text-error text-sm font-medium mb-2 flex items-center space-x-1">
-            <p>{error.message}</p>
+            <p>{error?.message}</p>
             <svg
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
@@ -72,7 +78,7 @@ const Folders: FunctionComponent<IFoldersProps> = (props) => {
         </div>
       ) : (
         <div className="grid grid-cols-4 gap-3">
-          {data.files.map((folder) => (
+          {data?.files.map((folder) => (
             <button
               type="button"
               key={folder.id}
