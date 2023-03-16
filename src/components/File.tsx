@@ -1,9 +1,7 @@
 import {
-  Dispatch,
   DragEvent,
   FunctionComponent,
   MouseEvent,
-  SetStateAction,
   useCallback,
   useMemo,
 } from "react";
@@ -11,8 +9,8 @@ import {
 import Image from "next/image";
 
 import classNames from "../utils/classNames";
-import type { GlobalItemTypes, Provider } from "../types";
 import useSelectedFiles from "../hooks/useSelectedFiles";
+import type { GlobalItemTypes, Provider } from "../types";
 
 interface IFileProps {
   providerId: Provider;
@@ -70,14 +68,19 @@ const File: FunctionComponent<IFileProps> = (props) => {
     }
   }
 
+  function onDoubleClick() {
+    window.open(file.webUrl, "_blank", "noopener,noreferrer");
+  }
+
   return (
     <button
       draggable
       type="button"
       onClick={onClick}
-      id={`file-${file.id}`}
       data-id={file.id}
+      id={`file-${file.id}`}
       onDragStart={onDragStart}
+      onDoubleClick={onDoubleClick}
       className={classNames(
         "py-1 px-2 h-[200px] rounded-lg relative overflow-hidden focus:outline-none bg-indigo-50/60 hover:bg-indigo-100/50 focus:bg-indigo-100/90",
         isActive ? "bg-indigo-100/90" : "bg-indigo-50/60"
@@ -86,11 +89,11 @@ const File: FunctionComponent<IFileProps> = (props) => {
       <div className="w-full flex items-center p-2" data-id={file.id}>
         <div className="w-5 flex-shrink-0 mr-1.5" data-id={file.id}>
           <Image
-            src={file.iconLink}
             width={500}
             height={500}
             alt={file.name}
             data-id={file.id}
+            src={file.iconLink}
           />
         </div>
         <span

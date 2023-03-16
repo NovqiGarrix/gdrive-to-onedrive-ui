@@ -66,7 +66,6 @@ export interface DriveItem {
     thumbnailVersion: string;
     modifiedByMe: boolean;
     permissionIds: string[];
-    imageMediaMetadata: ImageMediaMetadata;
     linkShareMetadata: LinkShareMetadata;
 }
 
@@ -109,7 +108,11 @@ export interface OneDriveItem {
     folder?: {
         childCount: number;
     }
-    video?: {}
+    video?: {},
+    image?: {
+        width: number;
+        height: number;
+    }
 }
 
 export interface PhotosItem {

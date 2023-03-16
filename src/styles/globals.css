@@ -34,3 +34,19 @@ html > body {
 .tooltip::before {
   font-size: 12px;
 }
+
+.tooltip-bottom-left:before {
+  left: 90%;
+  right: auto;
+  bottom: auto;
+  top: var(--tooltip-offset);
+  transform: translateX(-90%);
+}
+.tooltip-bottom-left:after {
+  left: 50%;
+  right: auto;
+  bottom: auto;
+  transform: translateX(-50%);
+  top: var(--tooltip-tail-offset);
+  border-color: transparent transparent var(--tooltip-color) transparent;
+}
