@@ -18,6 +18,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { PROVIDERS } from "../constants";
 import classNames from "../utils/classNames";
 import type {
+  GetFilesFuncParams,
   GetFilesReturn,
   GooglePhotosFilter as IGooglePhotosFilter,
   Provider,
@@ -38,13 +39,13 @@ import googledriveApi from "../apis/googledrive.api";
 import googlephotosApi from "../apis/googlephotos.api";
 
 import File from "./File";
-import Folder from "./Folder";
 import Search from "./Search";
 import LoadingIcon from "./LoadingIcon";
 import Breadcrumbs from "./Breadcrumbs";
 import ProviderLogout from "./ProviderLogout";
 import SelectProvider from "./SelectProvider";
 import GooglePhotosFilter from "./GooglePhotosFilter";
+import Folders from "./Folders";
 
 interface IFilesContainerProps {
   provider: string;
@@ -74,21 +75,28 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
   const googlePhotosFilters = useGooglePhotosFilter((s) => s.formattedFilters);
 
   const getFiles = useCallback(
-    (
-      query?: string,
-      nextPageToken?: string,
-      path?: string,
-      filters?: IGooglePhotosFilter
-    ) => {
+    (params: GetFilesFuncParams) => {
+      const { query, nextPageToken, path, filters, foldersOnly } = params;
+
       switch (provider.id) {
         case "google_drive":
-          return googledriveApi.getFiles(query, nextPageToken);
+          return googledriveApi.getFiles({
+            query,
+            nextPageToken,
+            foldersOnly,
+            path,
+          });
 
         case "google_photos":
           return googlephotosApi.getFiles(nextPageToken, filters);
 
         case "onedrive":
-          return onedriveApi.getFiles({ query, nextPageToken, path });
+          return onedriveApi.getFiles({
+            query,
+            nextPageToken,
+            path,
+            foldersOnly,
+          });
 
         default:
           throw new Error("Invalid Provider!");
@@ -109,7 +117,7 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
     HttpErrorExeption
   >({
     queryFn: () =>
-      getFiles(debounceQuery, undefined, path, googlePhotosFilters),
+      getFiles({ query: debounceQuery, path, filters: googlePhotosFilters }),
     queryKey: [
       "files",
       provider.id,
@@ -211,12 +219,13 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
   async function getMoreDataFunc() {
     if (!data.nextPageToken) return;
 
-    const nextFiles = await getFiles(
-      debounceQuery,
-      data.nextPageToken,
+    const nextFiles = await getFiles({
+      query: debounceQuery,
+      nextPageToken: data.nextPageToken,
       path,
-      googlePhotosFilters
-    );
+      filters: googlePhotosFilters,
+    });
+
     setData((prev) => ({
       ...prev,
       files: [...prev.files, ...nextFiles.files],
@@ -325,7 +334,7 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
           </div>
         </div>
 
-        {data.files.length > 0 && !debounceQuery ? (
+        {!debounceQuery && !isError ? (
           <Breadcrumbs path={path} setPath={setPath} />
         ) : null}
 
@@ -337,74 +346,85 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
           </div>
         ) : null}
 
+        {/* Files */}
+        <Folders
+          path={path}
+          setPath={setPath}
+          getFiles={getFiles}
+          provider={provider}
+          query={debounceQuery}
+        />
+
         {/* Loading Component */}
-        {isLoading || isFetching ? (
-          <div className="w-full h-full flex items-center justify-center">
-            <LoadingIcon className="w-8 h-8 text-darken" />
-          </div>
-        ) : isError ? (
-          error.message === "Unauthorized" ? (
-            <div className="w-full h-5/6 flex flex-col items-center justify-center">
-              <Link
-                href={authUrl}
-                className="btn btn-primary"
-                referrerPolicy="no-referrer"
-              >
-                Sign In
-              </Link>
-              <span className="mt-3 font-medium">
-                Sign in to your Microsoft Account
-              </span>
+        <div className="mt-5 h-full">
+          {isLoading || isFetching ? (
+            <div className="w-full h-full flex items-center justify-center">
+              <LoadingIcon className="w-8 h-8 text-darken" />
             </div>
-          ) : (
-            <div className="text-red-500 mt-3">
-              <p>{error.message}</p>
-            </div>
-          )
-        ) : (
-          <Fragment>
-            {(data.files?.length || 0) > 0 ? (
-              <div className="mt-1">
-                <div
-                  onDrop={onDrop}
-                  onDragOver={onDragOver}
-                  className={classNames("grid grid-cols-3 gap-3")}
+          ) : isError ? (
+            error.message === "Unauthorized" ? (
+              <div className="w-full h-[78%] flex flex-col items-center justify-center">
+                <Link
+                  href={authUrl}
+                  className="btn btn-primary"
+                  referrerPolicy="no-referrer"
                 >
-                  {data.files?.map((file) => (
-                    <Fragment key={file.id}>
-                      {file.type === "folder" ? (
-                        <Folder path={path} setPath={setPath} file={file} />
-                      ) : (
-                        <File
-                          file={file}
-                          data={data.files}
-                          providerId={provider.id}
-                          selectedFiles={selectedFiles}
-                        />
-                      )}
-                    </Fragment>
-                  ))}
-                </div>
-
-                <div ref={infiniteScrollLoadingRef}></div>
-
-                {isGettingMoreData ? (
-                  <div className="max-w-full w-full flex items-center justify-center mt-5">
-                    <LoadingIcon
-                      width={30}
-                      height={30}
-                      className="text-darken"
-                    />
-                  </div>
-                ) : null}
+                  Sign In
+                </Link>
+                <span className="mt-3 font-medium">
+                  Sign in to your Microsoft Account
+                </span>
               </div>
             ) : (
-              <div className="mt-3 h-[70%] flex items-center justify-center">
-                <h3 className="text-sm text-dark">Nothing to show :(</h3>
+              <div className="text-red-500 mt-3">
+                <p>{error.message}</p>
               </div>
-            )}
-          </Fragment>
-        )}
+            )
+          ) : (
+            <Fragment>
+              <h2 className="text-dark font-medium mb-2">Files</h2>
+
+              {(data.files?.length || 0) > 0 ? (
+                <div className="mt-1">
+                  <div
+                    onDrop={onDrop}
+                    onDragOver={onDragOver}
+                    className={classNames("grid grid-cols-3 gap-3")}
+                  >
+                    {data.files?.map((file) => (
+                      <Fragment key={file.id}>
+                        {file.type === "file" ? (
+                          <File
+                            file={file}
+                            data={data.files}
+                            providerId={provider.id}
+                            selectedFiles={selectedFiles}
+                          />
+                        ) : null}
+                      </Fragment>
+                    ))}
+                  </div>
+
+                  <div ref={infiniteScrollLoadingRef}></div>
+
+                  {isGettingMoreData ? (
+                    <div className="max-w-full w-full flex items-center justify-center mt-5">
+                      <LoadingIcon
+                        width={30}
+                        height={30}
+                        className="text-darken"
+                      />
+                    </div>
+                  ) : null}
+                </div>
+              ) : (
+                <div className="mt-3 h-[70%] flex items-center justify-center">
+                  <h3 className="text-sm text-dark">Nothing to show :(</h3>
+                </div>
+              )}
+            </Fragment>
+          )}
+        </div>
       </div>
     </div>
   );

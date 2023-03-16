@@ -157,3 +157,11 @@ export interface GooglePhotosFilter {
     includeArchivedMedia?: boolean;
     onlyFavorites?: boolean;
 }
+
+export interface GetFilesFuncParams {
+    path?: string;
+    query?: string;
+    foldersOnly?: boolean;
+    nextPageToken?: string;
+    filters?: GooglePhotosFilter;
+}
