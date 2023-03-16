@@ -286,7 +286,6 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
     return () => {
       containerEl.removeEventListener("keydown", handleKeydown);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedFiles.length]);
 
   return (
