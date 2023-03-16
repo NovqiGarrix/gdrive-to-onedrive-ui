@@ -34,7 +34,6 @@ export default function toGlobalTypes(data: any, provider: Provider): GlobalItem
 
         case 'onedrive': {
             const d = data as OneDriveItem;
-
             const extension = d.name.split('.').pop();
 
             return {

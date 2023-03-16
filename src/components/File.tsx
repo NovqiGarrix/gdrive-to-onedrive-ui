@@ -106,7 +106,7 @@ const File: FunctionComponent<IFileProps> = (props) => {
 
       <div
         data-id={file.id}
-        className="w-full h-[70%] mx-auto flex items-center justify-center"
+        className="w-full h-[70%] bg-white rounded mx-auto flex items-center justify-center"
       >
         {file.image ? (
           <div
@@ -128,13 +128,13 @@ const File: FunctionComponent<IFileProps> = (props) => {
                 event.currentTarget.classList.remove("object-cover");
 
                 parent?.classList.remove("w-full", "h-full");
-                parent?.classList.add("w-16");
+                parent?.classList.add("w-12");
               }}
               className="rounded-md object-cover object-center w-full h-full"
             />
           </div>
         ) : (
-          <div data-id={file.id} className="-mt-5 w-16">
+          <div data-id={file.id} className="-mt-5 w-12">
             <Image
               src={file.iconLink}
               width={500}

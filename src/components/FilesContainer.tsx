@@ -8,6 +8,7 @@ import {
   useState,
   // @ts-ignore - No types
   experimental_useEffectEvent as useEffectEvent,
+  useMemo,
 } from "react";
 
 import Link from "next/link";
@@ -271,6 +272,12 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
       disabled: isErrorGettingMoreData,
     });
 
+  const files = useMemo(() => {
+    return debounceQuery
+      ? data.files
+      : data.files.filter((f) => f.type === "file");
+  }, [data.files, debounceQuery]);
+
   const openModal = useEffectEvent((params: any) => {
     openModalFunc(params);
   });
@@ -295,6 +302,7 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
     return () => {
       containerEl.removeEventListener("keydown", handleKeydown);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedFiles.length]);
 
   return (
@@ -384,7 +392,7 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
             <Fragment>
               <h2 className="text-dark font-medium mb-2">Files</h2>
 
-              {(data.files?.length || 0) > 0 ? (
+              {(files.length || 0) > 0 ? (
                 <div className="mt-1">
                   <div
                     onDrop={onDrop}
