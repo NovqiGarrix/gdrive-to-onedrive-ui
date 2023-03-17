@@ -11,11 +11,11 @@ const CallbackAuthPage: NextPage = () => {
 
   useEffect(() => {
     if (isRedirected.current) return;
-    const { state } = router.query;
+    const { state, redirect_url } = router.query;
 
     if (state === "OK") {
       isRedirected.current = true;
-      document.location.href = "/";
+      document.location.href = (redirect_url as string) || "/";
       return;
     }
 

@@ -11,7 +11,6 @@ import {
   useMemo,
 } from "react";
 
-import Link from "next/link";
 import { useRouter } from "next/router";
 import { toast } from "react-hot-toast";
 import useInfiniteScroll from "react-infinite-scroll-hook";
@@ -328,6 +327,23 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
       disabled: isErrorGettingMoreData,
     });
 
+  function signInWithMicrosoft() {
+    const redirect_url =
+      Object.entries(router.query).length > 0
+        ? `${window.location.origin}/?${new URLSearchParams(
+            router.query as any
+          ).toString()}`
+        : undefined;
+
+    const authURL = new URL(authUrl);
+    if (redirect_url) {
+      const state = authURL.searchParams.get("state")!;
+      authURL.searchParams.set("state", `${state}...Novrii...${redirect_url}`);
+    }
+
+    window.open(authURL, "_self", "noopener,noreferrer");
+  }
+
   const files = useMemo(() => {
     return debounceQuery
       ? data.files
@@ -446,13 +462,14 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
           ) : isError ? (
             error?.message === "Unauthorized" ? (
               <div className="w-full h-[78%] flex flex-col items-center justify-center">
-                <Link
-                  href={authUrl}
+                <button
+                  role="link"
+                  type="button"
+                  onClick={signInWithMicrosoft}
                   className="btn btn-primary"
-                  referrerPolicy="no-referrer"
                 >
                   Sign In
-                </Link>
+                </button>
                 <span className="mt-3 font-medium">
                   Sign in to your Microsoft Account
                 </span>

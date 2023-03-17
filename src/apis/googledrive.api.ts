@@ -33,7 +33,6 @@ function getParentQuery(parentId: string | undefined, foldersOnly?: boolean): st
 async function getFiles(params: IGetFilesParams): Promise<GetFilesReturn> {
 
     const { query, foldersOnly, nextPageToken, path } = params;
-    console.log({ path });
     if (foldersOnly) return getFoldersOnly(params);
 
     const parentId = getParentIdFromPath(path);
