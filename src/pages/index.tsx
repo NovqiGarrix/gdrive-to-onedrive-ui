@@ -28,6 +28,7 @@ export default Home;
 
 export const getServerSideProps: GetServerSideProps = async ({
   req: { cookies },
+  query,
 }) => {
   try {
     const me = await authApi.getMe(cookies.qid);
@@ -41,9 +42,37 @@ export const getServerSideProps: GetServerSideProps = async ({
       };
     }
 
+    Object.entries({ ...query }).forEach(([key, value]) => {
+      if (value && typeof value !== "string") {
+        query[key] = undefined;
+      }
+    });
+
+    if (!query.p1 || !query.p2) {
+      const qparams = new URLSearchParams();
+
+      qparams.append("p1", String(query.p1 ?? 0));
+      qparams.append("p2", String(query.p1 ?? 2));
+
+      return {
+        redirect: {
+          destination: `/?${qparams.toString()}`,
+          permanent: false,
+        },
+      };
+    }
+
+    // These are providers index
+    const p1 = Number(query.p1);
+    const p2 = Number(query.p2);
+
     return {
       props: {
         me: me ?? null,
+        providers: {
+          p1,
+          p2,
+        },
       },
     };
   } catch (error: any) {

@@ -12,6 +12,7 @@ import {
 } from "react";
 
 import Link from "next/link";
+import { useRouter } from "next/router";
 import { toast } from "react-hot-toast";
 import useInfiniteScroll from "react-infinite-scroll-hook";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -50,13 +51,16 @@ import GooglePhotosFilter from "./GooglePhotosFilter";
 
 interface IFilesContainerProps {
   provider: string;
+  componentIndex: number;
 }
 
 const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
-  const { provider: _providerId } = props;
+  const { provider: _providerId, componentIndex } = props;
 
-  const containerRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+
   const queryClient = useQueryClient();
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const selectedFiles = useSelectedFiles((s) => s.files);
   const openModalFunc = useDeleteFilesModalState((s) => s.openModal);
@@ -131,15 +135,27 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
         : undefined,
     ].filter(Boolean),
     retry: false,
-    keepPreviousData: true,
     refetchOnMount: false,
+    keepPreviousData: true,
     refetchOnWindowFocus: process.env.NODE_ENV === "production",
+
+    behavior: {
+      onFetch() {
+        if (provider.id !== previousProvider.current.id) {
+          toast.loading(`Switching to ${provider.name}...`, {
+            id: "switching-provider",
+          });
+        }
+      },
+    },
 
     onSuccess(data) {
       setData(data);
       if (provider.id !== previousProvider.current.id) {
         previousProvider.current = provider;
-        toast.success(`Switched to ${provider.name}`);
+        toast.success(`Switched to ${provider.name}`, {
+          id: "switching-provider",
+        });
       }
     },
 
@@ -249,7 +265,7 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
     },
   });
 
-  function onChangeProvider(newProvider: ProviderObject) {
+  function onProviderChange(newProvider: ProviderObject) {
     if (newProvider.id === provider.id) return;
 
     if (hasProvider(newProvider)) {
@@ -262,6 +278,16 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
     setProvider(newProvider);
     replaceProvider(provider, newProvider);
 
+    const query = new URLSearchParams(router.query as Record<string, string>);
+
+    const queryName = `p${componentIndex + 1}`;
+
+    query.set(
+      queryName,
+      String(PROVIDERS.findIndex((po) => po.id === newProvider.id))
+    );
+
+    router.push(`/?${query.toString()}`, undefined, { shallow: true });
     setSearchQuery("");
   }
 
@@ -315,7 +341,7 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
       >
         <div className="flex flex-col items-start justify-start">
           <div className="flex items-center justify-between w-full">
-            <SelectProvider provider={provider} onChange={onChangeProvider} />
+            <SelectProvider provider={provider} onChange={onProviderChange} />
 
             {/* Logout Component */}
             {!isError && !isLoading && provider.id === "onedrive" ? (

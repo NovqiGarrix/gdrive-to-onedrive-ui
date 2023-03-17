@@ -80,7 +80,6 @@ async function getFoldersOnly(params: IGetFoldersOnlyParams): Promise<GetFilesRe
 
         const resp = await fetch(urlInURL, defaultOptions);
         const { data, errors } = await resp.json();
-        console.log({ folders: data.files });
 
         if (!resp.ok) {
             throw new HttpErrorExeption(resp.status, errors[0].error);

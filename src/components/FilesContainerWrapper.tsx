@@ -8,9 +8,9 @@ import FilesContainer from "./FilesContainer";
 const FilesContainerWrapper: FunctionComponent = () => {
   const ref = useRef<HTMLDivElement>(null);
 
-  const initialUsedProviders = useUsedProviders(
-    (state) => state.getInitialProviders
-  )();
+  const initialUsedProviders = useUsedProviders((state) =>
+    Array.from(state.initialUsedProviders)
+  );
 
   const selectedFiles = useSelectedFiles((s) => s.files);
   const cleanSelectedFiles = useSelectedFiles((s) => s.cleanFiles);
@@ -48,8 +48,12 @@ const FilesContainerWrapper: FunctionComponent = () => {
       ref={ref}
       className="flex flex-col space-y-5 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-3 lg:divide-x lg:divide-bg"
     >
-      {initialUsedProviders.map((provider) => (
-        <FilesContainer key={provider.id} provider={provider.id} />
+      {initialUsedProviders.map((provider, index) => (
+        <FilesContainer
+          key={provider.id}
+          componentIndex={index}
+          provider={provider.id}
+        />
       ))}
     </div>
   );
