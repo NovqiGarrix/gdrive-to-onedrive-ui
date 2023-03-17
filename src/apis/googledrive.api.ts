@@ -14,19 +14,23 @@ interface IGetFilesParams {
     nextPageToken?: string;
 }
 
+function getParentIdFromPath(path: string | undefined): string | undefined {
+    return path ? path.split("/").pop()?.split("~")[1] : undefined;
+}
+
 async function getFiles(params: IGetFilesParams): Promise<GetFilesReturn> {
 
     const { query, foldersOnly, nextPageToken, path } = params;
     if (foldersOnly) return getFoldersOnly(params);
 
-    const parentId = path ? await getFileIdFromPath(path) : undefined;
+    const parentId = getParentIdFromPath(path);
 
     const urlInURL = new URL(`${API_URL}/api/google/drive/files`);
 
     urlInURL.searchParams.append('fields', '*');
-    urlInURL.searchParams.append('query', !query ? `mimeType != 'application/vnd.google-apps.folder'` : `name contains '${query}' and mimeType != 'application/vnd.google-apps.folder'`);
+    urlInURL.searchParams.append('query', !query ? `mimeType != 'application/vnd.google-apps.folder' and '${parentId || 'root'}' in parents` : `name contains '${query}' and mimeType != 'application/vnd.google-apps.folder' and '${parentId || 'root'}' in parents`);
 
-    Object.entries({ next_token: nextPageToken, parent_id: parentId }).forEach(([key, value]) => {
+    Object.entries({ next_token: nextPageToken }).forEach(([key, value]) => {
         if (value) {
             urlInURL.searchParams.append(key, value);
         }
@@ -53,56 +57,30 @@ async function getFiles(params: IGetFilesParams): Promise<GetFilesReturn> {
 
 }
 
-async function getFileIdFromPath(path: string): Promise<string | undefined> {
-
-    const foldername = path.split('/').pop();
-    if (!foldername) return undefined;
-
-    const urlInURL = new URL(`${API_URL}/api/google/drive/files`);
-    urlInURL.searchParams.append('fields', 'id');
-    urlInURL.searchParams.append('query', `name = '${foldername}'`);
-
-    try {
-
-        const resp = await fetch(urlInURL, defaultOptions);
-        const { data, errors } = await resp.json();
-
-        if (!resp.ok) {
-            throw new HttpErrorExeption(resp.status, errors[0].error);
-        }
-
-        return data.files.at(0)?.id;
-
-    } catch (error) {
-        throw handleHttpError(error);
-    }
-
-}
-
 async function getFoldersOnly(params: IGetFoldersOnlyParams): Promise<GetFilesReturn> {
 
     const { nextPageToken, path, query } = params;
 
+    const parentId = getParentIdFromPath(path);
     const urlInURL = new URL(`${API_URL}/api/google/drive/files`);
 
     urlInURL.searchParams.append('fields', '*');
+    urlInURL.searchParams.append('query',
+        !query
+            ? `mimeType = 'application/vnd.google-apps.folder' and '${parentId || 'root'}' in parents`
+            : `name contains '${query}' and mimeType = 'application/vnd.google-apps.folder' and '${parentId || 'root'}' in parents`);
 
+    Object.entries({ next_token: nextPageToken, path, query, parent_id: parentId }).forEach(([key, value]) => {
+        if (value) {
+            urlInURL.searchParams.append(key, value);
+        }
+    });
 
     try {
 
-        const parentId = path ? await getFileIdFromPath(path) : undefined;
-        urlInURL.searchParams.append('query',
-            !query
-                ? `mimeType = 'application/vnd.google-apps.folder' ${parentId ? '' : `and 'root' in parents`}`
-                : `name contains '${query}' and mimeType = 'application/vnd.google-apps.folder' ${parentId ? '' : `and 'root' in parents`}`);
-
-        Object.entries({ next_token: nextPageToken, path, query, parent_id: parentId }).forEach(([key, value]) => {
-            if (value) {
-                urlInURL.searchParams.append(key, value);
-            }
-        });
         const resp = await fetch(urlInURL, defaultOptions);
         const { data, errors } = await resp.json();
+        console.log({ folders: data.files });
 
         if (!resp.ok) {
             throw new HttpErrorExeption(resp.status, errors[0].error);

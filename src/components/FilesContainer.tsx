@@ -41,12 +41,12 @@ import googlephotosApi from "../apis/googlephotos.api";
 
 import File from "./File";
 import Search from "./Search";
+import Folders from "./Folders";
 import LoadingIcon from "./LoadingIcon";
 import Breadcrumbs from "./Breadcrumbs";
 import ProviderLogout from "./ProviderLogout";
 import SelectProvider from "./SelectProvider";
 import GooglePhotosFilter from "./GooglePhotosFilter";
-import Folders from "./Folders";
 
 interface IFilesContainerProps {
   provider: string;

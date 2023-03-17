@@ -14,6 +14,10 @@ interface IGetFilesParams {
     nextPageToken?: string;
 }
 
+function cleanPathFromFolderId(path: string | undefined): string | undefined {
+    return path?.split("/").map((p) => p.split("~")[0]).join("/");
+}
+
 async function getFiles(params: IGetFilesParams): Promise<GetFilesReturn> {
 
     const { path, query, nextPageToken, foldersOnly } = params;
@@ -25,7 +29,7 @@ async function getFiles(params: IGetFilesParams): Promise<GetFilesReturn> {
         const urlInURL = new URL(`${API_URL}/api/microsoft/files`);
         urlInURL.searchParams.append('fields', 'id,name,webUrl,@microsoft.graph.downloadUrl,video,file,folder');
 
-        Object.entries({ query, path, next_token: nextPageToken }).forEach(([key, value]) => {
+        Object.entries({ query, path: cleanPathFromFolderId(path), next_token: nextPageToken }).forEach(([key, value]) => {
             if (value) {
                 urlInURL.searchParams.append(key, value);
             }
@@ -61,7 +65,7 @@ async function getFoldersOnly(params: IGetFoldersOnlyParams): Promise<GetFilesRe
         urlInURL.searchParams.append('filter', 'folder ne null');
         urlInURL.searchParams.append('fields', 'id,name,webUrl,folder');
 
-        Object.entries({ next_token: nextPageToken, path, query }).forEach(([key, value]) => {
+        Object.entries({ next_token: nextPageToken, path: cleanPathFromFolderId(path), query }).forEach(([key, value]) => {
             if (value) {
                 urlInURL.searchParams.append(key, value);
             }

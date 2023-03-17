@@ -9,7 +9,7 @@ const Breadcrumbs: FunctionComponent<IBreadcrumbsProps> = (props) => {
   const { path, setPath } = props;
   const paths = useMemo(() => {
     if (path) {
-      const splittedPaths = path.split("/");
+      const splittedPaths = path.split("/").map((path) => path.split("~")[0]);
 
       // Remove first empty string
       splittedPaths.shift();

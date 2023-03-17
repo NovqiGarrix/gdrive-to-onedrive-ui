@@ -2,7 +2,12 @@ import { useQuery } from "@tanstack/react-query";
 import { Dispatch, FunctionComponent, SetStateAction } from "react";
 import { HttpErrorExeption } from "../exeptions/httpErrorExeption";
 import FolderIcon from "../icons/FolderIcon";
-import { GetFilesFuncParams, GetFilesReturn, ProviderObject } from "../types";
+import {
+  GetFilesFuncParams,
+  GetFilesReturn,
+  GlobalItemTypes,
+  ProviderObject,
+} from "../types";
 import LoadingIcon from "./LoadingIcon";
 
 interface IFoldersProps {
@@ -28,8 +33,12 @@ const Folders: FunctionComponent<IFoldersProps> = (props) => {
     refetchOnWindowFocus: process.env.NODE_ENV === "production",
   });
 
-  function onDoubleClick(folderName: string) {
-    setPath(path ? `${path}/${folderName}` : `/${folderName}`);
+  function onDoubleClick(folder: GlobalItemTypes) {
+    setPath(
+      path
+        ? `${path}/${folder.name}~${folder.id}`
+        : `/${folder.name}~${folder.id}`
+    );
   }
 
   if (!data?.files.length && !isLoading) return null;
@@ -82,7 +91,7 @@ const Folders: FunctionComponent<IFoldersProps> = (props) => {
             <button
               type="button"
               key={folder.id}
-              onDoubleClick={() => onDoubleClick(folder.name)}
+              onDoubleClick={() => onDoubleClick(folder)}
               className="flex items-center p-2.5 space-x-2 rounded-lg bg-indigo-50/60 hover:bg-indigo-100/50 focus:bg-indigo-100/90"
             >
               <FolderIcon
