@@ -2,7 +2,7 @@ import { Dispatch, FunctionComponent, SetStateAction, useMemo } from "react";
 
 interface IBreadcrumbsProps {
   path: string | undefined;
-  setPath: Dispatch<SetStateAction<string | undefined>>;
+  setPath: (path: string | undefined) => void;
 }
 
 const Breadcrumbs: FunctionComponent<IBreadcrumbsProps> = (props) => {

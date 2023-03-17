@@ -17,19 +17,18 @@ import { toast } from "react-hot-toast";
 import useInfiniteScroll from "react-infinite-scroll-hook";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { PROVIDERS } from "../constants";
-import classNames from "../utils/classNames";
 import type {
   GetFilesFuncParams,
   GetFilesReturn,
-  GooglePhotosFilter as IGooglePhotosFilter,
   Provider,
   ProviderObject,
   TranferFileSchema,
 } from "../types";
+import { PROVIDERS } from "../constants";
 import type { HttpErrorExeption } from "../exeptions/httpErrorExeption";
 
 import useSearchQuery from "../hooks/useSearchQuery";
+import useProviderPaths from "../hooks/useProviderPath";
 import useUsedProviders from "../hooks/useUsedProviders";
 import useSelectedFiles from "../hooks/useSelectedFiles";
 import useGooglePhotosFilter from "../hooks/useGooglePhotosFilter";
@@ -58,6 +57,31 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
   const { provider: _providerId, componentIndex } = props;
 
   const router = useRouter();
+  const pKey = `p${componentIndex + 1}` as "p1" | "p2";
+
+  const path = useProviderPaths((s) => s[pKey]);
+  const _setPath = useProviderPaths((s) => {
+    const setter = s[`set${pKey.toUpperCase()}` as "setP1" | "setP2"];
+    return setter;
+  });
+
+  function setPath(path: string | undefined) {
+    _setPath(path);
+    router.push(
+      {
+        pathname: "/",
+        query: {
+          ...router.query,
+          [`${pKey}_path`]: path
+            ?.split("/")
+            .map((p) => p.split("~")[0])
+            .join("/"),
+        },
+      },
+      undefined,
+      { shallow: true }
+    );
+  }
 
   const queryClient = useQueryClient();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -76,7 +100,6 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
   );
 
   const previousProvider = useRef<ProviderObject>(provider);
-  const [path, setPath] = useState<undefined | string>(undefined);
 
   const { debounceQuery, searchQuery, setSearchQuery } = useSearchQuery();
   const googlePhotosFilters = useGooglePhotosFilter((s) => s.formattedFilters);
@@ -140,7 +163,6 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
 
     behavior: {
       onFetch() {
-        console.log("Hello?");
         if (provider.id !== previousProvider.current.id) {
           toast.loading(`Switching to ${provider.name}...`, {
             id: "switching-provider",

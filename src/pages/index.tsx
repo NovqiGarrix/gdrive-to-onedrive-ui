@@ -66,12 +66,19 @@ export const getServerSideProps: GetServerSideProps = async ({
     const p1 = Number(query.p1);
     const p2 = Number(query.p2);
 
+    const p1Path = query.p1_path || null;
+    const p2Path = query.p2_path || null;
+
     return {
       props: {
         me: me ?? null,
         providers: {
           p1,
           p2,
+        },
+        providerPaths: {
+          p1: p1Path,
+          p2: p2Path,
         },
       },
     };

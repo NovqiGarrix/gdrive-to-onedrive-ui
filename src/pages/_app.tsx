@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { initUserStore } from "../hooks/useUser";
 import { initializeUsedProviders } from "../hooks/useUsedProviders";
 import { useEffect } from "react";
+import { initializedProviderPathStore } from "../hooks/useProviderPath";
 
 const queryClient = new QueryClient();
 
@@ -15,6 +16,7 @@ function MyApp({ Component, pageProps }: AppProps) {
 
   useEffect(() => {
     initializeUsedProviders(pageProps.providers);
+    initializedProviderPathStore(pageProps.providerPaths);
 
     // Just to make sure that the providers is coming from the server
     // and not change by the client

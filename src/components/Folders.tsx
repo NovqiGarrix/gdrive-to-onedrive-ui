@@ -13,8 +13,8 @@ import LoadingIcon from "./LoadingIcon";
 interface IFoldersProps {
   query: string;
   path: string | undefined;
-  setPath: Dispatch<SetStateAction<string | undefined>>;
   provider: ProviderObject;
+  setPath: (path: string | undefined) => void;
   getFiles: (params: GetFilesFuncParams) => Promise<GetFilesReturn>;
 }
 
