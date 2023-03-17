@@ -17,7 +17,6 @@ import LoadingIcon from "./LoadingIcon";
 
 const DeleteFilesModal: FunctionComponent = () => {
   const cancelButtonRef = useRef(null);
-
   const queryClient = useQueryClient();
 
   const open = useDeleteFilesModalState((state) => state.open);

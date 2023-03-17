@@ -31,7 +31,7 @@ const Folders: FunctionComponent<IFoldersProps> = (props) => {
     queryKey: ["folders", provider.id, path, query],
     retry: false,
     enabled,
-    refetchOnMount: false,
+    refetchOnMount: true,
     refetchOnWindowFocus: process.env.NODE_ENV === "production",
   });
 

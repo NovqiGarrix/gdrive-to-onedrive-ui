@@ -135,12 +135,12 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
         : undefined,
     ].filter(Boolean),
     retry: false,
-    refetchOnMount: false,
     keepPreviousData: true,
     refetchOnWindowFocus: process.env.NODE_ENV === "production",
 
     behavior: {
       onFetch() {
+        console.log("Hello?");
         if (provider.id !== previousProvider.current.id) {
           toast.loading(`Switching to ${provider.name}...`, {
             id: "switching-provider",
@@ -243,10 +243,10 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
     if (!data.nextPageToken) return;
 
     const nextFiles = await getFiles({
-      query: debounceQuery,
-      nextPageToken: data.nextPageToken,
       path,
+      query: debounceQuery,
       filters: googlePhotosFilters,
+      nextPageToken: data.nextPageToken,
     });
 
     setData((prev) => ({

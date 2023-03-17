@@ -15,11 +15,11 @@ const CallbackAuthPage: NextPage = () => {
 
     if (state === "OK") {
       isRedirected.current = true;
-      router.replace(`/`);
+      document.location.href = "/";
       return;
     }
 
-    void router.replace("/login");
+    document.location.href = "/login";
   }, [router]);
 
   return (
