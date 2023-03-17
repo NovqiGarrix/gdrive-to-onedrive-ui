@@ -165,7 +165,11 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
           const authURL = await authApi.getMicorosftAuthUrl();
           setAuthUrl(authURL);
         }
+
+        return;
       }
+
+      toast.error(err.message, { id: "switching-provider" });
     },
   });
 
