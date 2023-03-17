@@ -447,7 +447,7 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
                   <div
                     onDrop={onDrop}
                     onDragOver={onDragOver}
-                    className={classNames("grid grid-cols-3 gap-3")}
+                    className="grid grid-cols-3 gap-3 pb-5"
                   >
                     {data.files?.map((file) => (
                       <Fragment key={file.id}>
