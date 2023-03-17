@@ -67,15 +67,17 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
 
   function setPath(path: string | undefined) {
     _setPath(path);
+
+    if (!path) {
+      delete router.query[`${pKey}_path`];
+    }
+
     router.push(
       {
         pathname: "/",
         query: {
           ...router.query,
-          [`${pKey}_path`]: path
-            ?.split("/")
-            .map((p) => p.split("~")[0])
-            .join("/"),
+          ...(path ? { [`${pKey}_path`]: path } : {}),
         },
       },
       undefined,

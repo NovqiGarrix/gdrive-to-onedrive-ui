@@ -34,7 +34,5 @@ export function initializedProviderPathStore(paths: { p1: string; p2: string } |
     if (!paths || useProviderPaths.getState().isInitialized) return;
 
     const { p1, p2 } = paths;
-    if (!p1 || !p2) return;
-
-    useProviderPaths.setState({ p1, p2, isInitialized: true });
+    useProviderPaths.setState({ p1: p1 || undefined, p2: p2 || undefined, isInitialized: true });
 }

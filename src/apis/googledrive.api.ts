@@ -15,7 +15,7 @@ interface IGetFilesParams {
 }
 
 function getParentIdFromPath(path: string | undefined): string | undefined {
-    return path ? path.split("/").pop()?.split("~")[1] : undefined;
+    return path?.split("/").pop()?.split("~")[1];
 }
 
 function getParentQuery(parentId: string | undefined, foldersOnly?: boolean): string {
@@ -27,12 +27,13 @@ function getParentQuery(parentId: string | undefined, foldersOnly?: boolean): st
 
     return parentId
         ? `'${parentId}' in parents`
-        : `'root' in parents ${foldersOnly ? 'and sharedWithMe = true' : 'or sharedWithMe = true'}`
+        : `'root' in parents or sharedWithMe = true`
 }
 
 async function getFiles(params: IGetFilesParams): Promise<GetFilesReturn> {
 
     const { query, foldersOnly, nextPageToken, path } = params;
+    console.log({ path });
     if (foldersOnly) return getFoldersOnly(params);
 
     const parentId = getParentIdFromPath(path);
