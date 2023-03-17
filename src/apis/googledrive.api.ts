@@ -19,9 +19,15 @@ function getParentIdFromPath(path: string | undefined): string | undefined {
 }
 
 function getParentQuery(parentId: string | undefined, foldersOnly?: boolean): string {
+    if (foldersOnly) {
+        return parentId
+            ? `'${parentId}' in parents`
+            : `('root' in parents or sharedWithMe = true)`
+    }
+
     return parentId
         ? `'${parentId}' in parents`
-        : `'root' in parents ${foldersOnly ? '' : 'or sharedWithMe = true'}`
+        : `'root' in parents ${foldersOnly ? 'and sharedWithMe = true' : 'or sharedWithMe = true'}`
 }
 
 async function getFiles(params: IGetFilesParams): Promise<GetFilesReturn> {
