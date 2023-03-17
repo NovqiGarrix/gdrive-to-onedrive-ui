@@ -21,6 +21,8 @@ interface IFoldersProps {
 const Folders: FunctionComponent<IFoldersProps> = (props) => {
   const { path, provider, getFiles, setPath, query } = props;
 
+  const enabled = provider.id !== "google_photos";
+
   const { isLoading, isError, error, isFetching, data } = useQuery<
     GetFilesReturn,
     HttpErrorExeption
@@ -28,7 +30,7 @@ const Folders: FunctionComponent<IFoldersProps> = (props) => {
     queryFn: () => getFiles({ path, foldersOnly: true, query }),
     queryKey: ["folders", provider.id, path, query],
     retry: false,
-    keepPreviousData: true,
+    enabled,
     refetchOnMount: false,
     refetchOnWindowFocus: process.env.NODE_ENV === "production",
   });
@@ -41,7 +43,7 @@ const Folders: FunctionComponent<IFoldersProps> = (props) => {
     );
   }
 
-  if (!data?.files.length && !isLoading) return null;
+  if (!enabled || (!data?.files.length && !isLoading)) return null;
 
   return (
     <div className="mt-5 w-full">
