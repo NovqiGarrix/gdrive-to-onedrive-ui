@@ -18,6 +18,12 @@ function getParentIdFromPath(path: string | undefined): string | undefined {
     return path ? path.split("/").pop()?.split("~")[1] : undefined;
 }
 
+function getParentQuery(parentId: string | undefined, foldersOnly?: boolean): string {
+    return parentId
+        ? `'${parentId}' in parents`
+        : `'root' in parents ${foldersOnly ? '' : 'or sharedWithMe = true'}`
+}
+
 async function getFiles(params: IGetFilesParams): Promise<GetFilesReturn> {
 
     const { query, foldersOnly, nextPageToken, path } = params;
@@ -28,7 +34,7 @@ async function getFiles(params: IGetFilesParams): Promise<GetFilesReturn> {
     const urlInURL = new URL(`${API_URL}/api/google/drive/files`);
 
     urlInURL.searchParams.append('fields', '*');
-    urlInURL.searchParams.append('query', !query ? `mimeType != 'application/vnd.google-apps.folder' and '${parentId || 'root'}' in parents` : `name contains '${query}' and mimeType != 'application/vnd.google-apps.folder' and '${parentId || 'root'}' in parents`);
+    urlInURL.searchParams.append('query', !query ? `mimeType != 'application/vnd.google-apps.folder' and ${getParentQuery(parentId)}` : `name contains '${query}' and mimeType != 'application/vnd.google-apps.folder' and ${getParentQuery(parentId)}`);
 
     Object.entries({ next_token: nextPageToken }).forEach(([key, value]) => {
         if (value) {
@@ -65,10 +71,13 @@ async function getFoldersOnly(params: IGetFoldersOnlyParams): Promise<GetFilesRe
     const urlInURL = new URL(`${API_URL}/api/google/drive/files`);
 
     urlInURL.searchParams.append('fields', '*');
+
+    const parentQuery = getParentQuery(parentId, true);
+
     urlInURL.searchParams.append('query',
         !query
-            ? `mimeType = 'application/vnd.google-apps.folder' and '${parentId || 'root'}' in parents`
-            : `name contains '${query}' and mimeType = 'application/vnd.google-apps.folder' and '${parentId || 'root'}' in parents`);
+            ? `mimeType = 'application/vnd.google-apps.folder' and ${parentQuery}`
+            : `name contains '${query}' and mimeType = 'application/vnd.google-apps.folder' and ${parentQuery}`);
 
     Object.entries({ next_token: nextPageToken, path, query, parent_id: parentId }).forEach(([key, value]) => {
         if (value) {
