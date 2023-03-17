@@ -17,7 +17,9 @@ interface ISelectProviderProps {
 const SelectProvider: FunctionComponent<ISelectProviderProps> = (props) => {
   const { provider: selected, onChange } = props;
 
-  const usedProviders = useUsedProviders((state) => state.getProviders)();
+  const usedProviders = useUsedProviders((state) =>
+    Array.from(state.usedProviders)
+  );
 
   return (
     <Listbox value={selected} onChange={onChange}>

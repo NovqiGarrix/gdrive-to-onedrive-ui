@@ -8,7 +8,6 @@ interface IUsedProviders {
     initialUsedProviders: Set<ProviderObject>;
 
     replaceProvider: (prev: ProviderObject, next: ProviderObject) => void;
-    getProviders: () => Array<ProviderObject>;
     getInitialProviders: () => Array<ProviderObject>;
 
     has: (provider: ProviderObject) => boolean;
@@ -26,10 +25,6 @@ const useUsedProviders = create<IUsedProviders>((set, get) => ({
         const usedProviders = get().usedProviders;
         usedProviders.delete(prev);
         set({ usedProviders: usedProviders.add(next) });
-    },
-
-    getProviders() {
-        return Array.from(get().usedProviders);
     },
 
     getInitialProviders() {

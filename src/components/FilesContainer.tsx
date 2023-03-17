@@ -62,7 +62,9 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
   const openModalFunc = useDeleteFilesModalState((s) => s.openModal);
 
   const hasProvider = useUsedProviders((state) => state.has);
-  const getProviders = useUsedProviders((state) => state.getProviders);
+  const usedProviders = useUsedProviders((state) =>
+    Array.from(state.usedProviders)
+  );
   const replaceProvider = useUsedProviders((state) => state.replaceProvider);
 
   const [provider, setProvider] = useState(
@@ -179,7 +181,7 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
       if (!selectedFiles.length) return;
       if (selectedFiles[0].providerId === provider.id) return;
 
-      const providerTarget = getProviders()
+      const providerTarget = usedProviders
         .filter((provider) => provider.id !== selectedFiles[0].providerId)
         .at(0);
 
@@ -252,7 +254,7 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
 
     if (hasProvider(newProvider)) {
       toast.error(
-        "You have already added this provider. Please select another one."
+        "You have already select this provider. Please select another one."
       );
       return;
     }
