@@ -3,10 +3,13 @@ import { FunctionComponent } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/router";
+
+import Cog8ToothIcon from "@heroicons/react/24/outline/Cog8ToothIcon";
 import MagnifyingGlassIcon from "@heroicons/react/24/outline/MagnifyingGlassIcon";
 
 import authApi from "../apis/auth.api";
 import useUser from "../hooks/useUser";
+import { PowerIcon } from "@heroicons/react/24/outline";
 
 interface INavbarProps {}
 
@@ -94,10 +97,10 @@ const Navbar: FunctionComponent<INavbarProps> = () => {
                 <MagnifyingGlassIcon className="w-5 h-5 text-gray-300" />
               </div>
               <input
+                readOnly
                 type="text"
                 className="flex-grow w-[100%] md:w-full cursor-pointer outline-none font-poppins bg-transparent text-gray-300 text-sm"
                 placeholder="Quick Command"
-                readOnly
               />
             </div>
 
@@ -129,13 +132,24 @@ const Navbar: FunctionComponent<INavbarProps> = () => {
             className="menu menu-compact dropdown-content mt-3 p-2 shadow bg-base-100 rounded-box w-52"
           >
             <li>
-              <button type="button" onClick={logout}>
-                Logout
+              <Link passHref href="/settings" className="flex items-center">
+                <Cog8ToothIcon aria-hidden="true" className="w-5 h-5" />
+                <p>Settings</p>
+              </Link>
+            </li>
+            <li>
+              <button
+                type="button"
+                onClick={logout}
+                className="flex items-center"
+              >
+                <PowerIcon className="w-5 h-5" />
+                <p>Logout</p>
               </button>
             </li>
           </ul>
         </div>
-        <button className="btn btn-ghost btn-circle">
+        <button className="btn btn-ghost btn-circle" title="Notifications">
           <div className="indicator">
             <svg
               xmlns="http://www.w3.org/2000/svg"

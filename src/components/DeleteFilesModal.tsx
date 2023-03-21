@@ -14,6 +14,7 @@ import useGooglePhotosFilter from "../hooks/useGooglePhotosFilter";
 import useDeleteFilesModalState from "../hooks/useDeleteFilesModalState";
 
 import LoadingIcon from "./LoadingIcon";
+import googledriveApi from "../apis/googledrive.api";
 
 const DeleteFilesModal: FunctionComponent = () => {
   const cancelButtonRef = useRef(null);
@@ -37,7 +38,10 @@ const DeleteFilesModal: FunctionComponent = () => {
     ) => {
       switch (sFiles[0].providerId) {
         case "onedrive":
-          return onedriveApi.deleteFile(files);
+          return onedriveApi.deleteFiles(files);
+
+        case "google_drive":
+          return googledriveApi.deleteFiles(files);
 
         default:
           throw new Error("Provider not supported");

@@ -1,3 +1,5 @@
+import { ACCOUNTS } from "./constants";
+
 export interface User {
     id: string;
     name: string;
@@ -164,4 +166,13 @@ export interface GetFilesFuncParams {
     foldersOnly?: boolean;
     nextPageToken?: string;
     filters?: GooglePhotosFilter;
+}
+
+type Account = 'google' | 'microsoft';
+
+export interface AccountObject {
+    id: Account,
+    name: string,
+    image: string;
+    isConnected: boolean;
 }

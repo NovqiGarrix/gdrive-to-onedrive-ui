@@ -112,7 +112,7 @@ async function transferFile(file: TranferFileSchema): Promise<void> {
 
 }
 
-async function deleteFile(files: Array<IDeleteFilesParam>): Promise<void> {
+async function deleteFiles(files: Array<IDeleteFilesParam>): Promise<void> {
 
     try {
 
@@ -141,5 +141,5 @@ async function deleteFile(files: Array<IDeleteFilesParam>): Promise<void> {
 // eslint-disable-next-line import/no-anonymous-default-export
 export default {
     getFiles,
-    transferFile, deleteFile
+    transferFile, deleteFiles
 }

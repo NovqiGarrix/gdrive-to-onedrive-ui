@@ -5,8 +5,6 @@ import type { ProviderObject } from '../types';
 
 interface IUsedProviders {
 
-    isInitialized: boolean;
-
     usedProviders: Set<ProviderObject>;
     initialUsedProviders: Set<ProviderObject>;
 
@@ -16,8 +14,6 @@ interface IUsedProviders {
 }
 
 const useUsedProviders = create<IUsedProviders>((set, get) => ({
-
-    isInitialized: false,
 
     usedProviders: new Set(),
     initialUsedProviders: new Set(),
@@ -36,8 +32,6 @@ const useUsedProviders = create<IUsedProviders>((set, get) => ({
 
 export function initializeUsedProviders(providers?: { p1: number; p2: number }) {
     if (!providers) return;
-    console.log({ isInitialized: useUsedProviders.getState().isInitialized });
-
     const initialUsedProviders = new Set<ProviderObject>();
 
     const providersMaxIndex = PROVIDERS.length - 1;
@@ -67,9 +61,8 @@ export function initializeUsedProviders(providers?: { p1: number; p2: number }) 
     // src/constants.ts > PROVIDERS
 
     useUsedProviders.setState({
-        isInitialized: true,
         usedProviders: initialUsedProviders,
-        ...(useUsedProviders.getState().isInitialized ? {} : { initialUsedProviders })
+        ...(useUsedProviders.getState().initialUsedProviders.size > 0 ? {} : { initialUsedProviders })
     });
 }
 

@@ -1,4 +1,4 @@
-import type { ProviderObject } from "./types";
+import type { AccountObject, ProviderObject } from "./types";
 
 export const MAX_PER_PAGE = 20;
 
@@ -19,5 +19,20 @@ export const PROVIDERS: Array<ProviderObject> = [
         id: 'onedrive',
         name: 'OneDrive',
         image: '/onedrive.webp'
+    }
+]
+
+export const ACCOUNTS: Array<AccountObject> = [
+    {
+        id: 'google',
+        name: 'Google',
+        image: '/google.webp',
+        isConnected: false
+    },
+    {
+        id: 'microsoft',
+        name: 'Microsoft',
+        image: '/microsoft.webp',
+        isConnected: false
     }
 ]

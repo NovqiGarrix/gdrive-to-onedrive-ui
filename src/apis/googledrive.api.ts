@@ -1,4 +1,4 @@
-import type { GetFilesReturn } from '../types';
+import type { GetFilesReturn, IDeleteFilesParam } from '../types';
 import { HttpErrorExeption } from '../exeptions/httpErrorExeption';
 
 import toGlobalTypes from '../utils/toGlobalTypes';
@@ -112,7 +112,33 @@ async function getFoldersOnly(params: IGetFoldersOnlyParams): Promise<GetFilesRe
 
 }
 
+async function deleteFiles(files: Array<IDeleteFilesParam>): Promise<void> {
+
+    try {
+
+        const resp = await fetch(`${API_URL}/api/google/drive/files?files=${encodeURIComponent(JSON.stringify(files))}`, {
+            ...defaultOptions,
+            method: "DELETE"
+        });
+
+        const { errors } = await resp.json();
+        if (!resp.ok) {
+            if (errors[0].error) {
+                throw new HttpErrorExeption(resp.status, errors[0].error);
+            }
+        }
+
+        if (resp.ok && errors) {
+            throw new HttpErrorExeption(resp.status, JSON.stringify(errors));
+        }
+
+    } catch (error) {
+        throw handleHttpError(error);
+    }
+
+}
+
 // eslint-disable-next-line import/no-anonymous-default-export
 export default {
-    getFiles
+    getFiles, deleteFiles
 }

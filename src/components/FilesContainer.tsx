@@ -38,6 +38,8 @@ import onedriveApi from "../apis/onedrive.api";
 import googledriveApi from "../apis/googledrive.api";
 import googlephotosApi from "../apis/googlephotos.api";
 
+import signInWithRedirectUrl from "../utils/signInWithRedirectUrl";
+
 import File from "./File";
 import Search from "./Search";
 import Folders from "./Folders";
@@ -327,23 +329,6 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
       disabled: isErrorGettingMoreData,
     });
 
-  function signInWithMicrosoft() {
-    const redirect_url =
-      Object.entries(router.query).length > 0
-        ? `${window.location.origin}/?${new URLSearchParams(
-            router.query as any
-          ).toString()}`
-        : undefined;
-
-    const authURL = new URL(authUrl);
-    if (redirect_url) {
-      const state = authURL.searchParams.get("state")!;
-      authURL.searchParams.set("state", `${state}...Novrii...${redirect_url}`);
-    }
-
-    window.open(authURL, "_self", "noopener,noreferrer");
-  }
-
   const files = useMemo(() => {
     return debounceQuery
       ? data.files
@@ -465,7 +450,7 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
                 <button
                   role="link"
                   type="button"
-                  onClick={signInWithMicrosoft}
+                  onClick={() => signInWithRedirectUrl(authUrl)}
                   className="btn btn-primary"
                 >
                   Sign In

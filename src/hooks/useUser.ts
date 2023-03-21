@@ -3,7 +3,7 @@ import { User } from '../types';
 
 interface UseUser {
     user: User;
-    setUser: (user: User) => void;
+    setUser: (user: Partial<User>) => void;
 }
 
 const useUser = create<UseUser>((set) => ({
@@ -14,7 +14,7 @@ const useUser = create<UseUser>((set) => ({
         avatar: ''
     },
 
-    setUser: (user: User) => set({ user }),
+    setUser: (user) => set((state) => ({ user: { ...state.user, ...user } })),
 }));
 
 export default useUser;

@@ -1,5 +1,5 @@
-import { User } from "../types";
-import { ERROR_500_MESSAGE } from "../constants";
+import { User, AccountObject } from "../types";
+import { ACCOUNTS, ERROR_500_MESSAGE } from "../constants";
 import { HttpErrorExeption } from "../exeptions/httpErrorExeption";
 
 import { API_URL, defaultOptions } from ".";
@@ -101,10 +101,52 @@ async function logoutFromMicrosoft(): Promise<void> {
 
 }
 
+async function getLinkedAccounts(): Promise<Array<AccountObject>> {
+
+    try {
+
+        const accounts = await Promise.all(
+            ACCOUNTS.map(async (account) => {
+
+                try {
+                    const resp = await fetch(`${API_URL}/api/${account.id}/auth/me`, defaultOptions);
+                    const { errors } = await resp.json();
+
+                    if (!resp.ok) {
+                        if (resp.status === 401) {
+                            return {
+                                ...account,
+                                isConnected: false
+                            }
+                        }
+
+                        throw new HttpErrorExeption(resp.status, errors[0].error);
+                    }
+
+                    return {
+                        ...account,
+                        isConnected: true
+                    }
+
+                } catch (error) {
+                    throw handleHttpError(error);
+                }
+
+            })
+        );
+
+        return accounts;
+
+    } catch (error) {
+        throw handleHttpError(error);
+    }
+
+}
+
 // eslint-disable-next-line import/no-anonymous-default-export
 export default {
     getAuthURL,
     getMe, logout,
     getMicorosftAuthUrl,
-    logoutFromMicrosoft,
+    logoutFromMicrosoft, getLinkedAccounts
 }
