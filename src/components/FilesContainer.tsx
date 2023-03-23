@@ -32,6 +32,7 @@ import useUsedProviders from "../hooks/useUsedProviders";
 import useSelectedFiles from "../hooks/useSelectedFiles";
 import useGooglePhotosFilter from "../hooks/useGooglePhotosFilter";
 import useDeleteFilesModalState from "../hooks/useDeleteFilesModalState";
+import useUploadAbortControllers from "../hooks/useUploadAbortController";
 
 import authApi from "../apis/auth.api";
 import onedriveApi from "../apis/onedrive.api";
@@ -65,6 +66,13 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
     const setter = s[`set${pKey.toUpperCase()}` as "setP1" | "setP2"];
     return setter;
   });
+
+  const addAbortController = useUploadAbortControllers(
+    (s) => s.addAbortController
+  );
+  const removeAbortController = useUploadAbortControllers(
+    (s) => s.removeAbortController
+  );
 
   function setPath(path: string | undefined) {
     _setPath(path);
@@ -103,7 +111,6 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
   );
 
   const previousProvider = useRef<ProviderObject>(provider);
-
   const { debounceQuery, searchQuery, setSearchQuery } = useSearchQuery();
   const googlePhotosFilters = useGooglePhotosFilter((s) => s.formattedFilters);
 
@@ -203,10 +210,14 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
   }, []);
 
   const tranferFileFunc = useCallback(
-    (file: TranferFileSchema, providerTarget: Provider) => {
+    (
+      file: TranferFileSchema,
+      providerTarget: Provider,
+      signal: AbortSignal
+    ) => {
       switch (providerTarget) {
         case "onedrive":
-          return onedriveApi.transferFile(file);
+          return onedriveApi.transferFile(file, signal);
 
         default:
           throw new Error("Invalid Provider!");
@@ -217,6 +228,7 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
 
   async function onDrop(event: DragEvent<HTMLDivElement>) {
     event.preventDefault();
+    const randomId = Math.random().toString(36).substring(7);
 
     try {
       const selectedFiles = JSON.parse(
@@ -232,35 +244,60 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
 
       if (!providerTarget) {
         toast.error(
-          "Invalid Provider. Please choose one of the providers first."
+          "Invalid Provider. Please choose one of the providers first.",
+          { id: `transfer-files-${randomId}` }
         );
         return;
       }
 
-      toast(
-        `Transferring ${selectedFiles.length} files to ${providerTarget.name}`
-      );
-      for (const file of selectedFiles) {
-        await tranferFileFunc({ ...file, path }, providerTarget.id);
-      }
-
-      setSearchQuery("");
-      await queryClient.invalidateQueries(
-        [
-          "files",
-          provider.id,
-          debounceQuery,
-          path,
-          provider.id === "google_photos"
-            ? JSON.stringify(googlePhotosFilters)
-            : undefined,
-        ].filter(Boolean)
+      toast.loading(
+        `Transferring ${selectedFiles.length} files to ${providerTarget.name}`,
+        { id: `transfer-files-${randomId}` }
       );
 
-      toast.success("File transfered successfully!");
-    } catch (error) {
-      console.log(error);
-      toast.error("Invalid data. Please try again.");
+      const signals: Array<{
+        abortController: AbortController;
+        fileId: string;
+      }> = selectedFiles.map((file: TranferFileSchema) => ({
+        abortController: new AbortController(),
+        fileId: file.id,
+      }));
+
+      await Promise.all(
+        selectedFiles.map(async (file: TranferFileSchema) => {
+          const { abortController } = signals.find(
+            (s) => s.fileId === file.id
+          )!;
+          addAbortController(abortController);
+
+          await tranferFileFunc(
+            { ...file, path },
+            providerTarget.id,
+            abortController.signal
+          );
+          removeAbortController(abortController);
+
+          await queryClient.invalidateQueries(
+            [
+              "files",
+              provider.id,
+              debounceQuery,
+              path,
+              provider.id === "google_photos"
+                ? JSON.stringify(googlePhotosFilters)
+                : undefined,
+            ].filter(Boolean)
+          );
+        })
+      );
+
+      toast.success("File transfered successfully!", {
+        id: `transfer-files-${randomId}`,
+      });
+    } catch (error: any) {
+      toast.error(error.message, {
+        id: `transfer-files-${randomId}`,
+      });
     }
   }
 
@@ -411,105 +448,107 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
           </div>
         ) : null}
 
-        {/* Files */}
-        <Folders
-          path={path}
-          setPath={setPath}
-          getFiles={getFiles}
-          provider={provider}
-          query={debounceQuery}
-        />
+        <div
+          className="h-3/4"
+          {...(componentIndex === 1 ? { onDrop } : {})}
+          onDragOver={onDragOver}
+        >
+          {/* Files */}
+          <Folders
+            path={path}
+            setPath={setPath}
+            getFiles={getFiles}
+            provider={provider}
+            query={debounceQuery}
+          />
 
-        {/* Loading Component */}
-        <div className="mt-5 h-full">
-          {isLoading ? (
-            <div className="grid grid-cols-3 gap-3 pb-5">
-              {Array(9)
-                .fill(0)
-                .map((_, i) => (
-                  <div
-                    key={i}
-                    className="bg-indigo-50/60 hover:bg-indigo-100/50 rounded-lg focus:bg-indigo-100/90"
-                  >
-                    <div className="py-1 px-2 animate-pulse h-[200px] relative overflow-hidden focus:outline-none">
-                      <div className="w-full flex items-center p-2">
-                        <div className="w-5 h-5 rounded-full flex-shrink-0 mr-1.5 bg-gray-300"></div>
-                        <div className="w-full h-2 rounded bg-gray-300"></div>
-                      </div>
+          {/* Loading Component */}
+          <div className="mt-5 h-full">
+            {isLoading ? (
+              <div className="grid grid-cols-3 gap-3 pb-5">
+                {Array(9)
+                  .fill(0)
+                  .map((_, i) => (
+                    <div
+                      key={i}
+                      className="bg-indigo-50/60 hover:bg-indigo-100/50 rounded-lg focus:bg-indigo-100/90"
+                    >
+                      <div className="py-1 px-2 animate-pulse h-[200px] relative overflow-hidden focus:outline-none">
+                        <div className="w-full flex items-center p-2">
+                          <div className="w-5 h-5 rounded-full flex-shrink-0 mr-1.5 bg-gray-300"></div>
+                          <div className="w-full h-2 rounded bg-gray-300"></div>
+                        </div>
 
-                      <div className="w-full h-[70%] mt-1.5 rounded mx-auto flex items-center justify-center">
-                        <div className="w-36 h-36 rounded bg-gray-300"></div>
+                        <div className="w-full h-[70%] mt-1.5 rounded mx-auto flex items-center justify-center">
+                          <div className="w-36 h-36 rounded bg-gray-300"></div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-            </div>
-          ) : isError ? (
-            error?.message === "Unauthorized" ? (
-              <div className="w-full h-[78%] flex flex-col items-center justify-center">
-                <button
-                  role="link"
-                  type="button"
-                  onClick={() => signInWithRedirectUrl(authUrl)}
-                  className="btn btn-primary"
-                >
-                  Sign In
-                </button>
-                <span className="mt-3 font-medium">
-                  Sign in to your Microsoft Account
-                </span>
+                  ))}
               </div>
-            ) : (
-              <div className="text-red-500 mt-3">
-                <p>{error?.message}</p>
-              </div>
-            )
-          ) : (
-            <Fragment>
-              <h2 className="text-dark font-medium mb-2">Files</h2>
-
-              {(files.length || 0) > 0 ? (
-                <div className="mt-1">
-                  <div
-                    onDrop={onDrop}
-                    onDragOver={onDragOver}
-                    className="grid grid-cols-3 gap-3 pb-5"
+            ) : isError ? (
+              error?.message === "Unauthorized" ? (
+                <div className="w-full h-[78%] flex flex-col items-center justify-center">
+                  <button
+                    role="link"
+                    type="button"
+                    onClick={() => signInWithRedirectUrl(authUrl)}
+                    className="btn btn-primary"
                   >
-                    {data.files?.map((file) => (
-                      <Fragment key={file.id}>
-                        {file.type === "file" ? (
-                          <File
-                            file={file}
-                            data={data.files}
-                            providerId={provider.id}
-                            selectedFiles={selectedFiles}
-                          />
-                        ) : null}
-                      </Fragment>
-                    ))}
-                  </div>
-
-                  <div ref={infiniteScrollLoadingRef}></div>
-
-                  {isGettingMoreData ? (
-                    <div className="max-w-full w-full flex items-center justify-center mt-5">
-                      <LoadingIcon
-                        width={30}
-                        height={30}
-                        className="text-darken"
-                      />
-                    </div>
-                  ) : null}
+                    Sign In
+                  </button>
+                  <span className="mt-3 font-medium">
+                    Sign in to your Microsoft Account
+                  </span>
                 </div>
               ) : (
-                <div className="mt-2">
-                  <h3 className="text-sm text-gray-500">
-                    Your files will appear here
-                  </h3>
+                <div className="text-red-500 mt-3">
+                  <p>{error?.message}</p>
                 </div>
-              )}
-            </Fragment>
-          )}
+              )
+            ) : (
+              <Fragment>
+                <h2 className="text-dark font-medium mb-2">Files</h2>
+
+                {(files.length || 0) > 0 ? (
+                  <div className="mt-1">
+                    <div className="grid grid-cols-3 gap-3 pb-5">
+                      {data.files?.map((file) => (
+                        <Fragment key={file.id}>
+                          {file.type === "file" ? (
+                            <File
+                              file={file}
+                              data={data.files}
+                              providerId={provider.id}
+                              selectedFiles={selectedFiles}
+                            />
+                          ) : null}
+                        </Fragment>
+                      ))}
+                    </div>
+
+                    <div ref={infiniteScrollLoadingRef}></div>
+
+                    {isGettingMoreData ? (
+                      <div className="max-w-full w-full flex items-center justify-center mt-5">
+                        <LoadingIcon
+                          width={30}
+                          height={30}
+                          className="text-darken"
+                        />
+                      </div>
+                    ) : null}
+                  </div>
+                ) : (
+                  <div className="mt-2">
+                    <h3 className="text-sm text-gray-500">
+                      Your files will appear here
+                    </h3>
+                  </div>
+                )}
+              </Fragment>
+            )}
+          </div>
         </div>
       </div>
     </div>

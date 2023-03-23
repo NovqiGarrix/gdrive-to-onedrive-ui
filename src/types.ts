@@ -139,6 +139,7 @@ export interface ProviderObject {
 }
 
 export interface TranferFileSchema {
+    id: string;
     name: string;
     path?: string;
     downloadUrl: string;

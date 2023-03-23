@@ -85,20 +85,20 @@ async function getFoldersOnly(params: IGetFoldersOnlyParams): Promise<GetFilesRe
             nextPageToken: data.nextPageToken
         }
     } catch (error) {
-        console.log(error);
         throw handleHttpError(error);
     }
 
 }
 
-async function transferFile(file: TranferFileSchema): Promise<void> {
+async function transferFile(file: TranferFileSchema, signal: AbortSignal): Promise<void> {
 
     try {
 
         const resp = await fetch(`${API_URL}/api/microsoft/files`, {
             ...defaultOptions,
             method: "POST",
-            body: JSON.stringify({ name: file.name, downloadUrl: file.downloadUrl, path: file.path })
+            body: JSON.stringify({ name: file.name, downloadUrl: file.downloadUrl, path: file.path }),
+            signal
         });
 
         const { errors } = await resp.json();

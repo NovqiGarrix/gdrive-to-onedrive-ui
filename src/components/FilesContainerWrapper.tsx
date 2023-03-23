@@ -1,7 +1,9 @@
 import { FunctionComponent, useEffect, useRef } from "react";
 
+import useBeforeUnload from "../hooks/useBeforeUnload";
 import useSelectedFiles from "../hooks/useSelectedFiles";
 import useUsedProviders from "../hooks/useUsedProviders";
+import useUploadAbortControllers from "../hooks/useUploadAbortController";
 
 import FilesContainer from "./FilesContainer";
 
@@ -13,7 +15,14 @@ const FilesContainerWrapper: FunctionComponent = () => {
   );
 
   const selectedFiles = useSelectedFiles((s) => s.files);
+  const uploadAbortControllers = useUploadAbortControllers((s) => s.signals);
   const cleanSelectedFiles = useSelectedFiles((s) => s.cleanFiles);
+
+  useBeforeUnload(() => {
+    uploadAbortControllers.forEach((abortController) => {
+      abortController.abort();
+    });
+  });
 
   useEffect(() => {
     const el = ref.current;
