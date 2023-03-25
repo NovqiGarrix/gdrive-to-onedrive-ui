@@ -6,15 +6,17 @@ export default function toGlobalTypes(data: any, provider: Provider): GlobalItem
     switch (provider) {
         case 'google_drive': {
             const d = data as DriveItem;
+            const isFolder = d.mimeType === 'application/vnd.google-apps.folder';
+
             return {
                 id: d.id,
                 from: provider,
                 name: d.name,
-                type: d.mimeType === 'application/vnd.google-apps.folder' ? 'folder' : 'file',
+                type: isFolder ? 'folder' : 'file',
                 webUrl: d.webViewLink,
                 image: d.thumbnailLink,
                 iconLink: getIconExtensionUrl(d.name),
-                downloadUrl: `https://drive.google.com/uc?export=download&id=${d.id}`
+                downloadUrl: d.webContentLink
             }
         }
 
@@ -22,9 +24,9 @@ export default function toGlobalTypes(data: any, provider: Provider): GlobalItem
             const d = data as PhotosItem;
             return {
                 id: d.id,
+                type: 'file',
                 from: provider,
                 name: d.filename,
-                type: 'file',
                 webUrl: d.productUrl,
                 iconLink: getIconExtensionUrl(d.filename),
                 image: `${d.baseUrl}=w500-h500`,

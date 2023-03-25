@@ -9,7 +9,7 @@ import { API_URL, defaultOptions } from '.';
 
 async function getFiles(nextPageToken?: string, filter?: GooglePhotosFilter): Promise<GetFilesReturn> {
 
-    const urlInURL = new URL(`${API_URL}/api/google/photos`);
+    const urlInURL = new URL(`${API_URL}/api/google/photos/files`);
     urlInURL.searchParams.append('fields', '*');
     if (nextPageToken) {
         urlInURL.searchParams.append('next_token', nextPageToken);

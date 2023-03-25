@@ -141,8 +141,9 @@ export interface ProviderObject {
 export interface TranferFileSchema {
     id: string;
     name: string;
-    path?: string;
+    providerId: string;
     downloadUrl: string;
+    path?: string;
 }
 
 export interface IDeleteFilesParam {

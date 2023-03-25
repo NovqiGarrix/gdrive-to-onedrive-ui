@@ -1,11 +1,12 @@
 import toGlobalTypes from '../utils/toGlobalTypes';
 import handleHttpError from '../utils/handleHttpError';
 
+import { UPLOAD_CHUNK_SIZE } from '../constants';
 import { HttpErrorExeption } from '../exeptions/httpErrorExeption';
 import type { GetFilesReturn, IDeleteFilesParam, TranferFileSchema } from '../types';
 
 import { API_URL, defaultOptions } from '.';
-import { IGetFoldersOnlyParams } from './types';
+import type { IGetFoldersOnlyParams } from './types';
 
 interface IGetFilesParams {
     path?: string;
@@ -92,7 +93,41 @@ async function getFoldersOnly(params: IGetFoldersOnlyParams): Promise<GetFilesRe
 
 async function transferFile(file: TranferFileSchema, signal: AbortSignal): Promise<void> {
 
+    /**
+         * Provider Ids
+         * 1. google_drive
+         * 2. google_photos
+         * 3. onedrive
+         */
+
+    // API URL Formula
+    // /api/{provider}/{product}/files
+
+    // API URL Example
+    // /api/google/drive/files
+    // /api/google/photos/files
+
+    // /api/microsoft/files
+
+    const [provider, product] = file.providerId.startsWith('google_') ? file.providerId.split('_') : [file.providerId, '']
+
     try {
+
+        const respFile = await fetch(`${API_URL}/api/${provider}${product ? `/${product}` : ''}/files/${file.id}/buffers`, { credentials: 'include', signal });
+        if (!respFile.ok) {
+            throw new HttpErrorExeption(respFile.status, `Error tranferring the file: ${respFile.statusText}`);
+        }
+
+        const contentType = respFile.headers.get('content-type');
+        if (contentType?.includes("application/json")) {
+            const { errors } = await respFile.json();
+            throw new HttpErrorExeption(respFile.status, errors[0].error);
+        }
+
+        const fileArrayBuffer = await respFile.arrayBuffer();
+        if (fileArrayBuffer.byteLength >= UPLOAD_CHUNK_SIZE) {
+            return transferLargeFile(file, signal, fileArrayBuffer);
+        }
 
         const resp = await fetch(`${API_URL}/api/microsoft/files`, {
             ...defaultOptions,
@@ -107,6 +142,7 @@ async function transferFile(file: TranferFileSchema, signal: AbortSignal): Promi
         }
 
     } catch (error) {
+        console.log(error);
         throw handleHttpError(error);
     }
 
@@ -128,11 +164,81 @@ async function deleteFiles(files: Array<IDeleteFilesParam>): Promise<void> {
             }
         }
 
+        // If the response status is 200,
+        // but there are errors, it means that some files were not deleted
         if (resp.ok && errors) {
             throw new HttpErrorExeption(resp.status, JSON.stringify(errors));
         }
 
     } catch (error) {
+        throw handleHttpError(error);
+    }
+
+}
+
+async function transferLargeFile(file: TranferFileSchema, signal: AbortSignal, fileArrayBuffer: ArrayBuffer): Promise<void> {
+
+    try {
+
+        // Register the file to be transfered to the server
+        const registerResp = await fetch(`${API_URL}/api/microsoft/files/uploadSession`, {
+            ...defaultOptions,
+            method: "POST",
+            signal
+        });
+
+        const { errors, data: sessionId } = await registerResp.json();
+        if (!registerResp.ok) {
+            throw new HttpErrorExeption(registerResp.status, errors[0].error);
+        }
+
+        let startChunk = 0;
+        let endChunk = UPLOAD_CHUNK_SIZE;
+
+        const totalSize = fileArrayBuffer.byteLength;
+
+        while (startChunk < endChunk) {
+            endChunk = Math.min(endChunk, totalSize);
+            const chunk = fileArrayBuffer.slice(startChunk, endChunk);
+
+            const respUpload = await fetch(`${API_URL}/api/microsoft/files/uploadSession/${sessionId}/chunks`, {
+                headers: {
+                    "Content-Type": "application/octet-stream"
+                },
+                credentials: 'include',
+                method: "POST",
+                body: chunk,
+                signal
+            });
+
+            const { errors: uploadErrors } = await respUpload.json();
+            if (!respUpload.ok) {
+                throw new HttpErrorExeption(respUpload.status, uploadErrors[0].error);
+            }
+
+            startChunk += UPLOAD_CHUNK_SIZE;
+            endChunk += UPLOAD_CHUNK_SIZE;
+        }
+
+        const completeResp = await fetch(`${API_URL}/api/microsoft/files/uploadSession/${sessionId}/complete`, {
+            ...defaultOptions,
+            method: "POST",
+            body: JSON.stringify({
+                path: file.path,
+                name: file.name,
+            }),
+            signal
+        });
+
+        const { errors: completeErrors } = await completeResp.json();
+
+        if (!completeResp.ok) {
+            console.log(completeErrors);
+            throw new HttpErrorExeption(completeResp.status, completeErrors[0].error);
+        }
+
+    } catch (error) {
+        console.log(error);
         throw handleHttpError(error);
     }
 

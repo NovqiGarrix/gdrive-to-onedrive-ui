@@ -36,3 +36,5 @@ export const ACCOUNTS: Array<AccountObject> = [
         isConnected: false
     }
 ]
+
+export const UPLOAD_CHUNK_SIZE = 1024 * 1024 * 4;
