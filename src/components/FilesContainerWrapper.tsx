@@ -2,8 +2,8 @@ import { FunctionComponent, useEffect, useRef } from "react";
 
 import useBeforeUnload from "../hooks/useBeforeUnload";
 import useSelectedFiles from "../hooks/useSelectedFiles";
+import useUploadInfoProgress from "../hooks/useUploadInfoProgress";
 import useUsedProviders from "../hooks/useUsedProviders";
-import useUploadAbortControllers from "../hooks/useUploadAbortController";
 
 import FilesContainer from "./FilesContainer";
 
@@ -15,11 +15,11 @@ const FilesContainerWrapper: FunctionComponent = () => {
   );
 
   const selectedFiles = useSelectedFiles((s) => s.files);
-  const uploadAbortControllers = useUploadAbortControllers((s) => s.signals);
+  const uploadInfoProgress = useUploadInfoProgress((s) => s.uploadInfoProgress);
   const cleanSelectedFiles = useSelectedFiles((s) => s.cleanFiles);
 
   useBeforeUnload(() => {
-    uploadAbortControllers.forEach((abortController) => {
+    uploadInfoProgress.forEach(({ abortController }) => {
       abortController.abort();
     });
   });
@@ -55,7 +55,7 @@ const FilesContainerWrapper: FunctionComponent = () => {
   return (
     <div
       ref={ref}
-      className="flex flex-col space-y-5 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-3 lg:divide-x lg:divide-bg"
+      className="flex relative flex-col space-y-5 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-3 lg:divide-x lg:divide-bg"
     >
       {initialUsedProviders.map((provider, index) => (
         <FilesContainer

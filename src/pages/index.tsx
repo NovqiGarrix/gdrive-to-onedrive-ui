@@ -4,10 +4,11 @@ import Head from "next/head";
 
 import authApi from "../apis/auth.api";
 import { DeleteFilesModal, FilesContainerWrapper, Navbar } from "../components";
+import UploadProgressInfo from "../components/UploadProgressInfo";
 
 const Home: NextPage = () => {
   return (
-    <main className="bg-bg pb-8">
+    <main className="bg-bg pb-8 relative">
       <Head>
         <title>infile.io | Manage your files in one place</title>
         <meta name="description" content="Manage your files in one place" />
@@ -16,6 +17,7 @@ const Home: NextPage = () => {
 
       <Navbar />
       <DeleteFilesModal />
+      <UploadProgressInfo />
 
       <div className="px-8 lg:px-16 mt-2 md:mt-5 lg:mt-10">
         <FilesContainerWrapper />

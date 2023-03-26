@@ -1,5 +1,3 @@
-import { ACCOUNTS } from "./constants";
-
 export interface User {
     id: string;
     name: string;
@@ -76,18 +74,15 @@ interface LinkShareMetadata {
     securityUpdateEnabled: boolean;
 }
 
-interface ImageMediaMetadata {
-    width: number;
-    height: number;
-    rotation: number;
-    time: string;
-}
-
 interface OneDriveParentReference {
     driveType: string;
     driveId: string;
     id: string;
     path: string;
+}
+
+export interface OneDriveFolder {
+    childCount: number;
 }
 
 export interface OneDriveItem {
@@ -107,9 +102,7 @@ export interface OneDriveItem {
         }
     };
     parentReference: OneDriveParentReference;
-    folder?: {
-        childCount: number;
-    }
+    folder?: OneDriveFolder;
     video?: {},
     image?: {
         width: number;
@@ -143,6 +136,7 @@ export interface TranferFileSchema {
     name: string;
     providerId: string;
     downloadUrl: string;
+    iconLink: string;
     path?: string;
 }
 
@@ -178,3 +172,4 @@ export interface AccountObject {
     image: string;
     isConnected: boolean;
 }
+

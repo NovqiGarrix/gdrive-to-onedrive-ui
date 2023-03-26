@@ -24,6 +24,7 @@ import type {
   TranferFileSchema,
 } from "../types";
 import { PROVIDERS } from "../constants";
+import signInWithRedirectUrl from "../utils/signInWithRedirectUrl";
 import type { HttpErrorExeption } from "../exeptions/httpErrorExeption";
 
 import useSearchQuery from "../hooks/useSearchQuery";
@@ -31,15 +32,13 @@ import useProviderPaths from "../hooks/useProviderPath";
 import useUsedProviders from "../hooks/useUsedProviders";
 import useSelectedFiles from "../hooks/useSelectedFiles";
 import useGooglePhotosFilter from "../hooks/useGooglePhotosFilter";
+import useUploadInfoProgress from "../hooks/useUploadInfoProgress";
 import useDeleteFilesModalState from "../hooks/useDeleteFilesModalState";
-import useUploadAbortControllers from "../hooks/useUploadAbortController";
 
 import authApi from "../apis/auth.api";
 import onedriveApi from "../apis/onedrive.api";
 import googledriveApi from "../apis/googledrive.api";
 import googlephotosApi from "../apis/googlephotos.api";
-
-import signInWithRedirectUrl from "../utils/signInWithRedirectUrl";
 
 import File from "./File";
 import Search from "./Search";
@@ -67,32 +66,28 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
     return setter;
   });
 
-  const addAbortController = useUploadAbortControllers(
-    (s) => s.addAbortController
-  );
-  const removeAbortController = useUploadAbortControllers(
-    (s) => s.removeAbortController
-  );
+  const setPath = useCallback(
+    (path: string | undefined) => {
+      _setPath(path);
 
-  function setPath(path: string | undefined) {
-    _setPath(path);
+      if (!path) {
+        delete router.query[`${pKey}_path`];
+      }
 
-    if (!path) {
-      delete router.query[`${pKey}_path`];
-    }
-
-    router.push(
-      {
-        pathname: "/",
-        query: {
-          ...router.query,
-          ...(path ? { [`${pKey}_path`]: path } : {}),
+      router.push(
+        {
+          pathname: "/",
+          query: {
+            ...router.query,
+            ...(path ? { [`${pKey}_path`]: path } : {}),
+          },
         },
-      },
-      undefined,
-      { shallow: true }
-    );
-  }
+        undefined,
+        { shallow: true }
+      );
+    },
+    [_setPath, pKey, router]
+  );
 
   const queryClient = useQueryClient();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -151,6 +146,13 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
   });
 
   const [authUrl, setAuthUrl] = useState("");
+  const setShowUploadInfoProgress = useUploadInfoProgress((s) => s.setShow);
+  const addUploadInfoProgress = useUploadInfoProgress(
+    (s) => s.addUploadInfoProgress
+  );
+  const updateUploadInfoProgress = useUploadInfoProgress(
+    (s) => s.updateUploadInfoProgress
+  );
 
   const { isLoading, isError, error } = useQuery<
     GetFilesReturn,
@@ -209,29 +211,49 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
     event.preventDefault();
   }, []);
 
-  const tranferFileFunc = useCallback(
-    (
-      file: TranferFileSchema,
-      providerTarget: Provider,
-      signal: AbortSignal
-    ) => {
-      switch (providerTarget) {
-        case "onedrive":
-          return onedriveApi.transferFile(file, signal);
+  async function transferFileFunc(
+    file: TranferFileSchema,
+    providerTarget: Provider,
+    signal: AbortSignal
+  ) {
+    function onUploadProgress(progress: number) {
+      const uploadInfoProgress =
+        useUploadInfoProgress.getState().uploadInfoProgress;
+      const f = uploadInfoProgress.find((f) => f.id === file.id);
+      if (!f) return;
 
-        default:
-          throw new Error("Invalid Provider!");
-      }
-    },
-    []
-  );
+      updateUploadInfoProgress({ ...f, uploadProgress: progress });
+    }
+
+    function onDownloadProgress(progress: number) {
+      const uploadInfoProgress =
+        useUploadInfoProgress.getState().uploadInfoProgress;
+      const f = uploadInfoProgress.find((f) => f.id === file.id);
+      if (!f) return;
+
+      updateUploadInfoProgress({ ...f, downloadProgress: progress });
+    }
+
+    switch (providerTarget) {
+      case "onedrive":
+        return onedriveApi.transferFile({
+          file,
+          signal,
+          onUploadProgress,
+          onDownloadProgress,
+        });
+
+      default:
+        throw new Error("Invalid Provider!");
+    }
+  }
 
   async function onDrop(event: DragEvent<HTMLDivElement>) {
     event.preventDefault();
     const randomId = Math.random().toString(36).substring(7);
 
     try {
-      const selectedFiles = JSON.parse(
+      let selectedFiles: Array<TranferFileSchema> = JSON.parse(
         event.dataTransfer.getData("text/plain")
       );
 
@@ -255,39 +277,62 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
         { id: `transfer-files-${randomId}` }
       );
 
-      const signals: Array<{
-        abortController: AbortController;
-        fileId: string;
-      }> = selectedFiles.map((file: TranferFileSchema) => ({
-        abortController: new AbortController(),
-        fileId: file.id,
-      }));
+      // Initiate upload info progress
+      const selectedFilesWithAbortController = selectedFiles.map((file) => {
+        const abortController = new AbortController();
+
+        addUploadInfoProgress({
+          ...file,
+          isError: false,
+          isLoading: true,
+          uploadProgress: 0,
+          downloadProgress: 0,
+          abortController,
+        });
+
+        return {
+          ...file,
+          abortController,
+        };
+      });
+
+      // Show upload info progress,
+      // after adding the files to upload progress state
+      setShowUploadInfoProgress(true);
 
       await Promise.all(
-        selectedFiles.map(async (file: TranferFileSchema) => {
-          const { abortController } = signals.find(
-            (s) => s.fileId === file.id
-          )!;
-          addAbortController(abortController);
+        selectedFilesWithAbortController.map(async (file) => {
+          try {
+            await transferFileFunc(
+              { ...file, path },
+              providerTarget.id,
+              file.abortController.signal
+            );
 
-          await tranferFileFunc(
-            { ...file, path },
-            providerTarget.id,
-            abortController.signal
-          );
-          removeAbortController(abortController);
+            updateUploadInfoProgress({
+              id: file.id,
+              isLoading: false,
+              isError: false,
+            });
 
-          await queryClient.invalidateQueries(
-            [
-              "files",
-              provider.id,
-              debounceQuery,
-              path,
-              provider.id === "google_photos"
-                ? JSON.stringify(googlePhotosFilters)
-                : undefined,
-            ].filter(Boolean)
-          );
+            await queryClient.invalidateQueries(
+              [
+                "files",
+                provider.id,
+                debounceQuery,
+                path,
+                provider.id === "google_photos"
+                  ? JSON.stringify(googlePhotosFilters)
+                  : undefined,
+              ].filter(Boolean)
+            );
+          } catch (error) {
+            updateUploadInfoProgress({
+              id: file.id,
+              isLoading: false,
+              isError: true,
+            });
+          }
         })
       );
 

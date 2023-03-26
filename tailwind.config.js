@@ -28,5 +28,5 @@ module.exports = {
       scale: ["active", "group-hover"],
     },
   },
-  plugins: [require("daisyui"), require("@tailwindcss/forms")({ strategy: "class" })],
+  plugins: [require("daisyui"), require("@tailwindcss/forms")({ strategy: "class" }), require('tailwind-scrollbar-hide')],
 };

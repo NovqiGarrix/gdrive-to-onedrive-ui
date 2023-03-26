@@ -50,3 +50,10 @@ html > body {
   top: var(--tooltip-tail-offset);
   border-color: transparent transparent var(--tooltip-color) transparent;
 }
+
+.loading-circle::before {
+  content: "";
+  width: 20px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.5);
+}

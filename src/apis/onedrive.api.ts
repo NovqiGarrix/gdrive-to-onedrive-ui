@@ -1,12 +1,17 @@
+import axios from 'axios';
+
 import toGlobalTypes from '../utils/toGlobalTypes';
 import handleHttpError from '../utils/handleHttpError';
+import getPercentageUploadProgress from '../utils/getPercentageUploadProgress';
 
 import { UPLOAD_CHUNK_SIZE } from '../constants';
+import onedriveClient from '../lib/onedrive.client';
 import { HttpErrorExeption } from '../exeptions/httpErrorExeption';
 import type { GetFilesReturn, IDeleteFilesParam, TranferFileSchema } from '../types';
 
 import { API_URL, defaultOptions } from '.';
 import type { IGetFoldersOnlyParams } from './types';
+
 
 interface IGetFilesParams {
     path?: string;
@@ -91,42 +96,61 @@ async function getFoldersOnly(params: IGetFoldersOnlyParams): Promise<GetFilesRe
 
 }
 
-async function transferFile(file: TranferFileSchema, signal: AbortSignal): Promise<void> {
+interface ITransferFileParams {
+    file: TranferFileSchema;
+    signal: AbortSignal;
+    onUploadProgress: (progress: number) => void;
+    onDownloadProgress: (progress: number) => void;
+}
+
+async function transferFile(params: ITransferFileParams): Promise<void> {
+
+    const { file, signal, onUploadProgress, onDownloadProgress } = params;
 
     /**
-         * Provider Ids
-         * 1. google_drive
-         * 2. google_photos
-         * 3. onedrive
-         */
-
-    // API URL Formula
-    // /api/{provider}/{product}/files
-
-    // API URL Example
-    // /api/google/drive/files
-    // /api/google/photos/files
-
-    // /api/microsoft/files
+     * Provider Ids
+     * 1. google_drive
+     * 2. google_photos
+     * 3. onedrive
+     * 
+     * API URL Formula
+     * /api/{provider}/{product}/files
+     * 
+     * API URL Example
+     * /api/google/drive/files
+     * /api/google/photos/files
+     * /api/microsoft/files
+     */
 
     const [provider, product] = file.providerId.startsWith('google_') ? file.providerId.split('_') : [file.providerId, '']
 
     try {
 
-        const respFile = await fetch(`${API_URL}/api/${provider}${product ? `/${product}` : ''}/files/${file.id}/buffers`, { credentials: 'include', signal });
-        if (!respFile.ok) {
-            throw new HttpErrorExeption(respFile.status, `Error tranferring the file: ${respFile.statusText}`);
+        const downloadUrlResp = await fetch(`${API_URL}/api/${provider}${product ? `/${product}` : ''}/files/${file.id}/downloadUrl`, { ...defaultOptions, signal });
+
+        const { errors: downloadUrlErrors, data: { permissionId, downloadUrl } } = await downloadUrlResp.json();
+        if (!downloadUrlResp.ok) {
+            throw new HttpErrorExeption(downloadUrlResp.status, downloadUrlErrors[0].error);
         }
 
-        const contentType = respFile.headers.get('content-type');
-        if (contentType?.includes("application/json")) {
-            const { errors } = await respFile.json();
-            throw new HttpErrorExeption(respFile.status, errors[0].error);
+        const { data: fileBuffer,
+            status: fileRespStatus,
+            statusText: fileRespStatusText
+        } = await axios.get(downloadUrl, {
+            signal,
+            responseType: 'arraybuffer',
+            onDownloadProgress(progressEvent) {
+                onDownloadProgress(getPercentageUploadProgress(progressEvent.loaded, progressEvent.total!));
+            },
+            validateStatus: () => true
+        });
+
+        if (fileRespStatus !== 200) {
+            throw new HttpErrorExeption(fileRespStatus, `Error while downloading file: ${fileRespStatusText}`);
         }
 
-        const fileArrayBuffer = await respFile.arrayBuffer();
-        if (fileArrayBuffer.byteLength >= UPLOAD_CHUNK_SIZE) {
-            return transferLargeFile(file, signal, fileArrayBuffer);
+        if (fileBuffer.byteLength >= UPLOAD_CHUNK_SIZE) {
+            return transferLargeFile({ file, signal, permissionId, fileBuffer, onUploadProgress });
         }
 
         const resp = await fetch(`${API_URL}/api/microsoft/files`, {
@@ -176,7 +200,17 @@ async function deleteFiles(files: Array<IDeleteFilesParam>): Promise<void> {
 
 }
 
-async function transferLargeFile(file: TranferFileSchema, signal: AbortSignal, fileArrayBuffer: ArrayBuffer): Promise<void> {
+interface ITransferLargeFileParams {
+    signal: AbortSignal;
+    permissionId: string;
+    fileBuffer: ArrayBuffer;
+    file: TranferFileSchema;
+    onUploadProgress: (progress: number) => void;
+}
+
+async function transferLargeFile(params: ITransferLargeFileParams): Promise<void> {
+
+    const { signal, fileBuffer, permissionId, file, onUploadProgress } = params;
 
     try {
 
@@ -187,45 +221,26 @@ async function transferLargeFile(file: TranferFileSchema, signal: AbortSignal, f
             signal
         });
 
-        const { errors, data: sessionId } = await registerResp.json();
+        const { errors, data: { sessionId, accessToken } } = await registerResp.json();
         if (!registerResp.ok) {
             throw new HttpErrorExeption(registerResp.status, errors[0].error);
         }
 
-        let startChunk = 0;
-        let endChunk = UPLOAD_CHUNK_SIZE;
-
-        const totalSize = fileArrayBuffer.byteLength;
-
-        while (startChunk < endChunk) {
-            endChunk = Math.min(endChunk, totalSize);
-            const chunk = fileArrayBuffer.slice(startChunk, endChunk);
-
-            const respUpload = await fetch(`${API_URL}/api/microsoft/files/uploadSession/${sessionId}/chunks`, {
-                headers: {
-                    "Content-Type": "application/octet-stream"
-                },
-                credentials: 'include',
-                method: "POST",
-                body: chunk,
-                signal
-            });
-
-            const { errors: uploadErrors } = await respUpload.json();
-            if (!respUpload.ok) {
-                throw new HttpErrorExeption(respUpload.status, uploadErrors[0].error);
-            }
-
-            startChunk += UPLOAD_CHUNK_SIZE;
-            endChunk += UPLOAD_CHUNK_SIZE;
-        }
+        await onedriveClient.uploadLargeFile({
+            accessToken,
+            buffer: Buffer.from(fileBuffer),
+            filename: file.name,
+            onedrivePath: file.path,
+            onUploadProgress
+        });
 
         const completeResp = await fetch(`${API_URL}/api/microsoft/files/uploadSession/${sessionId}/complete`, {
             ...defaultOptions,
             method: "POST",
             body: JSON.stringify({
-                path: file.path,
-                name: file.name,
+                permissionId,
+                fileId: file.id,
+                providerId: file.providerId
             }),
             signal
         });
