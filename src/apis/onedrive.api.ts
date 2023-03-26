@@ -153,20 +153,45 @@ async function transferFile(params: ITransferFileParams): Promise<void> {
             return transferLargeFile({ file, signal, permissionId, fileBuffer, onUploadProgress });
         }
 
-        const resp = await fetch(`${API_URL}/api/microsoft/files`, {
+        // Register the session to get fresh access token
+        const registerResp = await fetch(`${API_URL}/api/microsoft/files/uploadSession`, {
             ...defaultOptions,
             method: "POST",
-            body: JSON.stringify({ name: file.name, downloadUrl: file.downloadUrl, path: file.path }),
             signal
         });
 
-        const { errors } = await resp.json();
-        if (!resp.ok) {
-            throw new HttpErrorExeption(resp.status, errors[0].error);
+        const { errors, data: { sessionId, accessToken } } = await registerResp.json();
+        if (!registerResp.ok) {
+            throw new HttpErrorExeption(registerResp.status, errors[0].error);
+        }
+
+        await onedriveClient.uploadFile({
+            accessToken,
+            buffer: Buffer.from(fileBuffer),
+            filename: file.name,
+            onedrivePath: file.path,
+            onUploadProgress
+        });
+
+        const completeResp = await fetch(`${API_URL}/api/microsoft/files/uploadSession/${sessionId}/complete`, {
+            ...defaultOptions,
+            method: "POST",
+            body: JSON.stringify({
+                permissionId,
+                fileId: file.id,
+                providerId: file.providerId
+            }),
+            signal
+        });
+
+        const { errors: completeErrors } = await completeResp.json();
+
+        if (!completeResp.ok) {
+            console.log(completeErrors);
+            throw new HttpErrorExeption(completeResp.status, completeErrors[0].error);
         }
 
     } catch (error) {
-        console.log(error);
         throw handleHttpError(error);
     }
 

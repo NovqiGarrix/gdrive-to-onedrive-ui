@@ -1,3 +1,5 @@
+import axios from 'axios';
+
 import { HttpErrorExeption } from '../exeptions/httpErrorExeption';
 
 import { OneDriveItem } from '../types';
@@ -39,84 +41,79 @@ class OneDrive {
 
         const { buffer, filename, accessToken, onedrivePath, onUploadProgress, signal } = params;
 
-        try {
+        const totalSize = buffer.byteLength;
 
-            const totalSize = buffer.byteLength;
+        const options = {
+            name: filename,
+            fileSize: totalSize,
+            '@microsoft.graph.conflictBehavior': 'rename',
+        }
 
-            const options = {
-                name: filename,
-                fileSize: totalSize,
-                '@microsoft.graph.conflictBehavior': 'rename',
+        const endpoint = onedrivePath ? `/me/drive/root:/${onedrivePath}/${filename}:/createUploadSession` : `/me/drive/root:/${filename}:/createUploadSession`;
+
+        const respOfUploadSession = await fetch(`${this.baseUrl}${endpoint}`, {
+            ...this.defaultOptions(accessToken),
+            signal,
+            method: "POST",
+            body: JSON.stringify(options)
+        });
+
+        const { uploadUrl, error } = await respOfUploadSession.json();
+
+        if (!respOfUploadSession.ok) {
+            if (respOfUploadSession.status === 507) {
+                throw new HttpErrorExeption(respOfUploadSession.status, "You do not have enough space to upload this file.");
             }
 
-            const endpoint = onedrivePath ? `/me/drive/root:/${onedrivePath}/${filename}:/createUploadSession` : `/me/drive/root:/${filename}:/createUploadSession`;
+            throw new HttpErrorExeption(respOfUploadSession.status, error.message);
+        }
 
-            const respOfUploadSession = await fetch(`${this.baseUrl}${endpoint}`, {
-                ...this.defaultOptions(accessToken),
+        // https://learn.microsoft.com/en-us/graph/api/driveitem-createuploadsession?view=graph-rest-1.0#upload-bytes-to-the-upload-session
+        const chunkSize = 327680;
+
+        let startChunk = 0;
+        let endChunk = chunkSize;
+
+        if (typeof onUploadProgress === 'function') {
+            onUploadProgress(getPercentageUploadProgress(startChunk, totalSize));
+        }
+
+        let data: any;
+
+        while (startChunk < totalSize) {
+            endChunk = Math.min(endChunk, totalSize);
+            const chunkBuffer = buffer.slice(startChunk, endChunk);
+
+            const respUpload = await fetch(uploadUrl, {
+                headers: {
+                    "Content-Length": chunkBuffer.byteLength.toString(),
+                    "Content-Range": `bytes ${startChunk}-${endChunk - 1}/${totalSize}`,
+                },
                 signal,
-                method: "POST",
-                body: JSON.stringify(options)
+                method: "PUT",
+                body: chunkBuffer
             });
 
-            const { uploadUrl, error } = await respOfUploadSession.json();
+            data = await respUpload.json();
 
-            if (!respOfUploadSession.ok) {
-                if (respOfUploadSession.status === 507) {
-                    throw new HttpErrorExeption(respOfUploadSession.status, "You do not have enough space to upload this file.");
-                }
-
-                throw new HttpErrorExeption(respOfUploadSession.status, error.message);
-            }
-
-            // https://learn.microsoft.com/en-us/graph/api/driveitem-createuploadsession?view=graph-rest-1.0#upload-bytes-to-the-upload-session
-            const chunkSize = 327680;
-
-            let startChunk = 0;
-            let endChunk = chunkSize;
+            startChunk += chunkSize;
+            endChunk += chunkSize;
 
             if (typeof onUploadProgress === 'function') {
                 onUploadProgress(getPercentageUploadProgress(startChunk, totalSize));
-            }
-
-            let data: any;
-
-            while (startChunk < totalSize) {
-                endChunk = Math.min(endChunk, totalSize);
-                const chunkBuffer = buffer.slice(startChunk, endChunk);
-
-                const respUpload = await fetch(uploadUrl, {
-                    headers: {
-                        "Content-Length": chunkBuffer.byteLength.toString(),
-                        "Content-Range": `bytes ${startChunk}-${endChunk - 1}/${totalSize}`,
-                    },
-                    signal,
-                    method: "PUT",
-                    body: chunkBuffer
-                });
-
-                data = await respUpload.json();
-
-                startChunk += chunkSize;
-                endChunk += chunkSize;
-
-                if (typeof onUploadProgress === 'function') {
-                    onUploadProgress(getPercentageUploadProgress(startChunk, totalSize));
-                    if (startChunk >= totalSize) {
-                        onUploadProgress(100);
-                    }
+                if (startChunk >= totalSize) {
+                    onUploadProgress(100);
                 }
             }
-
-            return data;
-
-        } catch (error: any) {
-            console.error(`Error in uploadLargeFile (${filename}): ${error.message}`);
-            throw error;
         }
+
+        return data;
 
     }
 
-    async uploadFileFromBuffer(accessToken: string, buffer: Buffer, filename: string, onedrivePath?: string): Promise<OneDriveItem> {
+    async uploadFile(params: IUploadFileFromBufferParams): Promise<OneDriveItem> {
+
+        const { buffer, filename, accessToken, onedrivePath, onUploadProgress, signal } = params;
 
         let apiUrl: string;
 
@@ -126,13 +123,19 @@ class OneDrive {
             apiUrl = `/me/drive/root:/${filename}:/content`;
         }
 
-        const resp = await fetch(`${this.baseUrl}${apiUrl}?@microsoft.graph.conflictBehavior=rename`, {
-            ...this.defaultOptions(accessToken),
-            method: "PUT",
-            body: buffer
+        const { data } = await axios.put(`${this.baseUrl}${apiUrl}?@microsoft.graph.conflictBehavior=rename`, buffer, {
+            headers: {
+                "Content-Type": 'application/json',
+                Authorization: `Bearer ${accessToken}`,
+            },
+            onUploadProgress(progressEvent) {
+                if (typeof onUploadProgress === "function") {
+                    onUploadProgress(getPercentageUploadProgress(progressEvent.loaded, progressEvent.total!))
+                }
+            },
+            signal
         });
 
-        const data = await resp.json();
         return data;
 
     }

@@ -251,15 +251,17 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
   async function onDrop(event: DragEvent<HTMLDivElement>) {
     event.preventDefault();
     const randomId = Math.random().toString(36).substring(7);
+    const transferFileToastId = `transfer-files-${randomId}`;
 
     try {
-      let selectedFiles: Array<TranferFileSchema> = JSON.parse(
+      const selectedFiles: Array<TranferFileSchema> = JSON.parse(
         event.dataTransfer.getData("text/plain")
       );
 
       if (!selectedFiles.length) return;
       if (selectedFiles[0].providerId === provider.id) return;
 
+      // Get the provider target
       const providerTarget = usedProviders
         .filter((provider) => provider.id !== selectedFiles[0].providerId)
         .at(0);
@@ -267,15 +269,10 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
       if (!providerTarget) {
         toast.error(
           "Invalid Provider. Please choose one of the providers first.",
-          { id: `transfer-files-${randomId}` }
+          { id: transferFileToastId }
         );
         return;
       }
-
-      toast.loading(
-        `Transferring ${selectedFiles.length} files to ${providerTarget.name}`,
-        { id: `transfer-files-${randomId}` }
-      );
 
       // Initiate upload info progress
       const selectedFilesWithAbortController = selectedFiles.map((file) => {
@@ -296,8 +293,14 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
         };
       });
 
+      toast.loading(
+        `Transferring ${selectedFilesWithAbortController.length} to ${providerTarget.name}`,
+        {
+          duration: 5000,
+        }
+      );
+
       // Show upload info progress,
-      // after adding the files to upload progress state
       setShowUploadInfoProgress(true);
 
       await Promise.all(
@@ -326,7 +329,13 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
                   : undefined,
               ].filter(Boolean)
             );
-          } catch (error) {
+          } catch (error: any) {
+            if (error.message === "cancelled") {
+              toast.success(`${file.name}: Transfer cancelled!`, {
+                id: transferFileToastId,
+              });
+            }
+
             updateUploadInfoProgress({
               id: file.id,
               isLoading: false,
@@ -335,13 +344,9 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
           }
         })
       );
-
-      toast.success("File transfered successfully!", {
-        id: `transfer-files-${randomId}`,
-      });
     } catch (error: any) {
       toast.error(error.message, {
-        id: `transfer-files-${randomId}`,
+        id: transferFileToastId,
       });
     }
   }
