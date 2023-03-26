@@ -99,13 +99,14 @@ async function getFoldersOnly(params: IGetFoldersOnlyParams): Promise<GetFilesRe
 interface ITransferFileParams {
     file: TranferFileSchema;
     signal: AbortSignal;
+    onInfoChange: (info: string) => void;
     onUploadProgress: (progress: number) => void;
     onDownloadProgress: (progress: number) => void;
 }
 
 async function transferFile(params: ITransferFileParams): Promise<void> {
 
-    const { file, signal, onUploadProgress, onDownloadProgress } = params;
+    const { file, signal, onUploadProgress, onDownloadProgress, onInfoChange } = params;
 
     /**
      * Provider Ids
@@ -128,11 +129,14 @@ async function transferFile(params: ITransferFileParams): Promise<void> {
 
         const downloadUrlResp = await fetch(`${API_URL}/api/${provider}${product ? `/${product}` : ''}/files/${file.id}/downloadUrl`, { ...defaultOptions, signal });
 
-        const { errors: downloadUrlErrors, data: { permissionId, downloadUrl } } = await downloadUrlResp.json();
+        const { errors: downloadUrlErrors, data: downloadUrlData } = await downloadUrlResp.json();
         if (!downloadUrlResp.ok) {
             throw new HttpErrorExeption(downloadUrlResp.status, downloadUrlErrors[0].error);
         }
 
+        const { permissionId, downloadUrl } = downloadUrlData;
+
+        onInfoChange('Downloading your file');
         const { data: fileBuffer,
             status: fileRespStatus,
             statusText: fileRespStatusText
@@ -150,10 +154,11 @@ async function transferFile(params: ITransferFileParams): Promise<void> {
         }
 
         if (fileBuffer.byteLength >= UPLOAD_CHUNK_SIZE) {
-            return transferLargeFile({ file, signal, permissionId, fileBuffer, onUploadProgress });
+            return transferLargeFile({ file, signal, permissionId, fileBuffer, onUploadProgress, onInfoChange });
         }
 
         // Register the session to get fresh access token
+        onInfoChange('Creating upload session');
         const registerResp = await fetch(`${API_URL}/api/microsoft/files/uploadSession`, {
             ...defaultOptions,
             method: "POST",
@@ -165,6 +170,7 @@ async function transferFile(params: ITransferFileParams): Promise<void> {
             throw new HttpErrorExeption(registerResp.status, errors[0].error);
         }
 
+        onInfoChange('Uploading your file');
         await onedriveClient.uploadFile({
             accessToken,
             buffer: Buffer.from(fileBuffer),
@@ -173,6 +179,7 @@ async function transferFile(params: ITransferFileParams): Promise<void> {
             onUploadProgress
         });
 
+        onInfoChange('Last touch');
         const completeResp = await fetch(`${API_URL}/api/microsoft/files/uploadSession/${sessionId}/complete`, {
             ...defaultOptions,
             method: "POST",
@@ -190,6 +197,8 @@ async function transferFile(params: ITransferFileParams): Promise<void> {
             console.log(completeErrors);
             throw new HttpErrorExeption(completeResp.status, completeErrors[0].error);
         }
+
+        onInfoChange('Done');
 
     } catch (error) {
         throw handleHttpError(error);
@@ -230,16 +239,18 @@ interface ITransferLargeFileParams {
     permissionId: string;
     fileBuffer: ArrayBuffer;
     file: TranferFileSchema;
+    onInfoChange: (info: string) => void;
     onUploadProgress: (progress: number) => void;
 }
 
 async function transferLargeFile(params: ITransferLargeFileParams): Promise<void> {
 
-    const { signal, fileBuffer, permissionId, file, onUploadProgress } = params;
+    const { signal, fileBuffer, permissionId, file, onUploadProgress, onInfoChange } = params;
 
     try {
 
         // Register the file to be transfered to the server
+        onInfoChange('Creating upload session');
         const registerResp = await fetch(`${API_URL}/api/microsoft/files/uploadSession`, {
             ...defaultOptions,
             method: "POST",
@@ -251,6 +262,7 @@ async function transferLargeFile(params: ITransferLargeFileParams): Promise<void
             throw new HttpErrorExeption(registerResp.status, errors[0].error);
         }
 
+        onInfoChange('Uploading your file');
         await onedriveClient.uploadLargeFile({
             accessToken,
             buffer: Buffer.from(fileBuffer),
@@ -259,6 +271,7 @@ async function transferLargeFile(params: ITransferLargeFileParams): Promise<void
             onUploadProgress
         });
 
+        onInfoChange('Last touch');
         const completeResp = await fetch(`${API_URL}/api/microsoft/files/uploadSession/${sessionId}/complete`, {
             ...defaultOptions,
             method: "POST",
@@ -276,6 +289,8 @@ async function transferLargeFile(params: ITransferLargeFileParams): Promise<void
             console.log(completeErrors);
             throw new HttpErrorExeption(completeResp.status, completeErrors[0].error);
         }
+
+        onInfoChange('Done');
 
     } catch (error) {
         console.log(error);

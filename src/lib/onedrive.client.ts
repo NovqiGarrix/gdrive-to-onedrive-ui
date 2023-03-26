@@ -68,8 +68,7 @@ class OneDrive {
             throw new HttpErrorExeption(respOfUploadSession.status, error.message);
         }
 
-        // https://learn.microsoft.com/en-us/graph/api/driveitem-createuploadsession?view=graph-rest-1.0#upload-bytes-to-the-upload-session
-        const chunkSize = 327680;
+        const chunkSize = 1024 * 1024 * 2;
 
         let startChunk = 0;
         let endChunk = chunkSize;

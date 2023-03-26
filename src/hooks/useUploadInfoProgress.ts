@@ -1,13 +1,5 @@
 import { create } from "zustand";
-import { TranferFileSchema } from "../types";
-
-type UploadInfoProgress = TranferFileSchema & {
-    isError: boolean;
-    isLoading: boolean;
-    uploadProgress: number;
-    downloadProgress: number;
-    abortController: AbortController;
-};
+import type { UploadInfoProgress } from "../types";
 
 interface UseUploadInfoProgress {
     show: boolean;

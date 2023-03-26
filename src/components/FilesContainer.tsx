@@ -234,11 +234,21 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
       updateUploadInfoProgress({ ...f, downloadProgress: progress });
     }
 
+    function onInfoChange(info: string) {
+      const uploadInfoProgress =
+        useUploadInfoProgress.getState().uploadInfoProgress;
+      const f = uploadInfoProgress.find((f) => f.id === file.id);
+      if (!f) return;
+
+      updateUploadInfoProgress({ ...f, info });
+    }
+
     switch (providerTarget) {
       case "onedrive":
         return onedriveApi.transferFile({
           file,
           signal,
+          onInfoChange,
           onUploadProgress,
           onDownloadProgress,
         });
@@ -278,14 +288,23 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
       const selectedFilesWithAbortController = selectedFiles.map((file) => {
         const abortController = new AbortController();
 
-        addUploadInfoProgress({
+        const requiredParams = {
           ...file,
-          isError: false,
+          abortController,
           isLoading: true,
           uploadProgress: 0,
           downloadProgress: 0,
-          abortController,
-        });
+          info: "Preparing your file",
+        };
+
+        const isExist = useUploadInfoProgress
+          .getState()
+          .uploadInfoProgress.find((f) => f.id === file.id);
+        if (isExist) {
+          updateUploadInfoProgress(requiredParams);
+        } else {
+          addUploadInfoProgress(requiredParams);
+        }
 
         return {
           ...file,
@@ -296,54 +315,79 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
       toast.loading(
         `Transferring ${selectedFilesWithAbortController.length} to ${providerTarget.name}`,
         {
-          duration: 5000,
+          duration: 3000,
+          id: transferFileToastId,
         }
       );
 
       // Show upload info progress,
       setShowUploadInfoProgress(true);
 
-      await Promise.all(
-        selectedFilesWithAbortController.map(async (file) => {
-          try {
-            await transferFileFunc(
-              { ...file, path },
-              providerTarget.id,
-              file.abortController.signal
-            );
+      const uploadedFiles = (
+        await Promise.all(
+          selectedFilesWithAbortController.map(async (file) => {
+            try {
+              await transferFileFunc(
+                { ...file, path },
+                providerTarget.id,
+                file.abortController.signal
+              );
 
-            updateUploadInfoProgress({
-              id: file.id,
-              isLoading: false,
-              isError: false,
-            });
+              updateUploadInfoProgress({
+                id: file.id,
+                isLoading: false,
+              });
 
-            await queryClient.invalidateQueries(
-              [
-                "files",
-                provider.id,
-                debounceQuery,
-                path,
-                provider.id === "google_photos"
-                  ? JSON.stringify(googlePhotosFilters)
-                  : undefined,
-              ].filter(Boolean)
-            );
-          } catch (error: any) {
-            if (error.message === "cancelled") {
-              toast.success(`${file.name}: Transfer cancelled!`, {
-                id: transferFileToastId,
+              await queryClient.invalidateQueries(
+                [
+                  "files",
+                  provider.id,
+                  debounceQuery,
+                  path,
+                  provider.id === "google_photos"
+                    ? JSON.stringify(googlePhotosFilters)
+                    : undefined,
+                ].filter(Boolean)
+              );
+
+              return true;
+            } catch (error: any) {
+              if (error.message === "cancelled") {
+                toast.success(`${file.name}: Transfer cancelled!`, {
+                  id: transferFileToastId,
+                });
+              }
+
+              updateUploadInfoProgress({
+                id: file.id,
+                isLoading: false,
+                error: error.message,
               });
             }
+          })
+        )
+      ).filter(Boolean);
 
-            updateUploadInfoProgress({
-              id: file.id,
-              isLoading: false,
-              isError: true,
-            });
+      const isAllError =
+        useUploadInfoProgress
+          .getState()
+          .uploadInfoProgress.filter((info) => info.error).length ===
+        selectedFilesWithAbortController.length;
+
+      if (isAllError) {
+        toast.error(`Transfer failed`, {
+          id: transferFileToastId,
+        });
+      }
+
+      if (uploadedFiles.length) {
+        toast.success(
+          `Transferred ${uploadedFiles.length} to ${providerTarget.name}`,
+          {
+            id: transferFileToastId,
           }
-        })
-      );
+        );
+      }
     } catch (error: any) {
       toast.error(error.message, {
         id: transferFileToastId,

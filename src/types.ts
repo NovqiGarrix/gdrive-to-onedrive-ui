@@ -173,3 +173,12 @@ export interface AccountObject {
     isConnected: boolean;
 }
 
+export type UploadInfoProgress = TranferFileSchema & {
+    info: string;
+    isLoading: boolean;
+    uploadProgress: number;
+    downloadProgress: number;
+    abortController: AbortController;
+
+    error?: string;
+};

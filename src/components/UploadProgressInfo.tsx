@@ -13,10 +13,14 @@ import {
   XMarkIcon,
   ChevronUpIcon,
   ExclamationTriangleIcon,
+  CheckCircleIcon,
+  XCircleIcon,
 } from "@heroicons/react/20/solid";
 import { toast } from "react-hot-toast";
 import { Transition, Dialog } from "@headlessui/react";
 
+import classNames from "../utils/classNames";
+import type { UploadInfoProgress } from "../types";
 import useUploadInfoProgress from "../hooks/useUploadInfoProgress";
 
 const UploadProgressInfo: FunctionComponent = () => {
@@ -24,11 +28,12 @@ const UploadProgressInfo: FunctionComponent = () => {
   const [openWarningModal, setOpenWarningModal] = useState(false);
 
   const show = useUploadInfoProgress((s) => s.show);
+  const setShow = useUploadInfoProgress((s) => s.setShow);
   const uploadInfoProgress = useUploadInfoProgress((s) => s.uploadInfoProgress);
 
   const completedLength = useMemo(
     () =>
-      uploadInfoProgress.filter((info) => !info.isLoading && !info.isError)
+      uploadInfoProgress.filter((info) => !info.isLoading && !info.error)
         .length,
     [uploadInfoProgress]
   );
@@ -37,6 +42,22 @@ const UploadProgressInfo: FunctionComponent = () => {
     () => uploadInfoProgress.filter((info) => info.isLoading).length,
     [uploadInfoProgress]
   );
+
+  function onCancelAllUpload() {
+    const isAllDone = uploadInfoProgress.filter(
+      (info) => !info.isLoading && !info.error
+    ).length;
+
+    const isAllError = uploadInfoProgress.filter((info) => info.error).length;
+
+    if (isAllDone || isAllError) {
+      setShow(false);
+      useUploadInfoProgress.getState().clearUploadInfoProgress();
+      return;
+    }
+
+    setOpenWarningModal(true);
+  }
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -57,100 +78,72 @@ const UploadProgressInfo: FunctionComponent = () => {
       <WarningModal open={openWarningModal} setOpen={setOpenWarningModal} />
       <div
         style={{
-          translate: show ? (isMinimized ? "0 84%" : "0 0") : "0 100%",
+          translate: show ? (isMinimized ? "0 80%" : "0 0") : "0 100%",
           zIndex: show ? 10 : 0,
         }}
-        className="fixed z-10 shadow-lg border border-b-0 bg-white border-blue-500 w-full max-w-sm rounded-t-2xl -bottom-1 right-5 h-full max-h-80 overflow-y-auto scrollbar-hide transition-all duration-300"
+        className="fixed z-10 shadow-2xl border-2 border-b-0 bg-white border-blue-200 w-full max-w-sm rounded-t-2xl -bottom-1 right-5 h-full max-h-96 overflow-hidden transition-all duration-300"
       >
-        {/* Header */}
-        <div className="flex items-center justify-between bg-blue-50 p-3 px-4 rounded-t-2xl">
-          <h4 className="text-base font-medium text-gray-700">
-            {!loadingLength
-              ? `${completedLength} upload complete`
-              : `Uploading ${uploadInfoProgress.length} item`}
-          </h4>
-
-          <div className="flex items-center space-x-3">
-            <button
-              title="Minimize"
-              data-tip="Minimize"
-              className="tooltip tooltip-bottom focus:outline-none"
-              onClick={
-                isMinimized
-                  ? () => setIsMinimized(false)
-                  : () => setIsMinimized(true)
-              }
-            >
-              {isMinimized ? (
-                <ChevronUpIcon
-                  aria-hidden="true"
-                  className="w-6 h-6 text-gray-600"
-                />
-              ) : (
-                <ChevronDownIcon
-                  aria-hidden="true"
-                  className="w-6 h-6 text-gray-600"
-                />
-              )}
-            </button>
-            <button
-              title="Close"
-              data-tip="Close"
-              className="tooltip tooltip-bottom focus:outline-none"
-              onClick={() => setOpenWarningModal(true)}
-            >
-              <XMarkIcon aria-hidden="true" className="w-6 h-6 text-gray-600" />
-            </button>
-          </div>
-        </div>
-
-        {/* Body */}
-        <div className="bg-white">
-          {uploadInfoProgress.map((info) => (
-            <div
-              className="flex even:bg-gray-50 items-center justify-between space-x-5 py-3.5 px-4"
-              key={info.id}
-            >
-              <div className="space-x-3 flex items-center w-full">
-                <div className="w-6 flex-shrink-0 mr-1.5">
-                  <Image
-                    width={500}
-                    height={500}
-                    alt={`HelloWorld`}
-                    src={info.iconLink}
-                  />
-                </div>
-                <div className="w-full">
-                  <p className="text-gray-700 font-medium text-[13px] text-ellipsis overflow-hidden whitespace-nowrap">
-                    {info.name}
-                  </p>
-                  <div className="w-full h-2.5 relative">
-                    <div
-                      style={{
-                        width: `${
-                          (info.downloadProgress + info.uploadProgress) / 2
-                        }%`,
-                      }}
-                      className="h-1 mt-1 rounded absolute inset-0 z-10 bg-indigo-500"
-                    ></div>
-                    <div className="h-1 mt-1 rounded w-full absolute inset-0 bg-gray-200"></div>
-                  </div>
-                </div>
+        <div className="relative">
+          {/* Header */}
+          <div className="fixed top-0 w-full">
+            <div className="flex items-start justify-between relative bg-indigo-50 py-4 px-5 rounded-t-2xl">
+              <div>
+                <h4 className="font-medium text-lg text-gray-600">
+                  {!loadingLength
+                    ? `${completedLength} upload complete`
+                    : `Uploading ${loadingLength} item`}
+                </h4>
+                <p className="text-xs text-gray-500/80">
+                  Upload speed depends on the provider servers latency
+                </p>
               </div>
 
-              {/* Create a circle where the border width can control using javascript */}
-              <button
-                title="Cancel upload"
-                data-tip="cancel"
-                className="tooltip tooltip-bottom focus:outline-none"
-              >
-                <XMarkIcon
-                  aria-hidden="true"
-                  className="w-6 h-6 text-gray-600"
-                />
-              </button>
+              <div className="flex items-center space-x-3 absolute top-4 right-5">
+                <button
+                  title="Minimize"
+                  data-tip="Minimize"
+                  className="tooltip tooltip-bottom focus:outline-none"
+                  onClick={
+                    isMinimized
+                      ? () => setIsMinimized(false)
+                      : () => setIsMinimized(true)
+                  }
+                >
+                  {isMinimized ? (
+                    <ChevronUpIcon
+                      aria-hidden="true"
+                      className="w-6 h-6 text-gray-600"
+                    />
+                  ) : (
+                    <ChevronDownIcon
+                      aria-hidden="true"
+                      className="w-6 h-6 text-gray-600"
+                    />
+                  )}
+                </button>
+                <button
+                  title="Cancel"
+                  data-tip="Cancel"
+                  className="tooltip tooltip-bottom focus:outline-none"
+                  onClick={onCancelAllUpload}
+                >
+                  <XMarkIcon
+                    aria-hidden="true"
+                    className="w-6 h-6 text-gray-600"
+                  />
+                </button>
+              </div>
             </div>
-          ))}
+          </div>
+
+          <div className="h-[75px]"></div>
+
+          {/* Body */}
+          <div className="bg-white overflow-y-auto max-h-[305px] pb-2">
+            {uploadInfoProgress.map((info) => (
+              <IndividualFileInfo info={info} key={info.id} />
+            ))}
+          </div>
         </div>
       </div>
     </Fragment>
@@ -158,6 +151,94 @@ const UploadProgressInfo: FunctionComponent = () => {
 };
 
 export default UploadProgressInfo;
+
+interface IIndividualFileInfoProps {
+  info: UploadInfoProgress;
+}
+const IndividualFileInfo: FunctionComponent<IIndividualFileInfoProps> = ({
+  info,
+}) => {
+  const isDone = !info.isLoading && !info.error;
+  const percentage = Math.round(
+    (info.downloadProgress + info.uploadProgress) / 2
+  );
+
+  return (
+    <div
+      className={classNames(
+        "flex even:bg-gray-50 justify-between space-x-5 py-3.5 px-5",
+        info.error ? "items-center" : "items-start"
+      )}
+      key={info.id}
+    >
+      <div className="flex items-center w-full">
+        <div className="w-6 flex-shrink-0 mr-1.5">
+          <Image
+            width={500}
+            height={500}
+            alt={`${info.name} icon`}
+            src={info.iconLink}
+          />
+        </div>
+        <div className="w-full">
+          <h3 className="text-gray-500 font-bold text-sm text-ellipsis overflow-hidden whitespace-nowrap">
+            {info.name}
+          </h3>
+
+          {info.error ? (
+            <p className="text-red-500 font-medium text-xs">{info.error}</p>
+          ) : (
+            <p className="text-gray-500 font-medium text-xs">{info.info}</p>
+          )}
+        </div>
+      </div>
+
+      <div className="relative w-6 h-6 rounded-full">
+        <div
+          className={classNames(
+            "absolute inset-0 tooltip tooltip-bottom",
+            info.isLoading
+              ? "opacity-100 z-0 scale-100"
+              : "opacity-0 -z-50 scale-0"
+          )}
+          data-tip="Loading"
+        >
+          <div className="w-6 h-6 border-[3px] border-gray-300 rounded-full absolute inset-0"></div>
+          <div
+            className="z-10 radial-progress text-indigo-500"
+            style={{
+              // @ts-ignore - this is a custom attribute
+              "--value": percentage,
+              "--size": "24px",
+              "--thickness": "3px",
+            }}
+          ></div>
+        </div>
+        <div
+          data-tip="Done"
+          className={classNames(
+            "tooltip absolute inset-0 tooltip-bottom focus:outline-none transition-all duration-200",
+            isDone ? "opacity-100 z-0 scale-100" : "opacity-0 -z-50 scale-0"
+          )}
+        >
+          <CheckCircleIcon
+            aria-hidden="true"
+            className="w-6 h-6 text-green-600"
+          />
+        </div>
+        <div
+          data-tip="Error"
+          className={classNames(
+            "tooltip absolute inset-0 tooltip-bottom focus:outline-none transition-all duration-200",
+            info.error ? "opacity-100 z-0 scale-100" : "opacity-0 -z-50 scale-0"
+          )}
+        >
+          <XCircleIcon aria-hidden="true" className="w-6 h-6 text-red-500" />
+        </div>
+      </div>
+    </div>
+  );
+};
 
 interface IWaringModalProps {
   open: boolean;
