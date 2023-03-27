@@ -4,14 +4,16 @@ import handleHttpError from "../utils/handleHttpError";
 
 async function changeAvatar(file: File): Promise<string> {
 
-    const formData = new FormData();
-    formData.append('avatar', file);
-
     try {
 
-        const resp = await fetch(`${API_URL}/api/me/avatar`, {
+        const arrayBuffer = await file.arrayBuffer();
+
+        const resp = await fetch(`${API_URL}/api/me/avatar?filename=${file.name}`, {
+            headers: {
+                "Content-Type": "application/octet-stream"
+            },
             method: "PUT",
-            body: formData,
+            body: arrayBuffer,
             credentials: "include"
         });
 
