@@ -7,7 +7,7 @@ import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/20/solid";
 import { PROVIDERS } from "../constants";
 import classNames from "../utils/classNames";
 import type { ProviderObject } from "../types";
-import useUsedProviders from "../hooks/useUsedProviders";
+import useCloudProvider from "../hooks/useCloudProvider";
 
 interface ISelectProviderProps {
   provider: ProviderObject;
@@ -17,7 +17,7 @@ interface ISelectProviderProps {
 const SelectProvider: FunctionComponent<ISelectProviderProps> = (props) => {
   const { provider: selected, onChange } = props;
 
-  const usedProviders = useUsedProviders((state) =>
+  const usedProviders = useCloudProvider((state) =>
     Array.from(state.usedProviders)
   );
 

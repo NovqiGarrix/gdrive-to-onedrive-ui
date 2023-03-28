@@ -28,8 +28,7 @@ import signInWithRedirectUrl from "../utils/signInWithRedirectUrl";
 import type { HttpErrorExeption } from "../exeptions/httpErrorExeption";
 
 import useSearchQuery from "../hooks/useSearchQuery";
-import useProviderPaths from "../hooks/useProviderPath";
-import useUsedProviders from "../hooks/useUsedProviders";
+import useProviderPath from "../hooks/useProviderPath";
 import useSelectedFiles from "../hooks/useSelectedFiles";
 import useGooglePhotosFilter from "../hooks/useGooglePhotosFilter";
 import useUploadInfoProgress from "../hooks/useUploadInfoProgress";
@@ -45,49 +44,17 @@ import Search from "./Search";
 import Folders from "./Folders";
 import LoadingIcon from "./LoadingIcon";
 import Breadcrumbs from "./Breadcrumbs";
-import ProviderLogout from "./ProviderLogout";
 import SelectProvider from "./SelectProvider";
 import GooglePhotosFilter from "./GooglePhotosFilter";
 
 interface IFilesContainerProps {
   provider: string;
-  componentIndex: number;
 }
 
 const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
-  const { provider: _providerId, componentIndex } = props;
+  const { provider: _providerId } = props;
 
   const router = useRouter();
-  const pKey = `p${componentIndex + 1}` as "p1" | "p2";
-
-  const path = useProviderPaths((s) => s[pKey]);
-  const _setPath = useProviderPaths((s) => {
-    const setter = s[`set${pKey.toUpperCase()}` as "setP1" | "setP2"];
-    return setter;
-  });
-
-  const setPath = useCallback(
-    (path: string | undefined) => {
-      _setPath(path);
-
-      if (!path) {
-        delete router.query[`${pKey}_path`];
-      }
-
-      router.push(
-        {
-          pathname: "/",
-          query: {
-            ...router.query,
-            ...(path ? { [`${pKey}_path`]: path } : {}),
-          },
-        },
-        undefined,
-        { shallow: true }
-      );
-    },
-    [_setPath, pKey, router]
-  );
 
   const queryClient = useQueryClient();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -95,11 +62,8 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
   const selectedFiles = useSelectedFiles((s) => s.files);
   const openModalFunc = useDeleteFilesModalState((s) => s.openModal);
 
-  const hasProvider = useUsedProviders((state) => state.has);
-  const usedProviders = useUsedProviders((state) =>
-    Array.from(state.usedProviders)
-  );
-  const replaceProvider = useUsedProviders((state) => state.replaceProvider);
+  const providerPath = useProviderPath((s) => s.path);
+  const setProviderPath = useProviderPath((s) => s.setPath);
 
   const [provider, setProvider] = useState(
     PROVIDERS.find((p) => p.id === _providerId) || PROVIDERS[0]
@@ -159,12 +123,16 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
     HttpErrorExeption
   >({
     queryFn: () =>
-      getFiles({ query: debounceQuery, path, filters: googlePhotosFilters }),
+      getFiles({
+        query: debounceQuery,
+        path: providerPath,
+        filters: googlePhotosFilters,
+      }),
     queryKey: [
       "files",
       provider.id,
       debounceQuery,
-      path,
+      providerPath,
       provider.id === "google_photos"
         ? JSON.stringify(googlePhotosFilters)
         : undefined,
@@ -272,9 +240,8 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
       if (selectedFiles[0].providerId === provider.id) return;
 
       // Get the provider target
-      const providerTarget = usedProviders
-        .filter((provider) => provider.id !== selectedFiles[0].providerId)
-        .at(0);
+      // TODO: Make it dynamic
+      const providerTarget = PROVIDERS[1];
 
       if (!providerTarget) {
         toast.error(
@@ -328,7 +295,7 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
           selectedFilesWithAbortController.map(async (file) => {
             try {
               await transferFileFunc(
-                { ...file, path },
+                { ...file, path: providerPath },
                 providerTarget.id,
                 file.abortController.signal
               );
@@ -343,7 +310,7 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
                   "files",
                   provider.id,
                   debounceQuery,
-                  path,
+                  providerPath,
                   provider.id === "google_photos"
                     ? JSON.stringify(googlePhotosFilters)
                     : undefined,
@@ -399,7 +366,7 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
     if (!data.nextPageToken) return;
 
     const nextFiles = await getFiles({
-      path,
+      path: providerPath,
       query: debounceQuery,
       filters: googlePhotosFilters,
       nextPageToken: data.nextPageToken,
@@ -417,7 +384,12 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
     isLoading: isGettingMoreData,
     isError: isErrorGettingMoreData,
   } = useMutation({
-    mutationKey: ["getMoreData", debounceQuery, data.nextPageToken, path],
+    mutationKey: [
+      "getMoreData",
+      debounceQuery,
+      data.nextPageToken,
+      providerPath,
+    ],
     mutationFn: getMoreDataFunc,
 
     onError() {
@@ -428,7 +400,7 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
   function onProviderChange(newProvider: ProviderObject) {
     if (newProvider.id === provider.id) return;
 
-    if (hasProvider(newProvider)) {
+    if (provider.id === newProvider.id) {
       toast.error(
         "You have already select this provider. Please select another one."
       );
@@ -436,14 +408,11 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
     }
 
     setProvider(newProvider);
-    replaceProvider(provider, newProvider);
 
     const query = new URLSearchParams(router.query as Record<string, string>);
 
-    const queryName = `p${componentIndex + 1}`;
-
     query.set(
-      queryName,
+      "provider",
       String(PROVIDERS.findIndex((po) => po.id === newProvider.id))
     );
 
@@ -479,7 +448,7 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
       if (e.code === "Delete") {
         openModal({
           debounceQuery,
-          path,
+          path: providerPath,
           providerId: provider.id,
         });
       }
@@ -493,160 +462,7 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedFiles.length]);
 
-  return (
-    <div ref={containerRef}>
-      <div
-        ref={infiniteScrollScrollRef}
-        className="bg-white rounded-2xl lg:rounded-3xl h-full min-h-[80vh] max-h-[80vh] p-5 md:p-8 overflow-y-auto overflow-x-hidden"
-      >
-        <div className="flex flex-col items-start justify-start">
-          <div className="flex items-center justify-between w-full">
-            <SelectProvider provider={provider} onChange={onProviderChange} />
-
-            {/* Logout Component */}
-            {!isError && !isLoading && provider.id === "onedrive" ? (
-              <ProviderLogout
-                path={path}
-                providerId={provider.id}
-                debounceQuery={debounceQuery}
-              />
-            ) : null}
-          </div>
-
-          <div className="w-full mt-3">
-            {provider.id === "google_photos" ? (
-              <GooglePhotosFilter
-                isLoading={!!(isLoading && googlePhotosFilters)}
-              />
-            ) : (
-              <Fragment>
-                <Search
-                  searchQuery={searchQuery}
-                  setSearchQuery={setSearchQuery}
-                />
-                <hr className="w-full bg-bg-2" />
-              </Fragment>
-            )}
-          </div>
-        </div>
-
-        {!debounceQuery && !isError ? (
-          <Breadcrumbs path={path} setPath={setPath} />
-        ) : null}
-
-        {debounceQuery ? (
-          <div className="mt-5 mb-3">
-            <p className="text-sm text-darken">
-              Search results for `{debounceQuery}`
-            </p>
-          </div>
-        ) : null}
-
-        <div
-          className="h-3/4"
-          {...(componentIndex === 1 ? { onDrop } : {})}
-          onDragOver={onDragOver}
-        >
-          {/* Files */}
-          <Folders
-            path={path}
-            setPath={setPath}
-            getFiles={getFiles}
-            provider={provider}
-            query={debounceQuery}
-          />
-
-          {/* Loading Component */}
-          <div className="mt-5 h-full">
-            {isLoading ? (
-              <div className="grid grid-cols-3 gap-3 pb-5">
-                {Array(9)
-                  .fill(0)
-                  .map((_, i) => (
-                    <div
-                      key={i}
-                      className="bg-indigo-50/60 hover:bg-indigo-100/50 rounded-lg focus:bg-indigo-100/90"
-                    >
-                      <div className="py-1 px-2 animate-pulse h-[200px] relative overflow-hidden focus:outline-none">
-                        <div className="w-full flex items-center p-2">
-                          <div className="w-5 h-5 rounded-full flex-shrink-0 mr-1.5 bg-gray-300"></div>
-                          <div className="w-full h-2 rounded bg-gray-300"></div>
-                        </div>
-
-                        <div className="w-full h-[70%] mt-1.5 rounded mx-auto flex items-center justify-center">
-                          <div className="w-36 h-36 rounded bg-gray-300"></div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-              </div>
-            ) : isError ? (
-              error?.message === "Unauthorized" ? (
-                <div className="w-full h-[78%] flex flex-col items-center justify-center">
-                  <button
-                    role="link"
-                    type="button"
-                    onClick={() => signInWithRedirectUrl(authUrl)}
-                    className="btn btn-primary"
-                  >
-                    Sign In
-                  </button>
-                  <span className="mt-3 font-medium">
-                    Sign in to your Microsoft Account
-                  </span>
-                </div>
-              ) : (
-                <div className="text-red-500 mt-3">
-                  <p>{error?.message}</p>
-                </div>
-              )
-            ) : (
-              <Fragment>
-                <h2 className="text-dark font-medium mb-2">Files</h2>
-
-                {(files.length || 0) > 0 ? (
-                  <div className="mt-1">
-                    <div className="grid grid-cols-3 gap-3 pb-5">
-                      {data.files?.map((file) => (
-                        <Fragment key={file.id}>
-                          {file.type === "file" ? (
-                            <File
-                              file={file}
-                              data={data.files}
-                              providerId={provider.id}
-                              selectedFiles={selectedFiles}
-                            />
-                          ) : null}
-                        </Fragment>
-                      ))}
-                    </div>
-
-                    <div ref={infiniteScrollLoadingRef}></div>
-
-                    {isGettingMoreData ? (
-                      <div className="max-w-full w-full flex items-center justify-center mt-5">
-                        <LoadingIcon
-                          width={30}
-                          height={30}
-                          className="text-darken"
-                        />
-                      </div>
-                    ) : null}
-                  </div>
-                ) : (
-                  <div className="mt-2">
-                    <h3 className="text-sm text-gray-500">
-                      Your files will appear here
-                    </h3>
-                  </div>
-                )}
-              </Fragment>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  return <div ref={containerRef}></div>;
 };
 
 export default FilesContainer;

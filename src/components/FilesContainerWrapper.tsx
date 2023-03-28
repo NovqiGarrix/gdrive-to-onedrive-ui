@@ -2,21 +2,19 @@ import { FunctionComponent, useEffect, useRef } from "react";
 
 import useBeforeUnload from "../hooks/useBeforeUnload";
 import useSelectedFiles from "../hooks/useSelectedFiles";
+import useCloudProvider from "../hooks/useCloudProvider";
 import useUploadInfoProgress from "../hooks/useUploadInfoProgress";
-import useUsedProviders from "../hooks/useUsedProviders";
 
 import FilesContainer from "./FilesContainer";
 
 const FilesContainerWrapper: FunctionComponent = () => {
   const ref = useRef<HTMLDivElement>(null);
 
-  const initialUsedProviders = useUsedProviders((state) =>
-    Array.from(state.initialUsedProviders)
-  );
+  const cloudProvider = useCloudProvider((s) => s.provider);
 
   const selectedFiles = useSelectedFiles((s) => s.files);
-  const uploadInfoProgress = useUploadInfoProgress((s) => s.uploadInfoProgress);
   const cleanSelectedFiles = useSelectedFiles((s) => s.cleanFiles);
+  const uploadInfoProgress = useUploadInfoProgress((s) => s.uploadInfoProgress);
 
   useBeforeUnload(() => {
     uploadInfoProgress.forEach(({ abortController }) => {
@@ -57,13 +55,7 @@ const FilesContainerWrapper: FunctionComponent = () => {
       ref={ref}
       className="flex relative flex-col space-y-5 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-3 lg:divide-x lg:divide-bg"
     >
-      {initialUsedProviders.map((provider, index) => (
-        <FilesContainer
-          key={provider.id}
-          componentIndex={index}
-          provider={provider.id}
-        />
-      ))}
+      <FilesContainer provider={cloudProvider.id} />
     </div>
   );
 };

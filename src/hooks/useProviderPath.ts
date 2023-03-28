@@ -2,37 +2,28 @@ import { create } from "zustand";
 
 interface IUseProviderPath {
 
-    p1: string | undefined;
-
-    setP1: (p1: string | undefined) => void;
-
-    p2: string | undefined;
-
-    setP2: (p2: string | undefined) => void;
+    path: string | undefined;
+    setPath: (path: string | undefined) => void;
 
     isInitialized: boolean;
 
 }
 
-const useProviderPaths = create<IUseProviderPath>((set) => ({
+const useProviderPath = create<IUseProviderPath>((set) => ({
 
-    p1: undefined,
+    path: undefined,
 
-    setP1: (p1) => set({ p1 }),
-
-    p2: undefined,
-
-    setP2: (p2) => set({ p2 }),
+    setPath(path) {
+        set({ path });
+    },
 
     isInitialized: false,
 
 }));
 
-export default useProviderPaths;
+export default useProviderPath;
 
-export function initializedProviderPathStore(paths: { p1: string; p2: string } | undefined) {
-    if (!paths || useProviderPaths.getState().isInitialized) return;
-
-    const { p1, p2 } = paths;
-    useProviderPaths.setState({ p1: p1 || undefined, p2: p2 || undefined, isInitialized: true });
+export function initializedProviderPath(path: string | undefined) {
+    if (useProviderPath.getState().isInitialized) return;
+    useProviderPath.setState({ path, isInitialized: true });
 }

@@ -3,8 +3,11 @@ import type { GetServerSideProps, NextPage } from "next";
 import Head from "next/head";
 
 import authApi from "../apis/auth.api";
-import { DeleteFilesModal, FilesContainerWrapper, Navbar } from "../components";
-import UploadProgressInfo from "../components/UploadProgressInfo";
+
+import { FilesContainerWrapper, Navbar } from "../components";
+
+import { initializeCloudProvider } from "../hooks/useCloudProvider";
+import { initializedProviderPath } from "../hooks/useProviderPath";
 
 const Home: NextPage = () => {
   return (
@@ -16,12 +19,6 @@ const Home: NextPage = () => {
       </Head>
 
       <Navbar />
-      <DeleteFilesModal />
-      <UploadProgressInfo />
-
-      <div className="px-8 lg:px-16 mt-2 md:mt-5 lg:mt-10">
-        <FilesContainerWrapper />
-      </div>
     </main>
   );
 };
@@ -44,44 +41,18 @@ export const getServerSideProps: GetServerSideProps = async ({
       };
     }
 
-    Object.entries({ ...query }).forEach(([key, value]) => {
+    Object.entries(query).forEach(([key, value]) => {
       if (value && typeof value !== "string") {
         query[key] = undefined;
       }
     });
 
-    if (!query.p1 || !query.p2) {
-      const qparams = new URLSearchParams();
-
-      qparams.append("p1", String(query.p1 ?? 0));
-      qparams.append("p2", String(query.p1 ?? 2));
-
-      return {
-        redirect: {
-          destination: `/?${qparams.toString()}`,
-          permanent: false,
-        },
-      };
-    }
-
-    // These are providers index
-    const p1 = Number(query.p1);
-    const p2 = Number(query.p2);
-
-    const p1Path = query.p1_path || null;
-    const p2Path = query.p2_path || null;
+    initializeCloudProvider(query.provider as string);
+    initializedProviderPath(query.provider_path as string);
 
     return {
       props: {
-        me: me ?? null,
-        providers: {
-          p1,
-          p2,
-        },
-        providerPaths: {
-          p1: p1Path,
-          p2: p2Path,
-        },
+        me,
       },
     };
   } catch (error: any) {
