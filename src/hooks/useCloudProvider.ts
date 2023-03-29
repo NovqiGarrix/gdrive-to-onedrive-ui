@@ -25,11 +25,26 @@ const useCloudProvider = create<IUseCloudProvider>((set) => ({
 
 }));
 
-export function initializeCloudProvider(p: string | undefined) {
-    let provider = p ? PROVIDERS.find((provider) => provider.id === p) : PROVIDERS[0];
-    if (!provider) toast('Invalid provider. Using default provider');
+class UseCloudProviderMem {
+    public static isRunning = false;
+}
+
+export function initializeCloudProvider(p: string | undefined | null) {
+    if (UseCloudProviderMem.isRunning) return;
+    let provider = PROVIDERS.find((provider) => provider.id === p);
+    if (!provider) {
+        if (p) {
+            /**
+             * Only show toast if provider is invalid
+             * So, if the query params are empty, it won't show
+             */
+            toast.success('Invalid provider. Using default provider');
+        }
+        provider = PROVIDERS[0];
+    }
 
     useCloudProvider.setState({ provider, isInitialized: true });
+    UseCloudProviderMem.isRunning = true;
 }
 
 export default useCloudProvider;

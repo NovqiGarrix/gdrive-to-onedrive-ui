@@ -5,8 +5,6 @@ interface IUseProviderPath {
     path: string | undefined;
     setPath: (path: string | undefined) => void;
 
-    isInitialized: boolean;
-
 }
 
 const useProviderPath = create<IUseProviderPath>((set) => ({
@@ -17,13 +15,17 @@ const useProviderPath = create<IUseProviderPath>((set) => ({
         set({ path });
     },
 
-    isInitialized: false,
-
 }));
 
 export default useProviderPath;
 
-export function initializedProviderPath(path: string | undefined) {
-    if (useProviderPath.getState().isInitialized) return;
-    useProviderPath.setState({ path, isInitialized: true });
+class UseProviderPathMem {
+    public static isRunning = false;
+}
+
+export function initializedProviderPath(path: string | undefined | null) {
+    if (UseProviderPathMem.isRunning) return;
+
+    useProviderPath.setState({ path: path || undefined });
+    UseProviderPathMem.isRunning = true;
 }

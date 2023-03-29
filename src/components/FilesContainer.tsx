@@ -70,7 +70,7 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
   );
 
   const previousProvider = useRef<ProviderObject>(provider);
-  const { debounceQuery, searchQuery, setSearchQuery } = useSearchQuery();
+  const debounceQuery = useSearchQuery((s) => s.debounceQuery);
   const googlePhotosFilters = useGooglePhotosFilter((s) => s.formattedFilters);
 
   const getFiles = useCallback(
@@ -396,29 +396,6 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
       toast.error("Failed to load more data.");
     },
   });
-
-  function onProviderChange(newProvider: ProviderObject) {
-    if (newProvider.id === provider.id) return;
-
-    if (provider.id === newProvider.id) {
-      toast.error(
-        "You have already select this provider. Please select another one."
-      );
-      return;
-    }
-
-    setProvider(newProvider);
-
-    const query = new URLSearchParams(router.query as Record<string, string>);
-
-    query.set(
-      "provider",
-      String(PROVIDERS.findIndex((po) => po.id === newProvider.id))
-    );
-
-    router.push(`/?${query.toString()}`, undefined, { shallow: true });
-    setSearchQuery("");
-  }
 
   const [infiniteScrollLoadingRef, { rootRef: infiniteScrollScrollRef }] =
     useInfiniteScroll({

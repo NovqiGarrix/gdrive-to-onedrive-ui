@@ -12,6 +12,7 @@ module.exports = {
         fontGray: "#8B9AB1",
         fontGray2: "#798AA5",
         fontBlack: "#0F172A",
+        fontBlack2: "#313133",
         purple: "#725DFF",
         youngPrimary: "#E5EEFB"
       }

@@ -1,27 +1,78 @@
-import { useQuery } from "@tanstack/react-query";
-import { Dispatch, FunctionComponent, SetStateAction } from "react";
-import { HttpErrorExeption } from "../exeptions/httpErrorExeption";
-import FolderIcon from "../icons/FolderIcon";
 import {
+  FunctionComponent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+
+import { useRouter } from "next/router";
+import { useQuery } from "@tanstack/react-query";
+
+import type {
   GetFilesFuncParams,
   GetFilesReturn,
   GlobalItemTypes,
-  ProviderObject,
 } from "../types";
+import FolderIcon from "../icons/FolderIcon";
+import { HttpErrorExeption } from "../exeptions/httpErrorExeption";
+
+import onedriveApi from "../apis/onedrive.api";
+import googledriveApi from "../apis/googledrive.api";
+import googlephotosApi from "../apis/googlephotos.api";
+
+import useSearchQuery from "../hooks/useSearchQuery";
+import useProviderPath from "../hooks/useProviderPath";
+import useCloudProvider from "../hooks/useCloudProvider";
+
 import LoadingIcon from "./LoadingIcon";
+import classNames from "../utils/classNames";
 
-interface IFoldersProps {
-  query: string;
-  path: string | undefined;
-  provider: ProviderObject;
-  setPath: (path: string | undefined) => void;
-  getFiles: (params: GetFilesFuncParams) => Promise<GetFilesReturn>;
-}
+const Folders: FunctionComponent = () => {
+  const router = useRouter();
 
-const Folders: FunctionComponent<IFoldersProps> = (props) => {
-  const { path, provider, getFiles, setPath, query } = props;
+  const path = useProviderPath((s) => s.path);
+  const setPath = useProviderPath((s) => s.setPath);
 
+  const query = useSearchQuery((s) => s.debounceQuery);
+  const provider = useCloudProvider((s) => s.provider);
   const enabled = provider.id !== "google_photos";
+
+  const folderContainerRef = useRef<HTMLDivElement>(null);
+  const [selectedFolder, setSelectedFolder] = useState<GlobalItemTypes | null>(
+    null
+  );
+
+  const getFiles = useCallback(
+    (params: GetFilesFuncParams) => {
+      const { query, nextPageToken, path, filters, foldersOnly } = params;
+
+      switch (provider.id) {
+        case "google_drive":
+          return googledriveApi.getFiles({
+            query,
+            nextPageToken,
+            foldersOnly,
+            path,
+          });
+
+        case "google_photos":
+          return googlephotosApi.getFiles(nextPageToken, filters);
+
+        case "onedrive":
+          return onedriveApi.getFiles({
+            query,
+            nextPageToken,
+            path,
+            foldersOnly,
+          });
+
+        default:
+          throw new Error("Invalid Provider!");
+      }
+    },
+    [provider.id]
+  );
 
   const { isLoading, isError, error, isFetching, data } = useQuery<
     GetFilesReturn,
@@ -35,40 +86,64 @@ const Folders: FunctionComponent<IFoldersProps> = (props) => {
     refetchOnWindowFocus: process.env.NODE_ENV === "production",
   });
 
-  function onDoubleClick(folder: GlobalItemTypes) {
-    setPath(
-      path
-        ? `${path}/${folder.name}~${folder.id}`
-        : `/${folder.name}~${folder.id}`
+  async function onDoubleClick(folder: GlobalItemTypes) {
+    const newPath = path
+      ? `${path}/${folder.name}~${folder.id}`
+      : `/${folder.name}~${folder.id}`;
+
+    const urlParams = new URLSearchParams(
+      router.query as Record<string, string>
     );
+    urlParams.set("path", newPath);
+
+    await router.push(`/`, `/?${urlParams.toString()}`, {
+      shallow: true,
+    });
+    setPath(newPath);
   }
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        folderContainerRef.current &&
+        !folderContainerRef.current.contains(event.target as Node)
+      )
+        setSelectedFolder(null);
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   if (!enabled || (!data?.files.length && !isLoading)) return null;
 
   return (
-    <div className="mt-5 w-full">
-      <div className="flex items-start space-x-3">
-        <h2 className="text-dark font-medium mb-2">Folders</h2>
-        {isFetching ? (
-          <LoadingIcon fill="rgb(101 110 127, 1)" className="w-4 h-4 mt-1" />
-        ) : null}
+    <div className="w-full mt-[42px]">
+      <div className="flex items-center space-x-3">
+        <h2 className="font-medium font-inter text-fontBlack2 text-2xl">
+          Folders
+        </h2>
+        {isFetching ? <LoadingIcon fill="#313132" className="w-4 h-4" /> : null}
       </div>
 
       {isLoading ? (
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-5 gap-5 mt-[30px]">
           {Array(12)
             .fill(0)
             .map((_, i) => (
-              <div key={i} className="rounded-lg bg-indigo-50/60">
-                <div className="animate-pulse flex items-center p-2.5 space-x-2">
-                  <div className="w-5 h-5 bg-gray-300 flex-shrink-0 rounded-full"></div>
-                  <div className="w-full h-2 bg-gray-300 rounded"></div>
+              <div key={i} className="rounded-lg bg-youngPrimary/60">
+                <div className="animate-pulse rounded-[10px] bg-youngPrimary/60 flex items-center p-4">
+                  <div className="w-5 h-5 bg-gray-300/80 flex-shrink-0 rounded-full"></div>
+                  <div className="ml-4 w-full h-2 bg-gray-300/80 rounded"></div>
                 </div>
               </div>
             ))}
         </div>
-      ) : isError ? (
-        <div className="w-full">
+      ) : isError && error?.message !== "Unauthorized" ? (
+        <div className="w-full mt-[30px]">
           <h2 className="text-error text-sm font-medium mb-2 flex items-center space-x-1">
             <p>{error?.message}</p>
             <svg
@@ -88,21 +163,30 @@ const Folders: FunctionComponent<IFoldersProps> = (props) => {
           </h2>
         </div>
       ) : (
-        <div className="grid grid-cols-4 gap-3">
+        <div
+          ref={folderContainerRef}
+          className="grid grid-cols-5 gap-5 mt-[30px]"
+        >
           {data?.files.map((folder) => (
             <button
               type="button"
               key={folder.id}
+              onClick={() => setSelectedFolder(folder)}
               onDoubleClick={() => onDoubleClick(folder)}
-              className="flex items-center p-2.5 space-x-2 rounded-lg bg-indigo-50/60 hover:bg-indigo-100/50 focus:bg-indigo-100/90"
+              className={classNames(
+                "rounded-[10px] flex items-center p-4",
+                selectedFolder?.id === folder.id
+                  ? "bg-primary/20"
+                  : "bg-youngPrimary/60 hover:bg-gray-200"
+              )}
             >
               <FolderIcon
-                className="flex-shrink-0"
-                fill="rgb(102 110 127 / 1)"
                 width={23}
                 height={23}
+                fill="#313133"
+                className="flex-shrink-0"
               />
-              <span className="text-darken text-ellipsis overflow-hidden whitespace-nowrap group-focus:text-indigo-700 font-medium text-xs">
+              <span className="ml-3 font-inter font-medium text-sm text-ellipsis overflow-hidden whitespace-nowrap">
                 {folder.name}
               </span>
             </button>

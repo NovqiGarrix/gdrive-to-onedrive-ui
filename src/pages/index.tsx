@@ -1,14 +1,40 @@
 import type { GetServerSideProps, NextPage } from "next";
 
 import Head from "next/head";
+import { useEffect } from "react";
 
 import authApi from "../apis/auth.api";
-import { Navbar, Sidebar, UploadArea } from "../components";
+import { Navbar, Sidebar, UploadArea, Folders } from "../components";
 
 import { initializeCloudProvider } from "../hooks/useCloudProvider";
 import { initializedProviderPath } from "../hooks/useProviderPath";
 
-const Home: NextPage = () => {
+interface IHomePageProps {
+  path: string | null;
+  provider: string | null;
+}
+
+const Home: NextPage<IHomePageProps> = (props) => {
+  const { path, provider } = props;
+
+  useEffect(() => {
+    /**
+     * This hook just initializes the state of the provider and path
+     * from the query params
+     *
+     * That's all it is
+     */
+
+    initializeCloudProvider(provider);
+    initializedProviderPath(path);
+
+    /**
+     * Don't want to manage the state when the provider and path changes
+     * Instead, the state will be managed by the useCloudProvider and useProviderPath hooks
+     */
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <main className="bg-white pb-8 relative inline-flex w-full">
       <Head>
@@ -21,6 +47,7 @@ const Home: NextPage = () => {
       <div className="py-[40px] pl-[42px] pr-[35px] w-full">
         <Navbar />
         <UploadArea />
+        <Folders />
       </div>
     </main>
   );
@@ -50,12 +77,11 @@ export const getServerSideProps: GetServerSideProps = async ({
       }
     });
 
-    initializeCloudProvider(query.provider as string);
-    initializedProviderPath(query.provider_path as string);
-
     return {
       props: {
         me,
+        path: query.path || null,
+        provider: query.provider || null,
       },
     };
   } catch (error: any) {
