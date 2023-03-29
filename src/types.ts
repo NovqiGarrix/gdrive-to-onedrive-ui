@@ -17,6 +17,7 @@ export interface GlobalItemTypes {
     downloadUrl: string;
 
     image?: string;
+    mimeType?: string;
 }
 
 export interface GetFilesReturn {

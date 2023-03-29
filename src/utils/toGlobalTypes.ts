@@ -13,10 +13,11 @@ export default function toGlobalTypes(data: any, provider: Provider): GlobalItem
                 from: provider,
                 name: d.name,
                 type: isFolder ? 'folder' : 'file',
+                mimeType: d.mimeType,
                 webUrl: d.webViewLink,
-                image: d.thumbnailLink,
+                image: d.mimeType.includes("image") ? d.webContentLink : d.hasThumbnail ? d.thumbnailLink : undefined,
                 iconLink: getIconExtensionUrl(d.name),
-                downloadUrl: d.webContentLink
+                downloadUrl: d.webContentLink,
             }
         }
 
@@ -29,7 +30,7 @@ export default function toGlobalTypes(data: any, provider: Provider): GlobalItem
                 name: d.filename,
                 webUrl: d.productUrl,
                 iconLink: getIconExtensionUrl(d.filename),
-                image: `${d.baseUrl}=w500-h500`,
+                image: `${d.baseUrl}=w800-h800`,
                 downloadUrl: `${d.baseUrl}=d`
             }
         }

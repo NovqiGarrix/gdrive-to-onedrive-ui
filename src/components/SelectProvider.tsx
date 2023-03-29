@@ -1,19 +1,35 @@
 import { FunctionComponent, Fragment } from "react";
 
 import Image from "next/image";
+import { useRouter } from "next/router";
+
 import { Listbox, Transition } from "@headlessui/react";
 import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/20/solid";
 
 import { PROVIDERS } from "../constants";
 import classNames from "../utils/classNames";
+import type { ProviderObject } from "../types";
+
 import useCloudProvider from "../hooks/useCloudProvider";
 
 const SelectProvider: FunctionComponent = () => {
+  const router = useRouter();
+
   const selected = useCloudProvider((s) => s.provider);
   const setProvider = useCloudProvider((s) => s.setProvider);
 
+  async function onProviderChange(provider: ProviderObject) {
+    const queryParams = new URLSearchParams(
+      router.query as Record<string, string>
+    );
+    queryParams.set("provider", provider.id);
+
+    await router.push("/", `/?${queryParams.toString()}`, { shallow: true });
+    setProvider(provider);
+  }
+
   return (
-    <Listbox value={selected} onChange={setProvider}>
+    <Listbox value={selected} onChange={onProviderChange}>
       {({ open }) => (
         <>
           <div className="relative w-full mt-[30px] pl-[24px] pr-[34px]">

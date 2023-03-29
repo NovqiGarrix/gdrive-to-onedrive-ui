@@ -1,6 +1,5 @@
 import {
   DragEvent,
-  Fragment,
   FunctionComponent,
   useCallback,
   useEffect,
@@ -11,10 +10,12 @@ import {
   useMemo,
 } from "react";
 
-import { useRouter } from "next/router";
+import Link from "next/link";
+
 import { toast } from "react-hot-toast";
 import useInfiniteScroll from "react-infinite-scroll-hook";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import EllipsisHorizontalIcon from "@heroicons/react/20/solid/EllipsisHorizontalIcon";
 
 import type {
   GetFilesFuncParams,
@@ -24,28 +25,21 @@ import type {
   TranferFileSchema,
 } from "../types";
 import { PROVIDERS } from "../constants";
-import signInWithRedirectUrl from "../utils/signInWithRedirectUrl";
 import type { HttpErrorExeption } from "../exeptions/httpErrorExeption";
 
 import useSearchQuery from "../hooks/useSearchQuery";
 import useProviderPath from "../hooks/useProviderPath";
 import useSelectedFiles from "../hooks/useSelectedFiles";
+import useCloudProvider from "../hooks/useCloudProvider";
 import useGooglePhotosFilter from "../hooks/useGooglePhotosFilter";
 import useUploadInfoProgress from "../hooks/useUploadInfoProgress";
 import useDeleteFilesModalState from "../hooks/useDeleteFilesModalState";
 
-import authApi from "../apis/auth.api";
 import onedriveApi from "../apis/onedrive.api";
 import googledriveApi from "../apis/googledrive.api";
 import googlephotosApi from "../apis/googlephotos.api";
-
-import File from "./File";
-import Search from "./Search";
-import Folders from "./Folders";
-import LoadingIcon from "./LoadingIcon";
-import Breadcrumbs from "./Breadcrumbs";
-import SelectProvider from "./SelectProvider";
-import GooglePhotosFilter from "./GooglePhotosFilter";
+import Image from "next/legacy/image";
+import getIconExtensionUrl from "../utils/getIconExtensionUrl";
 
 interface IFilesContainerProps {
   provider: string;
@@ -54,8 +48,6 @@ interface IFilesContainerProps {
 const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
   const { provider: _providerId } = props;
 
-  const router = useRouter();
-
   const queryClient = useQueryClient();
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -63,11 +55,7 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
   const openModalFunc = useDeleteFilesModalState((s) => s.openModal);
 
   const providerPath = useProviderPath((s) => s.path);
-  const setProviderPath = useProviderPath((s) => s.setPath);
-
-  const [provider, setProvider] = useState(
-    PROVIDERS.find((p) => p.id === _providerId) || PROVIDERS[0]
-  );
+  const provider = useCloudProvider((s) => s.provider);
 
   const previousProvider = useRef<ProviderObject>(provider);
   const debounceQuery = useSearchQuery((s) => s.debounceQuery);
@@ -109,7 +97,6 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
     nextPageToken: undefined,
   });
 
-  const [authUrl, setAuthUrl] = useState("");
   const setShowUploadInfoProgress = useUploadInfoProgress((s) => s.setShow);
   const addUploadInfoProgress = useUploadInfoProgress(
     (s) => s.addUploadInfoProgress
@@ -162,22 +149,18 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
     },
 
     async onError(err) {
-      if (err.message === "Unauthorized") {
-        if (provider.id === "onedrive") {
-          const authURL = await authApi.getMicorosftAuthUrl();
-          setAuthUrl(authURL);
-        }
+      // if (err.message === "Unauthorized") {
+      //   if (provider.id === "onedrive") {
+      //     const authURL = await authApi.getMicorosftAuthUrl();
+      //     setAuthUrl(authURL);
+      //   }
 
-        return;
-      }
+      //   return;
+      // }
 
       toast.error(err.message, { id: "switching-provider" });
     },
   });
-
-  const onDragOver = useCallback((event: DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-  }, []);
 
   async function transferFileFunc(
     file: TranferFileSchema,
@@ -226,7 +209,7 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
     }
   }
 
-  async function onDrop(event: DragEvent<HTMLDivElement>) {
+  async function transferFile(event: DragEvent<HTMLDivElement>) {
     event.preventDefault();
     const randomId = Math.random().toString(36).substring(7);
     const transferFileToastId = `transfer-files-${randomId}`;
@@ -397,14 +380,13 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
     },
   });
 
-  const [infiniteScrollLoadingRef, { rootRef: infiniteScrollScrollRef }] =
-    useInfiniteScroll({
-      loading: isGettingMoreData,
-      hasNextPage: !!data.nextPageToken,
-      onLoadMore: getMoreData,
-      rootMargin: "0px 0px 1000px 0px",
-      disabled: isErrorGettingMoreData,
-    });
+  const [infiniteScrollLoadingRef] = useInfiniteScroll({
+    loading: isGettingMoreData,
+    hasNextPage: !!data.nextPageToken,
+    onLoadMore: getMoreData,
+    rootMargin: "0px 0px 2000px 0px",
+    disabled: isErrorGettingMoreData,
+  });
 
   const files = useMemo(() => {
     return debounceQuery
@@ -439,7 +421,95 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedFiles.length]);
 
-  return <div ref={containerRef}></div>;
+  return (
+    <div ref={containerRef} className="w-full">
+      <div className="w-full mt-[42px]">
+        <h2 className="font-medium font-inter text-fontBlack2 text-2xl">
+          Files
+        </h2>
+
+        {isLoading ? (
+          <div className="grid grid-cols-4 gap-5 mt-[30px]">
+            {Array(7)
+              .fill(0)
+              .map((_, i) => (
+                <div key={i} className="animate-pulse">
+                  {/* The Image Container */}
+                  <div className="bg-[#F4F6F6] rounded-[10px] pt-[15px] px-[15px] h-[230px]"></div>
+
+                  <div className="mt-[22px]">
+                    {/* The filename and the options button */}
+                    <div className="flex items-center justify-between">
+                      <div className="w-10/12 h-2 rounded bg-gray-300/80"></div>
+                      <EllipsisHorizontalIcon className="w-5 h-5 text-fontBlack flex-shrink-0" />
+                    </div>
+
+                    <p className="mt-4 w-1/2 h-2 rounded bg-gray-200"></p>
+                  </div>
+                </div>
+              ))}
+          </div>
+        ) : isError ? (
+          <div></div>
+        ) : (
+          <div className="grid grid-cols-4 gap-5 mt-[30px]">
+            {files.map((file) => (
+              <div key={file.id} className="mb-2">
+                {/* The Image Container */}
+                <div className="bg-[#F4F6F6] flex items-center justify-center rounded-[10px] pt-[15px] px-[15px] h-[230px] overflow-hidden">
+                  {file.image ? (
+                    // Do not cache the image in CDN (Privacy concern). That's why we don't use next/image
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      alt={file.name}
+                      loading="lazy"
+                      src={file.image}
+                      className="object-cover rounded-t-[10px] w-full h-full"
+                    />
+                  ) : (
+                    <Image
+                      src={getIconExtensionUrl(file.name, file.mimeType)}
+                      alt={`${file.name} icon`}
+                      width={50}
+                      height={50}
+                      loading="lazy"
+                    />
+                  )}
+                </div>
+
+                <div className="mt-[22px]">
+                  {/* The filename and the options button */}
+                  <div className="flex items-center justify-between">
+                    <Link
+                      passHref
+                      target="_blank"
+                      href={file.webUrl}
+                      referrerPolicy="no-referrer"
+                      className="w-[85%] text-base font-medium font-inter text-ellipsis overflow-hidden whitespace-nowrap"
+                    >
+                      {file.name}
+                    </Link>
+                    <button type="button">
+                      <EllipsisHorizontalIcon
+                        aria-hidden="true"
+                        className="w-5 h-5 text-fontBlack flex-shrink-0"
+                      />
+                    </button>
+                  </div>
+
+                  <p className="mt-3 text-sm font-medium text-[#8B9AB1]">
+                    Uploaded 10m ago
+                  </p>
+                </div>
+              </div>
+            ))}
+            {/* End of element. Use for infinite scrolling */}
+            <div ref={infiniteScrollLoadingRef}></div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 };
 
 export default FilesContainer;

@@ -4,7 +4,13 @@ import Head from "next/head";
 import { useEffect } from "react";
 
 import authApi from "../apis/auth.api";
-import { Navbar, Sidebar, UploadArea, Folders } from "../components";
+import {
+  Navbar,
+  Sidebar,
+  UploadArea,
+  Folders,
+  FilesContainerWrapper,
+} from "../components";
 
 import { initializeCloudProvider } from "../hooks/useCloudProvider";
 import { initializedProviderPath } from "../hooks/useProviderPath";
@@ -48,6 +54,7 @@ const Home: NextPage<IHomePageProps> = (props) => {
         <Navbar />
         <UploadArea />
         <Folders />
+        <FilesContainerWrapper />
       </div>
     </main>
   );

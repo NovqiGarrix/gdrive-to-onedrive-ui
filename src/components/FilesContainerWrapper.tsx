@@ -51,10 +51,7 @@ const FilesContainerWrapper: FunctionComponent = () => {
   }, [cleanSelectedFiles, selectedFiles.length]);
 
   return (
-    <div
-      ref={ref}
-      className="flex relative flex-col space-y-5 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-3 lg:divide-x lg:divide-bg"
-    >
+    <div ref={ref} className="w-full">
       <FilesContainer provider={cloudProvider.id} />
     </div>
   );
