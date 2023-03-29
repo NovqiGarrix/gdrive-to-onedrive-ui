@@ -1,20 +1,24 @@
-import { useState, useEffect } from 'react';
+import { create } from 'zustand';
 
-export default function useSearchQuery() {
+interface IUseSearchQuery {
+    query: string;
+    setQuery: (query: string) => void;
 
-    const [searchQuery, setSearchQuery] = useState('');
-    const [debounceQuery, setDebounceQuery] = useState('');
-
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            setDebounceQuery(searchQuery);
-        }, 300);
-
-        return () => {
-            clearTimeout(timer);
-        };
-    }, [searchQuery]);
-
-    return { searchQuery, setSearchQuery, debounceQuery };
-
+    debounceQuery: string;
+    setDebounceQuery: (query: string) => void;
 }
+
+const useSearchQuery = create<IUseSearchQuery>((set) => ({
+    query: '',
+
+    setQuery(query: string) {
+        set({ query });
+    },
+
+    debounceQuery: '',
+    setDebounceQuery(query: string) {
+        set({ debounceQuery: query });
+    }
+}));
+
+export default useSearchQuery;

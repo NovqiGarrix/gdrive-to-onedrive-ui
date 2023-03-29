@@ -10,15 +10,17 @@ import { initializedProviderPath } from "../hooks/useProviderPath";
 
 const Home: NextPage = () => {
   return (
-    <main className="bg-white pb-8 relative">
+    <main className="bg-white pb-8 relative inline-flex w-full">
       <Head>
         <title>infile.io | Manage your files in one place</title>
         <meta name="description" content="Manage your files in one place" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <Navbar />
       <Sidebar />
+      <div className="py-[40px] pl-[42px] pr-[35px] w-full">
+        <Navbar />
+      </div>
     </main>
   );
 };

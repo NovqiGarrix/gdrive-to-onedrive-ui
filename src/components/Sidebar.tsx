@@ -93,7 +93,7 @@ const EachMenuList: FunctionComponent<typeof generalMenus[number]> = (
 
 const Sidebar: FunctionComponent<ISidebarProps> = (props) => {
   return (
-    <section className="w-[294px] merah min-h-screen h-full border-r border-[#E2E3E5] py-[50px]">
+    <section className="w-[294px] flex-shrink-0 min-h-screen h-full border-r border-[#E2E3E5] py-[40px]">
       {/* Company Logo and Name */}
       <div className="px-[34px] flex items-center">
         <div className="w-[50px] h-[50px] rounded-full overflow-hidden">
