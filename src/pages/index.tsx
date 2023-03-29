@@ -3,15 +3,14 @@ import type { GetServerSideProps, NextPage } from "next";
 import Head from "next/head";
 
 import authApi from "../apis/auth.api";
-
-import { FilesContainerWrapper, Navbar } from "../components";
+import { Navbar, Sidebar } from "../components";
 
 import { initializeCloudProvider } from "../hooks/useCloudProvider";
 import { initializedProviderPath } from "../hooks/useProviderPath";
 
 const Home: NextPage = () => {
   return (
-    <main className="bg-bg pb-8 relative">
+    <main className="bg-white pb-8 relative">
       <Head>
         <title>infile.io | Manage your files in one place</title>
         <meta name="description" content="Manage your files in one place" />
@@ -19,6 +18,7 @@ const Home: NextPage = () => {
       </Head>
 
       <Navbar />
+      <Sidebar />
     </main>
   );
 };
