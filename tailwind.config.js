@@ -13,10 +13,12 @@ module.exports = {
         fontGray2: "#798AA5",
         fontBlack: "#0F172A",
         purple: "#725DFF",
+        youngPrimary: "#E5EEFB"
       }
     },
     fontFamily: {
       poppins: ['"Poppins"'],
+      inter: ['"Inter"'],
     },
   },
   variants: {

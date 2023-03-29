@@ -3,7 +3,7 @@ import type { GetServerSideProps, NextPage } from "next";
 import Head from "next/head";
 
 import authApi from "../apis/auth.api";
-import { Navbar, Sidebar } from "../components";
+import { Navbar, Sidebar, UploadArea } from "../components";
 
 import { initializeCloudProvider } from "../hooks/useCloudProvider";
 import { initializedProviderPath } from "../hooks/useProviderPath";
@@ -20,6 +20,7 @@ const Home: NextPage = () => {
       <Sidebar />
       <div className="py-[40px] pl-[42px] pr-[35px] w-full">
         <Navbar />
+        <UploadArea />
       </div>
     </main>
   );
