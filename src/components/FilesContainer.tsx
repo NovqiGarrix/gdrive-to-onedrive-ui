@@ -40,6 +40,8 @@ import googledriveApi from "../apis/googledrive.api";
 import googlephotosApi from "../apis/googlephotos.api";
 import Image from "next/legacy/image";
 import getIconExtensionUrl from "../utils/getIconExtensionUrl";
+import useGetFiles from "../hooks/useGetFiles";
+import useGetFilesFunc from "./useGetFilesFunc";
 
 interface IFilesContainerProps {
   provider: string;
@@ -57,45 +59,23 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
   const providerPath = useProviderPath((s) => s.path);
   const provider = useCloudProvider((s) => s.provider);
 
-  const previousProvider = useRef<ProviderObject>(provider);
   const debounceQuery = useSearchQuery((s) => s.debounceQuery);
   const googlePhotosFilters = useGooglePhotosFilter((s) => s.formattedFilters);
-
-  const getFiles = useCallback(
-    (params: GetFilesFuncParams) => {
-      const { query, nextPageToken, path, filters, foldersOnly } = params;
-
-      switch (provider.id) {
-        case "google_drive":
-          return googledriveApi.getFiles({
-            query,
-            nextPageToken,
-            foldersOnly,
-            path,
-          });
-
-        case "google_photos":
-          return googlephotosApi.getFiles(nextPageToken, filters);
-
-        case "onedrive":
-          return onedriveApi.getFiles({
-            query,
-            nextPageToken,
-            path,
-            foldersOnly,
-          });
-
-        default:
-          throw new Error("Invalid Provider!");
-      }
-    },
-    [provider.id]
-  );
 
   const [data, setData] = useState<GetFilesReturn>({
     files: [],
     nextPageToken: undefined,
   });
+
+  const getFiles = useGetFilesFunc();
+
+  /**
+   * The reason, I pass getFiles to useGetFiles is
+   * because I want to avoid creating the function twice.
+   *
+   * In this component and in the useGetFiles hook
+   */
+  const { isLoading, isError } = useGetFiles(setData, getFiles);
 
   const setShowUploadInfoProgress = useUploadInfoProgress((s) => s.setShow);
   const addUploadInfoProgress = useUploadInfoProgress(
@@ -104,63 +84,6 @@ const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
   const updateUploadInfoProgress = useUploadInfoProgress(
     (s) => s.updateUploadInfoProgress
   );
-
-  const { isLoading, isError, error } = useQuery<
-    GetFilesReturn,
-    HttpErrorExeption
-  >({
-    queryFn: () =>
-      getFiles({
-        query: debounceQuery,
-        path: providerPath,
-        filters: googlePhotosFilters,
-      }),
-    queryKey: [
-      "files",
-      provider.id,
-      debounceQuery,
-      providerPath,
-      provider.id === "google_photos"
-        ? JSON.stringify(googlePhotosFilters)
-        : undefined,
-    ].filter(Boolean),
-    retry: false,
-    keepPreviousData: true,
-    refetchOnWindowFocus: process.env.NODE_ENV === "production",
-
-    behavior: {
-      onFetch() {
-        if (provider.id !== previousProvider.current.id) {
-          toast.loading(`Switching to ${provider.name}...`, {
-            id: "switching-provider",
-          });
-        }
-      },
-    },
-
-    onSuccess(data) {
-      setData(data);
-      if (provider.id !== previousProvider.current.id) {
-        previousProvider.current = provider;
-        toast.success(`Switched to ${provider.name}`, {
-          id: "switching-provider",
-        });
-      }
-    },
-
-    async onError(err) {
-      // if (err.message === "Unauthorized") {
-      //   if (provider.id === "onedrive") {
-      //     const authURL = await authApi.getMicorosftAuthUrl();
-      //     setAuthUrl(authURL);
-      //   }
-
-      //   return;
-      // }
-
-      toast.error(err.message, { id: "switching-provider" });
-    },
-  });
 
   async function transferFileFunc(
     file: TranferFileSchema,

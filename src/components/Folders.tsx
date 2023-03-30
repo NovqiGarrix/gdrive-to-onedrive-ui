@@ -1,27 +1,10 @@
-import {
-  FunctionComponent,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
-
+import { FunctionComponent, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
-import { useQuery } from "@tanstack/react-query";
 
-import type {
-  GetFilesFuncParams,
-  GetFilesReturn,
-  GlobalItemTypes,
-} from "../types";
 import FolderIcon from "../icons/FolderIcon";
-import { HttpErrorExeption } from "../exeptions/httpErrorExeption";
+import type { GlobalItemTypes } from "../types";
 
-import onedriveApi from "../apis/onedrive.api";
-import googledriveApi from "../apis/googledrive.api";
-import googlephotosApi from "../apis/googlephotos.api";
-
-import useSearchQuery from "../hooks/useSearchQuery";
+import useGetFolders from "../hooks/useGetFolders";
 import useProviderPath from "../hooks/useProviderPath";
 import useCloudProvider from "../hooks/useCloudProvider";
 
@@ -34,57 +17,16 @@ const Folders: FunctionComponent = () => {
   const path = useProviderPath((s) => s.path);
   const setPath = useProviderPath((s) => s.setPath);
 
-  const query = useSearchQuery((s) => s.debounceQuery);
-  const provider = useCloudProvider((s) => s.provider);
-  const enabled = provider.id !== "google_photos";
+  const providerId = useCloudProvider((s) => s.provider.id);
+  const enabled = providerId !== "google_photos";
 
   const folderContainerRef = useRef<HTMLDivElement>(null);
   const [selectedFolder, setSelectedFolder] = useState<GlobalItemTypes | null>(
     null
   );
 
-  const getFiles = useCallback(
-    (params: GetFilesFuncParams) => {
-      const { query, nextPageToken, path, filters, foldersOnly } = params;
-
-      switch (provider.id) {
-        case "google_drive":
-          return googledriveApi.getFiles({
-            query,
-            nextPageToken,
-            foldersOnly,
-            path,
-          });
-
-        case "google_photos":
-          return googlephotosApi.getFiles(nextPageToken, filters);
-
-        case "onedrive":
-          return onedriveApi.getFiles({
-            query,
-            nextPageToken,
-            path,
-            foldersOnly,
-          });
-
-        default:
-          throw new Error("Invalid Provider!");
-      }
-    },
-    [provider.id]
-  );
-
-  const { isLoading, isError, error, isFetching, data } = useQuery<
-    GetFilesReturn,
-    HttpErrorExeption
-  >({
-    queryFn: () => getFiles({ path, foldersOnly: true, query }),
-    queryKey: ["folders", provider.id, path, query],
-    retry: false,
-    enabled,
-    refetchOnMount: true,
-    refetchOnWindowFocus: process.env.NODE_ENV === "production",
-  });
+  const { isLoading, isError, error, isFetching, data } =
+    useGetFolders(enabled);
 
   async function onDoubleClick(folder: GlobalItemTypes) {
     const newPath = path

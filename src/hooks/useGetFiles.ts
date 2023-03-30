@@ -1,0 +1,83 @@
+import { Dispatch, SetStateAction, useRef } from "react";
+
+import toast from "react-hot-toast";
+import { useQuery } from "@tanstack/react-query";
+
+import useGetFilesFunc from "../components/useGetFilesFunc";
+import type { GetFilesReturn, ProviderObject } from "../types";
+import { HttpErrorExeption } from "../exeptions/httpErrorExeption";
+
+import useSearchQuery from "./useSearchQuery";
+import useProviderPath from "./useProviderPath";
+import useCloudProvider from "./useCloudProvider";
+import useGooglePhotosFilter from "./useGooglePhotosFilter";
+
+function useGetFiles(setData: Dispatch<SetStateAction<GetFilesReturn>>, getFiles: ReturnType<typeof useGetFilesFunc>) {
+
+    const providerPath = useProviderPath((s) => s.path);
+    const provider = useCloudProvider((s) => s.provider);
+    const debounceQuery = useSearchQuery((s) => s.debounceQuery);
+
+    const previousProvider = useRef<ProviderObject>(provider);
+    const googlePhotosFilters = useGooglePhotosFilter((s) => s.formattedFilters);
+
+    return useQuery<
+        GetFilesReturn,
+        HttpErrorExeption
+    >({
+        queryFn: () =>
+            getFiles({
+                query: debounceQuery,
+                path: providerPath,
+                filters: googlePhotosFilters,
+            }),
+        queryKey: [
+            "files",
+            provider.id,
+            debounceQuery,
+            providerPath,
+            provider.id === "google_photos"
+                ? JSON.stringify(googlePhotosFilters)
+                : undefined,
+        ].filter(Boolean),
+        retry: false,
+        keepPreviousData: true,
+        refetchOnWindowFocus: process.env.NODE_ENV === "production",
+
+        behavior: {
+            onFetch() {
+                if (provider.id !== previousProvider.current.id) {
+                    toast.loading(`Switching to ${provider.name}...`, {
+                        id: "switching-provider",
+                    });
+                }
+            },
+        },
+
+        onSuccess(data) {
+            setData(data);
+            if (provider.id !== previousProvider.current.id) {
+                previousProvider.current = provider;
+                toast.success(`Switched to ${provider.name}`, {
+                    id: "switching-provider",
+                });
+            }
+        },
+
+        async onError(err) {
+            // if (err.message === "Unauthorized") {
+            //   if (provider.id === "onedrive") {
+            //     const authURL = await authApi.getMicorosftAuthUrl();
+            //     setAuthUrl(authURL);
+            //   }
+
+            //   return;
+            // }
+
+            toast.error(err.message, { id: "switching-provider" });
+        },
+    });
+
+}
+
+export default useGetFiles;
