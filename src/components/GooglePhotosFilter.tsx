@@ -1,5 +1,7 @@
-import { FunctionComponent } from "react";
+import type { FunctionComponent } from "react";
+import { shallow } from "zustand/shallow";
 
+import useGetFiles from "../hooks/useGetFiles";
 import useGooglePhotosFilter from "../hooks/useGooglePhotosFilter";
 
 import LoadingIcon from "./LoadingIcon";
@@ -8,31 +10,33 @@ import GooglePhotosDateRanges from "./GooglePhotosDateRanges";
 import GooglePhotosFeatureFilter from "./GooglePhotosFeatureFilter";
 import GooglePhotosContentCategories from "./GooglePhotosContentCategories";
 
-interface IGooglePhotosFilterProps {
-  isLoading: boolean;
-}
-
-const GooglePhotosFilter: FunctionComponent<IGooglePhotosFilterProps> = (
-  props
-) => {
-  const { isLoading } = props;
+const GooglePhotosFilter: FunctionComponent = () => {
+  // I guest the loading is not coming from here
+  const { isFetching } = useGetFiles();
 
   const includeArchivedMedia = useGooglePhotosFilter(
     (s) => s.isIncludeArchived
   );
-  const endDate = useGooglePhotosFilter((s) => s.endDate);
-  const startDate = useGooglePhotosFilter((s) => s.startDate);
-  const mediaTypes = useGooglePhotosFilter((s) => s.mediaTypeFilter);
-  const contentCategories = useGooglePhotosFilter((s) => s.contentFilter);
+  const endDate = useGooglePhotosFilter((s) => s.endDate, shallow);
+  const startDate = useGooglePhotosFilter((s) => s.startDate, shallow);
+  const mediaTypes = useGooglePhotosFilter((s) => s.mediaTypeFilter, shallow);
+  const contentCategories = useGooglePhotosFilter(
+    (s) => s.contentFilter,
+    shallow
+  );
   const onlyFavorites = useGooglePhotosFilter((s) => s.onlyFavorites);
 
+  const googlePhotosFilters = useGooglePhotosFilter(
+    (s) => s.formattedFilters,
+    shallow
+  );
   const setFormmatedFilters = useGooglePhotosFilter(
     (s) => s.setFormmatedFilters
   );
 
-  function onSubmit() {
-    console.log({ startDate, endDate });
+  const isLoading = Boolean(isFetching && googlePhotosFilters);
 
+  function onSubmit() {
     setFormmatedFilters({
       contentCategories,
       dateRanges: {
@@ -46,7 +50,7 @@ const GooglePhotosFilter: FunctionComponent<IGooglePhotosFilterProps> = (
   }
 
   return (
-    <div className="grid grid-cols-3 gap-3 items-center">
+    <div className="grid grid-cols-3 gap-3 items-center w-full">
       {/* Content Categories */}
       <GooglePhotosContentCategories />
 
@@ -62,7 +66,7 @@ const GooglePhotosFilter: FunctionComponent<IGooglePhotosFilterProps> = (
       {/* Submit Button */}
       <button
         type="button"
-        disabled={isLoading}
+        disabled={isFetching}
         onClick={onSubmit}
         className="group relative flex w-full justify-center rounded-md bg-indigo-600 py-2 px-3 text-sm font-semibold text-white hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-70 disabled:cursor-not-allowed"
       >

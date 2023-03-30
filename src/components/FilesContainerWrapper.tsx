@@ -1,8 +1,8 @@
 import { FunctionComponent, useEffect, useRef } from "react";
+import { shallow } from "zustand/shallow";
 
 import useBeforeUnload from "../hooks/useBeforeUnload";
 import useSelectedFiles from "../hooks/useSelectedFiles";
-import useCloudProvider from "../hooks/useCloudProvider";
 import useUploadInfoProgress from "../hooks/useUploadInfoProgress";
 
 import FilesContainer from "./FilesContainer";
@@ -10,11 +10,12 @@ import FilesContainer from "./FilesContainer";
 const FilesContainerWrapper: FunctionComponent = () => {
   const ref = useRef<HTMLDivElement>(null);
 
-  const cloudProvider = useCloudProvider((s) => s.provider);
-
-  const selectedFiles = useSelectedFiles((s) => s.files);
+  const selectedFiles = useSelectedFiles((s) => s.files, shallow);
   const cleanSelectedFiles = useSelectedFiles((s) => s.cleanFiles);
-  const uploadInfoProgress = useUploadInfoProgress((s) => s.uploadInfoProgress);
+  const uploadInfoProgress = useUploadInfoProgress(
+    (s) => s.uploadInfoProgress,
+    shallow
+  );
 
   useBeforeUnload(() => {
     uploadInfoProgress.forEach(({ abortController }) => {
@@ -52,7 +53,7 @@ const FilesContainerWrapper: FunctionComponent = () => {
 
   return (
     <div ref={ref} className="w-full">
-      <FilesContainer provider={cloudProvider.id} />
+      <FilesContainer />
     </div>
   );
 };

@@ -1,18 +1,24 @@
 import { FunctionComponent } from "react";
+import { shallow } from "zustand/shallow";
 
 import Image from "next/legacy/image";
 import { useRouter } from "next/router";
 import { BellIcon } from "@heroicons/react/24/outline";
 
 import authApi from "../apis/auth.api";
+
 import useUser from "../hooks/useUser";
+import useCloudProvider from "../hooks/useCloudProvider";
 
 import Search from "./Search";
+import GooglePhotosFilter from "./GooglePhotosFilter";
+import classNames from "../utils/classNames";
 
 const Navbar: FunctionComponent = () => {
   const router = useRouter();
 
-  const user = useUser((state) => state.user);
+  const user = useUser((state) => state.user, shallow);
+  const provider = useCloudProvider((s) => s.provider, shallow);
 
   async function logout() {
     try {
@@ -24,10 +30,15 @@ const Navbar: FunctionComponent = () => {
   }
 
   return (
-    <div className="w-full flex items-center">
-      <Search />
+    <div
+      className={classNames(
+        "w-full flex",
+        provider.id !== "google_photos" ? "items-center" : "items-start"
+      )}
+    >
+      {provider.id !== "google_photos" ? <Search /> : <GooglePhotosFilter />}
 
-      <div className="flex items-center ml-[42px] w-full">
+      <div className="flex items-center ml-[42px] max-w-[30%] w-full">
         <button type="button" className="relative">
           <div className="w-2.5 h-2.5 rounded-full bg-purple absolute -top-1 -right-2"></div>
           <BellIcon className="w-7 h-7 text-fontBlack" aria-hidden="true" />

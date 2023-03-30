@@ -1,6 +1,7 @@
 import { Fragment, FunctionComponent, useCallback, useRef } from "react";
 
 import { toast } from "react-hot-toast";
+import { shallow } from "zustand/shallow";
 import { Dialog, Transition } from "@headlessui/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
@@ -28,7 +29,7 @@ const DeleteFilesModal: FunctionComponent = () => {
     (state) => state.debounceQuery
   );
 
-  const selectedFiles = useSelectedFiles((s) => s.files);
+  const selectedFiles = useSelectedFiles((s) => s.files, shallow);
   const cleanSelectedFiles = useSelectedFiles((s) => s.cleanFiles);
 
   const deleteFileFunc = useCallback(

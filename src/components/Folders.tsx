@@ -1,5 +1,7 @@
 import { FunctionComponent, useEffect, useRef, useState } from "react";
+
 import { useRouter } from "next/router";
+import { shallow } from "zustand/shallow";
 
 import FolderIcon from "../icons/FolderIcon";
 import type { GlobalItemTypes } from "../types";
@@ -17,8 +19,8 @@ const Folders: FunctionComponent = () => {
   const path = useProviderPath((s) => s.path);
   const setPath = useProviderPath((s) => s.setPath);
 
-  const providerId = useCloudProvider((s) => s.provider.id);
-  const enabled = providerId !== "google_photos";
+  const provider = useCloudProvider((s) => s.provider, shallow);
+  const enabled = provider.id !== "google_photos";
 
   const folderContainerRef = useRef<HTMLDivElement>(null);
   const [selectedFolder, setSelectedFolder] = useState<GlobalItemTypes | null>(

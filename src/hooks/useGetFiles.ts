@@ -1,6 +1,7 @@
-import { Dispatch, SetStateAction, useRef } from "react";
+import { useRef, useState } from "react";
 
 import toast from "react-hot-toast";
+import { shallow } from "zustand/shallow";
 import { useQuery } from "@tanstack/react-query";
 
 import useGetFilesFunc from "../components/useGetFilesFunc";
@@ -12,16 +13,23 @@ import useProviderPath from "./useProviderPath";
 import useCloudProvider from "./useCloudProvider";
 import useGooglePhotosFilter from "./useGooglePhotosFilter";
 
-function useGetFiles(setData: Dispatch<SetStateAction<GetFilesReturn>>, getFiles: ReturnType<typeof useGetFilesFunc>) {
+function useGetFiles() {
+
+    const getFiles = useGetFilesFunc();
+
+    const [data, setData] = useState<GetFilesReturn>({
+        files: [],
+        nextPageToken: undefined,
+    });
 
     const providerPath = useProviderPath((s) => s.path);
-    const provider = useCloudProvider((s) => s.provider);
+    const provider = useCloudProvider((s) => s.provider, shallow);
     const debounceQuery = useSearchQuery((s) => s.debounceQuery);
 
     const previousProvider = useRef<ProviderObject>(provider);
-    const googlePhotosFilters = useGooglePhotosFilter((s) => s.formattedFilters);
+    const googlePhotosFilters = useGooglePhotosFilter((s) => s.formattedFilters, shallow);
 
-    return useQuery<
+    const { isLoading, isError, error, isFetching } = useQuery<
         GetFilesReturn,
         HttpErrorExeption
     >({
@@ -77,6 +85,16 @@ function useGetFiles(setData: Dispatch<SetStateAction<GetFilesReturn>>, getFiles
             toast.error(err.message, { id: "switching-provider" });
         },
     });
+
+    return {
+        data,
+        setData,
+
+        error,
+        isError,
+        isLoading,
+        isFetching,
+    }
 
 }
 

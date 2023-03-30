@@ -1,5 +1,6 @@
 import { FunctionComponent, useState } from "react";
 
+import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/router";
 
@@ -13,9 +14,7 @@ import SolidCog from "@heroicons/react/24/solid/Cog6ToothIcon";
 import OutlineCog from "@heroicons/react/24/outline/Cog6ToothIcon";
 
 import classNames from "../utils/classNames";
-import Link from "next/link";
 import SelectProvider from "./SelectProvider";
-import useCloudProvider from "../hooks/useCloudProvider";
 
 interface ISidebarProps {}
 

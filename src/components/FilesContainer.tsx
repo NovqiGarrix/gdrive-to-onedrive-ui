@@ -1,32 +1,26 @@
 import {
   DragEvent,
   FunctionComponent,
-  useCallback,
   useEffect,
   useRef,
-  useState,
   // @ts-ignore - No types
   experimental_useEffectEvent as useEffectEvent,
   useMemo,
 } from "react";
 
 import Link from "next/link";
+import Image from "next/legacy/image";
+import { shallow } from "zustand/shallow";
 
 import { toast } from "react-hot-toast";
 import useInfiniteScroll from "react-infinite-scroll-hook";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import EllipsisHorizontalIcon from "@heroicons/react/20/solid/EllipsisHorizontalIcon";
 
-import type {
-  GetFilesFuncParams,
-  GetFilesReturn,
-  Provider,
-  ProviderObject,
-  TranferFileSchema,
-} from "../types";
 import { PROVIDERS } from "../constants";
-import type { HttpErrorExeption } from "../exeptions/httpErrorExeption";
+import type { Provider, TranferFileSchema } from "../types";
 
+import useGetFiles from "../hooks/useGetFiles";
 import useSearchQuery from "../hooks/useSearchQuery";
 import useProviderPath from "../hooks/useProviderPath";
 import useSelectedFiles from "../hooks/useSelectedFiles";
@@ -36,46 +30,28 @@ import useUploadInfoProgress from "../hooks/useUploadInfoProgress";
 import useDeleteFilesModalState from "../hooks/useDeleteFilesModalState";
 
 import onedriveApi from "../apis/onedrive.api";
-import googledriveApi from "../apis/googledrive.api";
-import googlephotosApi from "../apis/googlephotos.api";
-import Image from "next/legacy/image";
 import getIconExtensionUrl from "../utils/getIconExtensionUrl";
-import useGetFiles from "../hooks/useGetFiles";
+
 import useGetFilesFunc from "./useGetFilesFunc";
 
-interface IFilesContainerProps {
-  provider: string;
-}
-
-const FilesContainer: FunctionComponent<IFilesContainerProps> = (props) => {
-  const { provider: _providerId } = props;
-
+const FilesContainer: FunctionComponent = () => {
   const queryClient = useQueryClient();
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const selectedFiles = useSelectedFiles((s) => s.files);
+  const selectedFiles = useSelectedFiles((s) => s.files, shallow);
   const openModalFunc = useDeleteFilesModalState((s) => s.openModal);
 
   const providerPath = useProviderPath((s) => s.path);
   const provider = useCloudProvider((s) => s.provider);
 
   const debounceQuery = useSearchQuery((s) => s.debounceQuery);
-  const googlePhotosFilters = useGooglePhotosFilter((s) => s.formattedFilters);
-
-  const [data, setData] = useState<GetFilesReturn>({
-    files: [],
-    nextPageToken: undefined,
-  });
+  const googlePhotosFilters = useGooglePhotosFilter(
+    (s) => s.formattedFilters,
+    shallow
+  );
 
   const getFiles = useGetFilesFunc();
-
-  /**
-   * The reason, I pass getFiles to useGetFiles is
-   * because I want to avoid creating the function twice.
-   *
-   * In this component and in the useGetFiles hook
-   */
-  const { isLoading, isError } = useGetFiles(setData, getFiles);
+  const { isLoading, isError, data, setData } = useGetFiles();
 
   const setShowUploadInfoProgress = useUploadInfoProgress((s) => s.setShow);
   const addUploadInfoProgress = useUploadInfoProgress(

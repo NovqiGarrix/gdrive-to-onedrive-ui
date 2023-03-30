@@ -2,6 +2,7 @@ import { FunctionComponent, Fragment } from "react";
 
 import Image from "next/image";
 import { useRouter } from "next/router";
+import { shallow } from "zustand/shallow";
 
 import { Listbox, Transition } from "@headlessui/react";
 import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/20/solid";
@@ -15,7 +16,7 @@ import useCloudProvider from "../hooks/useCloudProvider";
 const SelectProvider: FunctionComponent = () => {
   const router = useRouter();
 
-  const selected = useCloudProvider((s) => s.provider);
+  const selected = useCloudProvider((s) => s.provider, shallow);
   const setProvider = useCloudProvider((s) => s.setProvider);
 
   async function onProviderChange(provider: ProviderObject) {

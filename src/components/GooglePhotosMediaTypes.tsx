@@ -1,6 +1,7 @@
 import { Fragment, FunctionComponent } from "react";
 
 import toast from "react-hot-toast";
+import { shallow } from "zustand/shallow";
 import { useQuery } from "@tanstack/react-query";
 
 import googlephotosApi from "../apis/googlephotos.api";
@@ -28,8 +29,11 @@ const GooglePhotosMediaTypes: FunctionComponent = () => {
     },
   });
 
-  const selectedData = useGooglePhotosFilter((s) => s.mediaTypeFilter);
-  const addSelectedData = useGooglePhotosFilter((s) => s.addMediaTypeFilter);
+  const selectedData = useGooglePhotosFilter((s) => s.mediaTypeFilter, shallow);
+  const addSelectedData = useGooglePhotosFilter(
+    (s) => s.addMediaTypeFilter,
+    shallow
+  );
   const removeSelectedData = useGooglePhotosFilter(
     (s) => s.removeMediaTypeFilter
   );

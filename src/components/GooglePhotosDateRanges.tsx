@@ -1,15 +1,16 @@
 import { FunctionComponent, useMemo } from "react";
 
+import { shallow } from "zustand/shallow";
 import Datepicker from "react-tailwindcss-datepicker";
 import type { DateValueType } from "react-tailwindcss-datepicker/dist/types";
 
 import useGooglePhotosFilter from "../hooks/useGooglePhotosFilter";
 
 const GooglePhotosDateRanges: FunctionComponent = () => {
-  const endDate = useGooglePhotosFilter((s) => s.endDate);
+  const endDate = useGooglePhotosFilter((s) => s.endDate, shallow);
   const setEndDate = useGooglePhotosFilter((s) => s.setEndDate);
 
-  const startDate = useGooglePhotosFilter((s) => s.startDate);
+  const startDate = useGooglePhotosFilter((s) => s.startDate, shallow);
   const setStartDate = useGooglePhotosFilter((s) => s.setStartDate);
 
   function onChange(value: DateValueType) {

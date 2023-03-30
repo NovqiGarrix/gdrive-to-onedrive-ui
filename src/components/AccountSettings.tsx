@@ -2,15 +2,18 @@ import { ChangeEvent, FunctionComponent } from "react";
 
 import Image from "next/image";
 import { toast } from "react-hot-toast";
+import { shallow } from "zustand/shallow";
 
 import useUser from "../hooks/useUser";
-
-import LinkedAccounts from "./LinkedAccounts";
 import userApi from "../apis/user.api";
 
+import LinkedAccounts from "./LinkedAccounts";
+
 const AccountSettings: FunctionComponent = () => {
-  const username = useUser((s) => s.user.name);
-  const profilePicture = useUser((s) => s.user.avatar);
+  const { username, profilePicture } = useUser(
+    (s) => ({ username: s.user.name, profilePicture: s.user.avatar }),
+    shallow
+  );
 
   const setUser = useUser((s) => s.setUser);
 
