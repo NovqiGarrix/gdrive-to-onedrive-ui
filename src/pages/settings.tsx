@@ -5,7 +5,7 @@ import Head from "next/head";
 
 import authApi from "../apis/auth.api";
 import classNames from "../utils/classNames";
-import { AccountSettings, Navbar } from "../components";
+import { AccountSettings } from "../components";
 
 const SettingsPage: NextPage = () => {
   const [currentSetting, setCurrentSetting] = useState(0);
@@ -26,8 +26,6 @@ const SettingsPage: NextPage = () => {
         <meta name="robots" content="noindex" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-
-      <Navbar />
 
       <div className="max-w-3xl w-full mx-auto pt-10">
         <div className="flex items-center space-x-4">
