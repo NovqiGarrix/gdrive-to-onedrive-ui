@@ -143,10 +143,43 @@ async function getLinkedAccounts(): Promise<Array<AccountObject>> {
 
 }
 
+async function getAccountInfo(accountId: string): Promise<AccountObject> {
+
+    const account = ACCOUNTS.find((account) => account.id === accountId);
+    if (!account) throw new Error('Invalid Account.');
+
+    try {
+
+        const resp = await fetch(`${API_URL}/api/${accountId}/auth/me`, defaultOptions);
+        const { errors } = await resp.json();
+
+        if (!resp.ok) {
+            if (resp.status === 401) {
+                return {
+                    ...account,
+                    isConnected: false
+                }
+            }
+
+            throw new HttpErrorExeption(resp.status, errors[0].error);
+        }
+
+        return {
+            ...account,
+            isConnected: true
+        }
+
+    } catch (error) {
+        throw handleHttpError(error);
+    }
+
+}
+
 // eslint-disable-next-line import/no-anonymous-default-export
 export default {
     getAuthURL,
     getMe, logout,
     getMicorosftAuthUrl,
-    logoutFromMicrosoft, getLinkedAccounts
+    logoutFromMicrosoft, getLinkedAccounts,
+    getAccountInfo
 }

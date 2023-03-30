@@ -1,13 +1,12 @@
 import { FunctionComponent } from "react";
 
 import Image from "next/image";
+import { toast } from "react-hot-toast";
 import { useRouter } from "next/router";
-import { useQuery } from "@tanstack/react-query";
 
 import authApi from "../apis/auth.api";
 import type { AccountObject } from "../types";
-import { HttpErrorExeption } from "../exeptions/httpErrorExeption";
-import { toast } from "react-hot-toast";
+import useGetLinkedAccounts from "../hooks/useGetLinkedAccounts";
 import signInWithRedirectUrl from "../utils/signInWithRedirectUrl";
 
 interface ILinkedAccountsProps {}
@@ -23,14 +22,7 @@ const LinkedAccounts: FunctionComponent<ILinkedAccountsProps> = (props) => {
     isError,
     error,
     refetch,
-  } = useQuery<Array<AccountObject>, HttpErrorExeption>({
-    queryKey: ["linkedAccounts"],
-    queryFn: authApi.getLinkedAccounts,
-
-    retry: false,
-    refetchOnMount: false,
-    refetchOnWindowFocus: process.env.NODE_ENV === "production",
-  });
+  } = useGetLinkedAccounts();
 
   async function connectOrDisconnect(account: AccountObject) {
     const TOAST_ID = "connectOrDisconnectAccount";

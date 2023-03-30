@@ -1,7 +1,7 @@
 import type { GetServerSideProps, NextPage } from "next";
 
 import Head from "next/head";
-import { useEffect } from "react";
+import { Fragment, useEffect } from "react";
 
 import authApi from "../apis/auth.api";
 import {
@@ -10,10 +10,14 @@ import {
   UploadArea,
   Folders,
   FilesContainerWrapper,
+  LoadingIcon,
+  DisconnectedProviderAccount,
+  DisconnectedProviderAccountError,
 } from "../components";
 
 import { initializeCloudProvider } from "../hooks/useCloudProvider";
 import { initializedProviderPath } from "../hooks/useProviderPath";
+import useGetProviderAccountInfo from "../hooks/useGetProviderAccountInfo";
 
 interface IHomePageProps {
   path: string | null;
@@ -22,6 +26,13 @@ interface IHomePageProps {
 
 const Home: NextPage<IHomePageProps> = (props) => {
   const { path, provider } = props;
+
+  const {
+    data: providerAccountInfo,
+    isLoading: isGettingProviderAccountInfo,
+    isError: isProviderAccountInfoError,
+    error: providerAccountInfoError,
+  } = useGetProviderAccountInfo();
 
   useEffect(() => {
     /**
@@ -52,9 +63,24 @@ const Home: NextPage<IHomePageProps> = (props) => {
       <Sidebar />
       <div className="py-[40px] pl-[42px] pr-[35px] w-full">
         <Navbar />
-        <UploadArea />
-        <Folders />
-        <FilesContainerWrapper />
+        {isGettingProviderAccountInfo ? (
+          <div className="w-full mt-[50px] min-h-[70vh] flex items-center justify-center">
+            {/* <div className="flex items-center justify-center flex-col"> */}
+            <LoadingIcon className="w-10 h-10" fill="rgb(114 93 255)" />
+            {/* </div> */}
+          </div>
+        ) : isProviderAccountInfoError ? (
+          <DisconnectedProviderAccountError error={providerAccountInfoError!} />
+        ) : !providerAccountInfo?.isConnected ? (
+          // Show some message and a button to connect the account
+          <DisconnectedProviderAccount accountInfo={providerAccountInfo!} />
+        ) : (
+          <Fragment>
+            <UploadArea />
+            <Folders />
+            <FilesContainerWrapper />
+          </Fragment>
+        )}
       </div>
     </main>
   );

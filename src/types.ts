@@ -130,6 +130,7 @@ export interface ProviderObject {
     id: Provider;
     name: string;
     image: string;
+    accountId: string;
 }
 
 export interface TranferFileSchema {

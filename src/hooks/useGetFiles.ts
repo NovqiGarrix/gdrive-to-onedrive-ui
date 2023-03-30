@@ -73,14 +73,8 @@ function useGetFiles() {
         },
 
         async onError(err) {
-            // if (err.message === "Unauthorized") {
-            //   if (provider.id === "onedrive") {
-            //     const authURL = await authApi.getMicorosftAuthUrl();
-            //     setAuthUrl(authURL);
-            //   }
-
-            //   return;
-            // }
+            // Already handled in the home page with useGetProviderAccountInfo
+            if (err.message === "Unauthorized") return;
 
             toast.error(err.message, { id: "switching-provider" });
         },

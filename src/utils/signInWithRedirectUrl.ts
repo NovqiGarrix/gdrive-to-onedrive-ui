@@ -1,5 +1,7 @@
 
 export default function signInWithRedirectUrl(authUrl: string) {
+    if (!authUrl) return;
+
     const redirect_url = window.location.href;
 
     const authURL = new URL(authUrl);

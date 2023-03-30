@@ -8,17 +8,20 @@ export const PROVIDERS: Array<ProviderObject> = [
     {
         id: 'google_drive',
         name: 'Google Drive',
-        image: '/google-drive.webp'
+        image: '/google-drive.webp',
+        accountId: 'google'
     },
     {
         id: 'google_photos',
         name: 'Google Photos',
-        image: '/google-photos.webp'
+        image: '/google-photos.webp',
+        accountId: 'google'
     },
     {
         id: 'onedrive',
         name: 'OneDrive',
-        image: '/onedrive.webp'
+        image: '/onedrive.webp',
+        accountId: 'microsoft'
     }
 ]
 
