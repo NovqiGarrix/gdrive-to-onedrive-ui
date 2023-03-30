@@ -57,6 +57,10 @@ export default function formatGooglePhotosFilter(filter: GooglePhotosFilter) {
         }
     }) : undefined;
 
+    if ((filter?.mediaTypes?.length || 0) > 1) {
+        filter.mediaTypes = [];
+    }
+
     const mediaTypeFilter = filter?.mediaTypes?.length ? JSON.stringify({
         mediaTypeFilter: {
             mediaTypes: filter.mediaTypes
