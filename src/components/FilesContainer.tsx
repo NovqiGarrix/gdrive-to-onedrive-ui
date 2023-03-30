@@ -8,14 +8,10 @@ import {
   useMemo,
 } from "react";
 
-import Link from "next/link";
-import Image from "next/legacy/image";
-import { shallow } from "zustand/shallow";
-
 import { toast } from "react-hot-toast";
+import { shallow } from "zustand/shallow";
 import useInfiniteScroll from "react-infinite-scroll-hook";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import EllipsisHorizontalIcon from "@heroicons/react/20/solid/EllipsisHorizontalIcon";
 
 import { PROVIDERS } from "../constants";
 import type { Provider, TranferFileSchema } from "../types";
@@ -30,9 +26,10 @@ import useUploadInfoProgress from "../hooks/useUploadInfoProgress";
 import useDeleteFilesModalState from "../hooks/useDeleteFilesModalState";
 
 import onedriveApi from "../apis/onedrive.api";
-import getIconExtensionUrl from "../utils/getIconExtensionUrl";
 
+import File from "./File";
 import useGetFilesFunc from "./useGetFilesFunc";
+import FileSkeletonLoading from "./FileSkeletonLoading";
 
 const FilesContainer: FunctionComponent = () => {
   const queryClient = useQueryClient();
@@ -261,6 +258,7 @@ const FilesContainer: FunctionComponent = () => {
     }));
   }
 
+  // Get More Data Mutation
   const {
     mutate: getMoreData,
     isLoading: isGettingMoreData,
@@ -287,6 +285,7 @@ const FilesContainer: FunctionComponent = () => {
     disabled: isErrorGettingMoreData,
   });
 
+  // Filter the files to only show files (not folders)
   const files = useMemo(() => {
     return debounceQuery
       ? data.files
@@ -332,20 +331,7 @@ const FilesContainer: FunctionComponent = () => {
             {Array(7)
               .fill(0)
               .map((_, i) => (
-                <div key={i} className="animate-pulse">
-                  {/* The Image Container */}
-                  <div className="bg-[#F4F6F6] rounded-[10px] pt-[15px] px-[15px] h-[230px]"></div>
-
-                  <div className="mt-[22px]">
-                    {/* The filename and the options button */}
-                    <div className="flex items-center justify-between">
-                      <div className="w-10/12 h-2 rounded bg-gray-300/80"></div>
-                      <EllipsisHorizontalIcon className="w-5 h-5 text-fontBlack flex-shrink-0" />
-                    </div>
-
-                    <p className="mt-4 w-1/2 h-2 rounded bg-gray-200"></p>
-                  </div>
-                </div>
+                <FileSkeletonLoading key={i} />
               ))}
           </div>
         ) : isError ? (
@@ -353,54 +339,7 @@ const FilesContainer: FunctionComponent = () => {
         ) : (
           <div className="grid grid-cols-4 gap-5 mt-[30px]">
             {files.map((file) => (
-              <div key={file.id} className="mb-2">
-                {/* The Image Container */}
-                <div className="bg-[#F4F6F6] flex items-center justify-center rounded-[10px] pt-[15px] px-[15px] h-[230px] overflow-hidden">
-                  {file.image ? (
-                    // Do not cache the image in CDN (Privacy concern). That's why we don't use next/image
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      alt={file.name}
-                      loading="lazy"
-                      src={file.image}
-                      className="object-cover rounded-t-[10px] w-full h-full"
-                    />
-                  ) : (
-                    <Image
-                      src={getIconExtensionUrl(file.name, file.mimeType)}
-                      alt={`${file.name} icon`}
-                      width={50}
-                      height={50}
-                      loading="lazy"
-                    />
-                  )}
-                </div>
-
-                <div className="mt-[22px]">
-                  {/* The filename and the options button */}
-                  <div className="flex items-center justify-between">
-                    <Link
-                      passHref
-                      target="_blank"
-                      href={file.webUrl}
-                      referrerPolicy="no-referrer"
-                      className="w-[85%] text-base font-medium font-inter text-ellipsis overflow-hidden whitespace-nowrap"
-                    >
-                      {file.name}
-                    </Link>
-                    <button type="button">
-                      <EllipsisHorizontalIcon
-                        aria-hidden="true"
-                        className="w-5 h-5 text-fontBlack flex-shrink-0"
-                      />
-                    </button>
-                  </div>
-
-                  <p className="mt-3 text-sm font-medium text-[#8B9AB1]">
-                    Uploaded 10m ago
-                  </p>
-                </div>
-              </div>
+              <File key={file.id} file={file} />
             ))}
             {/* End of element. Use for infinite scrolling */}
             <div ref={infiniteScrollLoadingRef}></div>
