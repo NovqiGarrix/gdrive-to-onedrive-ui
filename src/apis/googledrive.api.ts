@@ -86,7 +86,7 @@ async function getFoldersOnly(params: IGetFoldersOnlyParams): Promise<GetFilesRe
     urlInURL.searchParams.append('query',
         !query
             ? `mimeType = 'application/vnd.google-apps.folder' and ${parentQuery}`
-            : `name contains '${query}' and mimeType = 'application/vnd.google-apps.folder' and ${parentQuery}`);
+            : `name contains '${query}' and mimeType = 'application/vnd.google-apps.folder'`);
 
     Object.entries({ next_token: nextPageToken, path, query, parent_id: parentId }).forEach(([key, value]) => {
         if (value) {
