@@ -12,6 +12,7 @@ import classNames from "../utils/classNames";
 import type { ProviderObject } from "../types";
 
 import useCloudProvider from "../hooks/useCloudProvider";
+import useProviderPath from "../hooks/useProviderPath";
 
 const SelectProvider: FunctionComponent = () => {
   const router = useRouter();
@@ -19,12 +20,17 @@ const SelectProvider: FunctionComponent = () => {
   const selected = useCloudProvider((s) => s.provider, shallow);
   const setProvider = useCloudProvider((s) => s.setProvider);
 
+  const setProviderPath = useProviderPath((s) => s.setPath);
+
   async function onProviderChange(provider: ProviderObject) {
     const queryParams = new URLSearchParams(
       router.query as Record<string, string>
     );
-    queryParams.set("provider", provider.id);
 
+    queryParams.delete("path");
+    setProviderPath(undefined);
+
+    queryParams.set("provider", provider.id);
     await router.push("/", `/?${queryParams.toString()}`, { shallow: true });
     setProvider(provider);
   }
