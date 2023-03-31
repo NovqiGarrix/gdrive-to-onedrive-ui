@@ -18,6 +18,7 @@ export default function toGlobalTypes(data: any, provider: Provider): GlobalItem
                 image: d.mimeType.includes("image") ? d.webContentLink : d.hasThumbnail ? d.thumbnailLink : undefined,
                 iconLink: getIconExtensionUrl(d.name),
                 downloadUrl: d.webContentLink,
+                createdAt: new Date(d.createdTime)
             }
         }
 
@@ -29,14 +30,16 @@ export default function toGlobalTypes(data: any, provider: Provider): GlobalItem
                 from: provider,
                 name: d.filename,
                 webUrl: d.productUrl,
-                iconLink: getIconExtensionUrl(d.filename),
+                downloadUrl: `${d.baseUrl}=d`,
                 image: `${d.baseUrl}=w800-h800`,
-                downloadUrl: `${d.baseUrl}=d`
+                iconLink: getIconExtensionUrl(d.filename),
+                createdAt: new Date(d.mediaMetadata.creationTime),
             }
         }
 
         case 'onedrive': {
             const d = data as OneDriveItem;
+            d.createdDateTime
             const extension = d.name.split('.').pop();
 
             return {
@@ -46,6 +49,7 @@ export default function toGlobalTypes(data: any, provider: Provider): GlobalItem
                 type: d.folder ? 'folder' : 'file',
                 webUrl: d.webUrl,
                 iconLink: getIconExtensionUrl(d.name),
+                createdAt: new Date(d.createdDateTime),
                 downloadUrl: d["@microsoft.graph.downloadUrl"],
                 image: d.file?.mimeType.includes("image") || extension === "webp" ? d["@microsoft.graph.downloadUrl"] : undefined,
             }

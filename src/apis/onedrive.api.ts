@@ -33,7 +33,7 @@ async function getFiles(params: IGetFilesParams): Promise<GetFilesReturn> {
     try {
 
         const urlInURL = new URL(`${API_URL}/api/microsoft/files`);
-        urlInURL.searchParams.append('fields', 'id,name,webUrl,@microsoft.graph.downloadUrl,video,file,folder');
+        urlInURL.searchParams.append('fields', 'id,name,webUrl,@microsoft.graph.downloadUrl,video,file,folder,createdDateTime');
 
         Object.entries({ query, path: cleanPathFromFolderId(path), next_token: nextPageToken }).forEach(([key, value]) => {
             if (value) {

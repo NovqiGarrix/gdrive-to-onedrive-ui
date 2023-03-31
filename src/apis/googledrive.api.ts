@@ -58,9 +58,6 @@ async function getFiles(params: IGetFilesParams): Promise<GetFilesReturn> {
         }
 
         const files = data.files.map((file: any) => toGlobalTypes(file, 'google_drive'));
-        if (query) {
-            console.log({ files, query });
-        }
 
         return {
             files,

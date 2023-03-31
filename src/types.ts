@@ -15,6 +15,7 @@ export interface GlobalItemTypes {
     from: Provider;
     iconLink: string;
     downloadUrl: string;
+    createdAt: Date;
 
     image?: string;
     mimeType?: string;

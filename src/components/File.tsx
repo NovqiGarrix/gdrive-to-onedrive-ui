@@ -6,6 +6,7 @@ import { EllipsisHorizontalIcon } from "@heroicons/react/20/solid";
 
 import type { GlobalItemTypes } from "../types";
 import getIconExtensionUrl from "../utils/getIconExtensionUrl";
+import dateFromNow from "../utils/dateFromNow";
 
 interface IFileProps {
   file: GlobalItemTypes;
@@ -17,7 +18,12 @@ const File: FunctionComponent<IFileProps> = (props) => {
   return (
     <div key={file.id} className="mb-2">
       {/* The Image Container */}
-      <div className="bg-[#F4F6F6] flex items-center justify-center rounded-[10px] pt-[15px] px-[15px] h-[230px] overflow-hidden">
+      <Link
+        passHref
+        target="_blank"
+        href={file.webUrl}
+        className="bg-[#F4F6F6] flex items-center justify-center rounded-[10px] pt-[15px] px-[15px] h-[230px] overflow-hidden"
+      >
         {file.image ? (
           // Do not cache the image in CDN (Privacy concern). That's why we don't use next/image
           // eslint-disable-next-line @next/next/no-img-element
@@ -29,14 +35,16 @@ const File: FunctionComponent<IFileProps> = (props) => {
           />
         ) : (
           <Image
-            src={getIconExtensionUrl(file.name, file.mimeType)}
-            alt={`${file.name} icon`}
             width={50}
             height={50}
             loading="lazy"
+            objectFit="contain"
+            alt={`${file.name} icon`}
+            className="drop-shadow"
+            src={getIconExtensionUrl(file.name, file.mimeType)}
           />
         )}
-      </div>
+      </Link>
 
       <div className="mt-[22px]">
         {/* The filename and the options button */}
@@ -59,7 +67,7 @@ const File: FunctionComponent<IFileProps> = (props) => {
         </div>
 
         <p className="mt-3 text-sm font-medium text-[#8B9AB1]">
-          Uploaded 10m ago
+          Uploaded {dateFromNow(file.createdAt)}
         </p>
       </div>
     </div>
