@@ -30,6 +30,7 @@ import onedriveApi from "../apis/onedrive.api";
 import File from "./File";
 import useGetFilesFunc from "./useGetFilesFunc";
 import FileSkeletonLoading from "./FileSkeletonLoading";
+import BeautifulError from "./BeautifulError";
 
 const FilesContainer: FunctionComponent = () => {
   const queryClient = useQueryClient();
@@ -48,7 +49,7 @@ const FilesContainer: FunctionComponent = () => {
   );
 
   const getFiles = useGetFilesFunc();
-  const { isLoading, isError, data, setData } = useGetFiles();
+  const { isLoading, isError, data, setData, error } = useGetFiles();
 
   const setShowUploadInfoProgress = useUploadInfoProgress((s) => s.setShow);
   const addUploadInfoProgress = useUploadInfoProgress(
@@ -335,7 +336,10 @@ const FilesContainer: FunctionComponent = () => {
               ))}
           </div>
         ) : isError ? (
-          <div></div>
+          <BeautifulError.Root>
+            <BeautifulError.Title title="Failed to load files" />
+            <BeautifulError.Message message={error?.message!} />
+          </BeautifulError.Root>
         ) : (
           <div className="grid grid-cols-4 gap-5 mt-[30px]">
             {files.map((file) => (
