@@ -10,4 +10,3 @@ export { default as FilesContainerWrapper } from './FilesContainerWrapper';
 export { default as AccountSettings } from './AccountSettings';
 export { default as LoadingIcon } from './LoadingIcon';
 export { default as DisconnectedProviderAccount } from './DisconnectedProviderAccount';
-export { default as DisconnectedProviderAccountError } from './DisconnectedProviderAccountError';

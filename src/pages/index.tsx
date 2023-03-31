@@ -12,12 +12,13 @@ import {
   FilesContainerWrapper,
   LoadingIcon,
   DisconnectedProviderAccount,
-  DisconnectedProviderAccountError,
 } from "../components";
 
 import { initializeCloudProvider } from "../hooks/useCloudProvider";
 import { initializedProviderPath } from "../hooks/useProviderPath";
 import useGetProviderAccountInfo from "../hooks/useGetProviderAccountInfo";
+import BeautifulError from "../components/BeautifulError";
+import { useRouter } from "next/router";
 
 interface IHomePageProps {
   path: string | null;
@@ -26,6 +27,8 @@ interface IHomePageProps {
 
 const Home: NextPage<IHomePageProps> = (props) => {
   const { path, provider } = props;
+
+  const router = useRouter();
 
   const {
     data: providerAccountInfo,
@@ -70,7 +73,16 @@ const Home: NextPage<IHomePageProps> = (props) => {
             {/* </div> */}
           </div>
         ) : isProviderAccountInfoError ? (
-          <DisconnectedProviderAccountError error={providerAccountInfoError!} />
+          // <DisconnectedProviderAccountError error={providerAccountInfoError!} />
+          <BeautifulError.Root>
+            <BeautifulError.Title title="Something went wrong" />
+            <BeautifulError.Message
+              message={providerAccountInfoError?.message!}
+            />
+            <BeautifulError.Button onClick={() => router.reload()}>
+              Reload Page
+            </BeautifulError.Button>
+          </BeautifulError.Root>
         ) : !providerAccountInfo?.isConnected ? (
           // Show some message and a button to connect the account
           <DisconnectedProviderAccount accountInfo={providerAccountInfo!} />
