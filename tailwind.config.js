@@ -14,7 +14,8 @@ module.exports = {
         fontBlack: "#0F172A",
         fontBlack2: "#313133",
         purple: "#725DFF",
-        youngPrimary: "#E5EEFB"
+        youngPrimary: "#E5EEFB",
+        youngPurple: "#ECECFD"
       }
     },
     fontFamily: {

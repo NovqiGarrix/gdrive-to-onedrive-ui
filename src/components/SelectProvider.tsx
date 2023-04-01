@@ -42,16 +42,14 @@ const SelectProvider: FunctionComponent = () => {
           <div className="relative w-full mt-[30px] pl-[24px] pr-[34px]">
             <Listbox.Button className="relative w-full cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 sm:text-sm sm:leading-6">
               <span className="flex items-center">
-                <div className="avatar">
-                  <div className="w-5">
-                    <Image
-                      src={selected.image}
-                      alt={selected.name}
-                      width={500}
-                      height={500}
-                      className="flex-shrink-0"
-                    />
-                  </div>
+                <div className="w-5">
+                  <Image
+                    src={selected.image}
+                    alt={selected.name}
+                    width={500}
+                    height={500}
+                    className="flex-shrink-0"
+                  />
                 </div>
                 <span className="ml-3 block truncate">{selected.name}</span>
               </span>

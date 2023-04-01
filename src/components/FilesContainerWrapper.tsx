@@ -52,7 +52,7 @@ const FilesContainerWrapper: FunctionComponent = () => {
   }, [cleanSelectedFiles, selectedFiles.length]);
 
   return (
-    <div ref={ref} className="w-full">
+    <div ref={ref} id="files-container-wrapper" className="w-full">
       <FilesContainer />
     </div>
   );

@@ -31,6 +31,7 @@ import File from "./File";
 import useGetFilesFunc from "./useGetFilesFunc";
 import FileSkeletonLoading from "./FileSkeletonLoading";
 import BeautifulError from "./BeautifulError";
+import FileOptions from "./FileOptions";
 
 const FilesContainer: FunctionComponent = () => {
   const queryClient = useQueryClient();
@@ -321,7 +322,8 @@ const FilesContainer: FunctionComponent = () => {
   }, [selectedFiles.length]);
 
   return (
-    <div ref={containerRef} className="w-full">
+    <div ref={containerRef} className="w-full relative">
+      <FileOptions />
       <div className="w-full mt-[42px]">
         <h2 className="font-medium font-inter text-fontBlack2 text-2xl">
           Files
@@ -346,7 +348,8 @@ const FilesContainer: FunctionComponent = () => {
               <File key={file.id} file={file} />
             ))}
             {/* End of element. Use for infinite scrolling */}
-            <div ref={infiniteScrollLoadingRef}></div>
+            {/* TODO: Uncomment this */}
+            {/* <div ref={infiniteScrollLoadingRef}></div> */}
           </div>
         )}
       </div>
