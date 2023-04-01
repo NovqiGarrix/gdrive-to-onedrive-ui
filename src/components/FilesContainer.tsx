@@ -345,7 +345,7 @@ const FilesContainer: FunctionComponent = () => {
         ) : (
           <div className="grid grid-cols-4 gap-5 mt-[30px]">
             {files.map((file) => (
-              <File key={file.id} file={file} />
+              <File key={file.id} file={file} files={data.files} />
             ))}
             {/* End of element. Use for infinite scrolling */}
             {/* TODO: Uncomment this */}

@@ -5,6 +5,8 @@ import {
   useMemo,
   useRef,
   useState,
+  // @ts-ignore - No types
+  experimental_useEffectEvent as useEffectEvent,
 } from "react";
 
 import Link from "next/link";
@@ -12,7 +14,7 @@ import Image from "next/image";
 import { shallow } from "zustand/shallow";
 import { Popover, Transition } from "@headlessui/react";
 
-// import useSelectedFiles from "../hooks/useSelectedFiles";
+import useSelectedFiles from "../hooks/useSelectedFiles";
 import useCloudProvider from "../hooks/useCloudProvider";
 
 import StarIcon from "@heroicons/react/24/outline/StarIcon";
@@ -24,6 +26,7 @@ import ArrowSmallDownIcon from "@heroicons/react/24/outline/ArrowSmallDownIcon";
 
 import classNames from "../utils/classNames";
 import { PROVIDERS } from "../constants";
+import useGetFiles from "../hooks/useGetFiles";
 
 const FileOptions: FunctionComponent = () => {
   const ref = useRef<HTMLDivElement>(null);
@@ -31,7 +34,10 @@ const FileOptions: FunctionComponent = () => {
   const [isShowingOptions, setIsShowingOptions] = useState(false);
 
   const [coord, setCoord] = useState({ x: 0, y: 0 });
-  // const selectedFiles = useSelectedFiles((s) => s.files, shallow);
+  const selectedFiles = useSelectedFiles((s) => s.files, shallow);
+  const replaceAllSelectedFiles = useSelectedFiles((s) => s.replaceAllFiles);
+
+  const { data: allFiles } = useGetFiles();
 
   const provider = useCloudProvider((s) => s.provider, shallow);
 
@@ -65,6 +71,19 @@ const FileOptions: FunctionComponent = () => {
     [provider.id]
   );
 
+  const getAndAddFile = useEffectEvent((fileIdFromAttribute: string) => {
+    if (selectedFiles.find((f) => f.id === fileIdFromAttribute)) return true;
+
+    const fileFromId = allFiles.files.find(
+      (file) => file.id === fileIdFromAttribute
+    );
+
+    if (!fileFromId) return false;
+
+    replaceAllSelectedFiles({ ...fileFromId, providerId: fileFromId.from });
+    return true;
+  });
+
   useEffect(() => {
     function isOutsideWindow(
       event: MouseEvent,
@@ -91,19 +110,25 @@ const FileOptions: FunctionComponent = () => {
     }
 
     function handleMouseDown(event: MouseEvent) {
+      // @ts-ignore - No types
+      const fileIdFromAttribute: string = event.target.getAttribute("data-id");
+      if (!fileIdFromAttribute) {
+        setIsShowingOptions(false);
+        return;
+      }
+
+      // Left click
       if (event.button !== 2) {
         if (ref.current && ref.current.contains(event.target as Node)) return;
         setIsShowingOptions(false);
         return;
       }
 
-      // @ts-ignore - No types
-      if (!event.target.getAttribute("data-id")) return;
+      if (!getAndAddFile(fileIdFromAttribute)) return;
 
       const newCoord = { x: event.clientX, y: event.clientY };
 
       const outsideWindow = isOutsideWindow(event, newCoord);
-
       if (outsideWindow?.isOutside) {
         if (!ref.current) return;
 
@@ -140,6 +165,8 @@ const FileOptions: FunctionComponent = () => {
       window.removeEventListener("mousedown", handleMouseDown);
       window.removeEventListener("contextmenu", preventRightClickOptions);
     };
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -156,23 +183,27 @@ const FileOptions: FunctionComponent = () => {
       <div className="divide-y divide-[#EBEBEB] w-full">
         <ul className="pb-2 mb-1 rounded-[20px]">
           {/* Open in Google Drive */}
-          <li className="py-[10px] px-[10px] cursor-pointer group rounded-[10px] hover:bg-gray-50">
-            <Link passHref href="/" className="flex items-center">
-              <div className="p-2 bg-gray-50 rounded-[8px] group-hover:bg-white">
-                <Image
-                  src={provider.image}
-                  alt={`${provider.name} icon`}
-                  width={22}
-                  height={22}
-                  className="flex-shrink-0"
-                />
-              </div>
+          {/* Hide if the selected files is more than 1 */}
 
-              <span className="ml-3 font-inter font-medium text-sm">
-                Open in {provider.name}
-              </span>
-            </Link>
-          </li>
+          {selectedFiles.length === 1 ? (
+            <li className="py-[10px] px-[10px] cursor-pointer group rounded-[10px] hover:bg-gray-50">
+              <Link passHref href="/" className="flex items-center">
+                <div className="p-2 bg-gray-50 rounded-[8px] group-hover:bg-white">
+                  <Image
+                    src={provider.image}
+                    alt={`${provider.name} icon`}
+                    width={22}
+                    height={22}
+                    className="flex-shrink-0"
+                  />
+                </div>
+
+                <span className="ml-3 font-inter font-medium text-sm">
+                  Open in {provider.name}
+                </span>
+              </Link>
+            </li>
+          ) : null}
 
           <Popover className="relative" as="li">
             <Popover.Button className="py-[10px] w-full px-[10px] cursor-pointer group rounded-[10px] hover:bg-gray-50 focus:bg-gray-50 focus:outline-none">

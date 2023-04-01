@@ -24,30 +24,19 @@ const FilesContainerWrapper: FunctionComponent = () => {
   });
 
   useEffect(() => {
-    const el = ref.current;
-
     const handleMouseDown = (e: MouseEvent) => {
       const target = e.target as HTMLElement | null;
       if (!target) return;
 
-      let shouldClean = !target.hasAttribute("data-id");
-
-      if (target.nodeName === "IMG") {
-        const parentEl = target.parentElement;
-        const parentElOfParentEl = parentEl?.parentElement;
-        const parentElOfParentElOfParentEl = parentElOfParentEl?.parentElement;
-
-        shouldClean = !parentElOfParentElOfParentEl?.id.startsWith("file-");
-      }
-
+      const shouldClean = !target.hasAttribute("data-id");
       if (!shouldClean || !selectedFiles.length) return;
       cleanSelectedFiles();
     };
 
-    el?.addEventListener("mousedown", handleMouseDown);
+    document.addEventListener("mousedown", handleMouseDown);
 
     return () => {
-      el?.removeEventListener("mousedown", handleMouseDown);
+      document.removeEventListener("mousedown", handleMouseDown);
     };
   }, [cleanSelectedFiles, selectedFiles.length]);
 
