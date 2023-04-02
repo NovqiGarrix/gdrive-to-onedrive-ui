@@ -39,6 +39,7 @@ import useGetFiles from "../hooks/useGetFiles";
 import useSelectedFiles from "../hooks/useSelectedFiles";
 import useCloudProvider from "../hooks/useCloudProvider";
 import useUploadInfoProgress from "../hooks/useUploadInfoProgress";
+import googledriveApi from "../apis/googledrive.api";
 
 const FileOptions: FunctionComponent = () => {
   const ref = useRef<HTMLDivElement>(null);
@@ -128,6 +129,10 @@ const FileOptions: FunctionComponent = () => {
 
       case "google_photos": {
         return googlephotosApi.transferFile(params);
+      }
+
+      case "google_drive": {
+        return googledriveApi.transferFile(params);
       }
 
       default:

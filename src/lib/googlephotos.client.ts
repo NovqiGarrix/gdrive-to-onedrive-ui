@@ -1,5 +1,6 @@
 import axios from 'axios';
 import mime from 'mime-types';
+
 import type { OnUploadProgress } from '../types';
 import { HttpErrorExeption } from "../exeptions/httpErrorExeption";
 import getPercentageUploadProgress from '../utils/getPercentageUploadProgress';

@@ -138,7 +138,6 @@ async function transferFile(params: ITransferFileParams): Promise<void> {
         const { errors: completeErrors } = await completeResp.json();
 
         if (!completeResp.ok) {
-            console.log(completeErrors);
             throw new HttpErrorExeption(completeResp.status, completeErrors[0].error);
         }
 
