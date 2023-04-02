@@ -98,6 +98,8 @@ async function transferFile(params: ITransferFileParams): Promise<void> {
             onDownloadProgress,
         });
 
+        googlephotosClient.validateFile(file.name, arrayBuffer.byteLength);
+
         const registerResp = await fetch(`${API_URL}/api/google/files/uploadSessions`, {
             ...defaultOptions,
             method: "POST",

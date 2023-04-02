@@ -1,6 +1,5 @@
 import axios from 'axios';
-import mime from 'mime-types'
-    ;
+import mime from 'mime-types';
 import type { OnUploadProgress } from '../types';
 import { HttpErrorExeption } from "../exeptions/httpErrorExeption";
 import getPercentageUploadProgress from '../utils/getPercentageUploadProgress';
@@ -100,15 +99,19 @@ class GooglePhotos {
 
     }
 
-    private validateFile(filename: string, byteLength: number) {
+    validateFile(filename: string, byteLength: number) {
         const ext = filename.split('.').pop()?.toLowerCase();
-        if (!ext
-            ||
-            (!ALLOWEED_PHOTO_EXTENSIONS.includes(ext) && !ALLOWEED_VIDEO_EXTENSIONS.includes(ext)) ||
-            byteLength > MAX_PHOTO_SIZE && ALLOWEED_PHOTO_EXTENSIONS.includes(ext) ||
-            byteLength > MAX_VIDEO_SIZE && ALLOWEED_VIDEO_EXTENSIONS.includes(ext)
+        if (!ext || (!ALLOWEED_PHOTO_EXTENSIONS.includes(ext) && !ALLOWEED_VIDEO_EXTENSIONS.includes(ext))
         ) {
             throw new HttpErrorExeption(400, 'Invalid file extension');
+        }
+
+        if (byteLength > MAX_PHOTO_SIZE && ALLOWEED_PHOTO_EXTENSIONS.includes(ext)) {
+            throw new HttpErrorExeption(400, 'Exceeded maximum file size for photo');
+        }
+
+        if (byteLength > MAX_VIDEO_SIZE && ALLOWEED_VIDEO_EXTENSIONS.includes(ext)) {
+            throw new HttpErrorExeption(400, 'Exceeded maximum file size for video');
         }
     }
 
