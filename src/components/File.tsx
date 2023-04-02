@@ -47,12 +47,12 @@ const File: FunctionComponent<IFileProps> = (props) => {
 
       const slicedFiles = files
         .slice(firstSelectedFileIndex, lastSelectedFileIndex + 1)
-        .map((f) => ({ providerId: f.from, ...f }));
+        .map((f) => ({ ...f, providerId: f.from }));
       replaceAllSelectedFiles(slicedFiles);
     } else if (event.ctrlKey || event.metaKey) {
-      addSelectedFile({ ...file, providerId: file.from });
+      addSelectedFile(file);
     } else {
-      replaceAllSelectedFiles({ ...file, providerId: file.from });
+      replaceAllSelectedFiles(file);
     }
   }
 

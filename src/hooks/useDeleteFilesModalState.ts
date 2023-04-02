@@ -1,10 +1,8 @@
 import { create } from "zustand";
-import { Provider } from "../types";
 
 interface DeleteModalParams {
     debounceQuery: string;
     path: string | undefined;
-    providerId: Provider | undefined;
 }
 
 type IDeleteFilesModalState = {
@@ -21,14 +19,12 @@ const useDeleteFilesModalState = create<IDeleteFilesModalState>((set) => ({
     },
 
     closeModal() {
-        set({ open: false, debounceQuery: "", path: undefined, providerId: undefined });
+        set({ open: false, debounceQuery: "", path: undefined });
     },
 
     debounceQuery: "",
 
     path: undefined,
-
-    providerId: undefined,
 
 }));
 

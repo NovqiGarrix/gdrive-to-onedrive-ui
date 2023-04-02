@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import type { UploadInfoProgress } from "../types";
+import { TEMP_UPLOAD_INFO_PROGRESS } from "../constants";
 
 interface UseUploadInfoProgress {
     show: boolean;
@@ -7,6 +8,7 @@ interface UseUploadInfoProgress {
 
     uploadInfoProgress: UploadInfoProgress[];
     addUploadInfoProgress: (uploadInfoProgress: UploadInfoProgress) => void;
+    removeUploadInfoProgress: (id: string) => void;
     updateUploadInfoProgress: (uploadInfoProgress: Partial<UploadInfoProgress> & { id: string }) => void;
 
     clearUploadInfoProgress: () => void;
@@ -15,16 +17,20 @@ interface UseUploadInfoProgress {
 const useUploadInfoProgress = create<UseUploadInfoProgress>((set) => ({
 
     show: false,
+
     setShow(show) {
         set({ show });
     },
 
     uploadInfoProgress: [],
+    // uploadInfoProgress: TEMP_UPLOAD_INFO_PROGRESS,
+
     addUploadInfoProgress(uploadInfoProgress) {
         set((state) => ({
             uploadInfoProgress: [...state.uploadInfoProgress, uploadInfoProgress],
         }));
     },
+
     updateUploadInfoProgress(uploadInfoProgress) {
         set((state) => ({
             uploadInfoProgress: state.uploadInfoProgress.map((item) =>
@@ -32,6 +38,13 @@ const useUploadInfoProgress = create<UseUploadInfoProgress>((set) => ({
             ),
         }));
     },
+
+    removeUploadInfoProgress(id) {
+        set((state) => ({
+            uploadInfoProgress: state.uploadInfoProgress.filter((item) => item.id !== id),
+        }));
+    },
+
     clearUploadInfoProgress() {
         set(({ uploadInfoProgress: [], show: false }));
     }

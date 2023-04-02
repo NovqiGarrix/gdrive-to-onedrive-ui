@@ -11,11 +11,11 @@ import {
 
 import Link from "next/link";
 import Image from "next/image";
-import { shallow } from "zustand/shallow";
-import { Popover, Transition } from "@headlessui/react";
 
-import useSelectedFiles from "../hooks/useSelectedFiles";
-import useCloudProvider from "../hooks/useCloudProvider";
+import { toast } from "react-hot-toast";
+import { shallow } from "zustand/shallow";
+import { useQueryClient } from "@tanstack/react-query";
+import { Popover, Transition } from "@headlessui/react";
 
 import StarIcon from "@heroicons/react/24/outline/StarIcon";
 import BoltIcon from "@heroicons/react/24/outline/BoltIcon";
@@ -24,20 +24,31 @@ import PaperClipIcon from "@heroicons/react/24/outline/PaperClipIcon";
 import ArrowDownTrayIcon from "@heroicons/react/24/outline/ArrowDownTrayIcon";
 import ArrowSmallDownIcon from "@heroicons/react/24/outline/ArrowSmallDownIcon";
 
-import classNames from "../utils/classNames";
+import type {
+  Provider,
+  ProviderObject,
+  TransferFileSchema,
+  UploadInfoProgress,
+} from "../types";
 import { PROVIDERS } from "../constants";
+import classNames from "../utils/classNames";
+
 import useGetFiles from "../hooks/useGetFiles";
+import useSelectedFiles from "../hooks/useSelectedFiles";
+import useCloudProvider from "../hooks/useCloudProvider";
+import useUploadInfoProgress from "../hooks/useUploadInfoProgress";
+import googlephotosApi from "../apis/googlephotos.api";
+import onedriveApi from "../apis/onedrive.api";
 
 const FileOptions: FunctionComponent = () => {
   const ref = useRef<HTMLDivElement>(null);
-
-  const [isShowingOptions, setIsShowingOptions] = useState(false);
+  const { data: allFiles } = useGetFiles();
 
   const [coord, setCoord] = useState({ x: 0, y: 0 });
+  const [isShowingOptions, setIsShowingOptions] = useState(false);
+
   const selectedFiles = useSelectedFiles((s) => s.files, shallow);
   const replaceAllSelectedFiles = useSelectedFiles((s) => s.replaceAllFiles);
-
-  const { data: allFiles } = useGetFiles();
 
   const provider = useCloudProvider((s) => s.provider, shallow);
 
@@ -71,6 +82,181 @@ const FileOptions: FunctionComponent = () => {
     [provider.id]
   );
 
+  const setShowUploadInfoProgress = useUploadInfoProgress((s) => s.setShow);
+  const addUploadInfoProgress = useUploadInfoProgress(
+    (s) => s.addUploadInfoProgress
+  );
+  const updateUploadInfoProgress = useUploadInfoProgress(
+    (s) => s.updateUploadInfoProgress
+  );
+
+  async function transferFileFunc(
+    file: TransferFileSchema,
+    providerTarget: Provider,
+    signal: AbortSignal
+  ) {
+    function onUploadProgress(progress: number) {
+      const uploadInfoProgress =
+        useUploadInfoProgress.getState().uploadInfoProgress;
+      const f = uploadInfoProgress.find((f) => f.id === file.id);
+      if (!f) return;
+
+      updateUploadInfoProgress({ ...f, uploadProgress: progress });
+    }
+
+    function onDownloadProgress(progress: number) {
+      const uploadInfoProgress =
+        useUploadInfoProgress.getState().uploadInfoProgress;
+      const f = uploadInfoProgress.find((f) => f.id === file.id);
+      if (!f) return;
+
+      updateUploadInfoProgress({ ...f, downloadProgress: progress });
+    }
+
+    switch (providerTarget) {
+      case "onedrive": {
+        return onedriveApi.transferFile({
+          file,
+          signal,
+          onUploadProgress,
+          onDownloadProgress,
+          providerId: providerTarget,
+        });
+      }
+
+      case "google_photos": {
+        return googlephotosApi.transferFile({
+          file,
+          signal,
+          onUploadProgress,
+          onDownloadProgress,
+          providerId: file.providerId,
+        });
+      }
+
+      default:
+        throw new Error("Invalid Provider!");
+    }
+  }
+
+  async function upload(
+    file: Omit<UploadInfoProgress, "upload">,
+    providerTarget: ProviderObject,
+    transferFileToastId: string
+  ) {
+    try {
+      await transferFileFunc(
+        file,
+        providerTarget.id,
+        file.abortController.signal
+      );
+
+      updateUploadInfoProgress({
+        id: file.id,
+        isLoading: false,
+      });
+      return true;
+    } catch (error: any) {
+      if (error.message === "cancelled") {
+        toast.success(`${file.name}: Transfer cancelled!`, {
+          id: transferFileToastId,
+        });
+      }
+
+      updateUploadInfoProgress({
+        id: file.id,
+        isLoading: false,
+        error: error.message,
+      });
+
+      return false;
+    }
+  }
+
+  async function transferFile(providerTarget: ProviderObject) {
+    setIsShowingOptions(false);
+
+    const transferFileToastId = `transfer-files-${Math.random()
+      .toString(36)
+      .substring(7)}`;
+
+    try {
+      // Initiate upload info progress
+      const selectedFilesWithAbortController = selectedFiles.map((file) => {
+        const abortController = new AbortController();
+
+        const requiredParams: UploadInfoProgress = {
+          ...file,
+          abortController,
+          isLoading: true,
+          uploadProgress: 0,
+          downloadProgress: 0,
+          providerId: file.from,
+          upload: () =>
+            upload(requiredParams, providerTarget, transferFileToastId),
+        };
+
+        const isExist = useUploadInfoProgress
+          .getState()
+          .uploadInfoProgress.find((f) => f.id === file.id);
+        if (isExist) {
+          updateUploadInfoProgress(requiredParams);
+        } else {
+          addUploadInfoProgress(requiredParams);
+        }
+
+        return requiredParams;
+      });
+
+      toast.loading(
+        `Transferring ${selectedFilesWithAbortController.length} to ${providerTarget.name}`,
+        {
+          duration: 3000,
+          id: transferFileToastId,
+        }
+      );
+
+      // Show upload info progress,
+      setShowUploadInfoProgress(true);
+
+      if (providerTarget.id === "google_photos") {
+        // Google Photos only support upload one by one
+        for await (const file of selectedFilesWithAbortController) {
+          await file.upload();
+        }
+      } else {
+        await Promise.all(
+          selectedFilesWithAbortController.map((file) => file.upload())
+        );
+      }
+
+      const isAllError =
+        useUploadInfoProgress
+          .getState()
+          .uploadInfoProgress.filter((info) => info.error).length ===
+        selectedFilesWithAbortController.length;
+
+      if (isAllError) {
+        toast.error(`Transfer failed`, {
+          id: transferFileToastId,
+        });
+      }
+
+      // if (uploadedFiles.length) {
+      //   toast.success(
+      //     `Transferred ${uploadedFiles.length} to ${providerTarget.name}`,
+      //     {
+      //       id: transferFileToastId,
+      //     }
+      //   );
+      // }
+    } catch (error: any) {
+      toast.error(error.message, {
+        id: transferFileToastId,
+      });
+    }
+  }
+
   const getAndAddFile = useEffectEvent((fileIdFromAttribute: string) => {
     if (selectedFiles.find((f) => f.id === fileIdFromAttribute)) return true;
 
@@ -80,7 +266,7 @@ const FileOptions: FunctionComponent = () => {
 
     if (!fileFromId) return false;
 
-    replaceAllSelectedFiles({ ...fileFromId, providerId: fileFromId.from });
+    replaceAllSelectedFiles(fileFromId);
     return true;
   });
 
@@ -113,13 +299,14 @@ const FileOptions: FunctionComponent = () => {
       // @ts-ignore - No types
       const fileIdFromAttribute: string = event.target.getAttribute("data-id");
       if (!fileIdFromAttribute) {
+        if (ref.current && ref.current.contains(event.target as Node)) return;
+
         setIsShowingOptions(false);
         return;
       }
 
       // Left click
       if (event.button !== 2) {
-        if (ref.current && ref.current.contains(event.target as Node)) return;
         setIsShowingOptions(false);
         return;
       }
@@ -172,6 +359,7 @@ const FileOptions: FunctionComponent = () => {
   return (
     <div
       ref={ref}
+      id="file-options"
       className={classNames(
         "fixed translate-x-0 translate-y-0 p-[14px] rounded-[20px] bg-white text-black w-[323px] shadow",
         isShowingOptions
@@ -234,32 +422,31 @@ const FileOptions: FunctionComponent = () => {
               leaveTo="opacity-0 translate-y-1"
             >
               <Popover.Panel className="absolute mt-2 left-1/2 z-20 flex w-screen max-w-max -translate-x-1/2">
-                <div className="w-screen p-[14px] rounded-[20px] max-w-[18rem] flex-auto overflow-hidden bg-white text-sm shadow-lg ring-1 ring-gray-900/5">
-                  <ul>
-                    {targetUploadProviders.map((p) => (
-                      <li
-                        key={p.id}
-                        className="py-[10px] px-[10px] cursor-pointer group rounded-[10px] hover:bg-youngPrimary"
+                <ul className="w-screen p-[14px] rounded-[20px] max-w-[18rem] flex-auto overflow-hidden bg-white text-sm shadow-lg ring-1 ring-gray-900/5">
+                  {targetUploadProviders.map((p) => (
+                    <li key={p.id}>
+                      <button
+                        type="button"
+                        onClick={() => transferFile(p)}
+                        className="w-full flex items-center py-[10px] px-[10px] cursor-pointer group rounded-[10px] hover:bg-youngPrimary"
                       >
-                        <Link passHref href="/" className="flex items-center">
-                          <div className="p-2 bg-gray-50 rounded-[8px] group-hover:bg-white">
-                            <Image
-                              src={p.image}
-                              alt={`${p.name} icon`}
-                              width={22}
-                              height={22}
-                              className="flex-shrink-0"
-                            />
-                          </div>
+                        <div className="p-2 bg-gray-50 rounded-[8px] group-hover:bg-white">
+                          <Image
+                            src={p.image}
+                            alt={`${p.name} icon`}
+                            width={22}
+                            height={22}
+                            className="flex-shrink-0"
+                          />
+                        </div>
 
-                          <span className="ml-3 font-inter font-medium text-sm">
-                            {p.name}
-                          </span>
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                        <span className="ml-3 font-inter font-medium text-sm">
+                          {p.name}
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
               </Popover.Panel>
             </Transition>
           </Popover>

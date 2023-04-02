@@ -7,7 +7,7 @@ import getPercentageUploadProgress from '../utils/getPercentageUploadProgress';
 import { UPLOAD_CHUNK_SIZE } from '../constants';
 import onedriveClient from '../lib/onedrive.client';
 import { HttpErrorExeption } from '../exeptions/httpErrorExeption';
-import type { GetFilesReturn, IDeleteFilesParam, TranferFileSchema } from '../types';
+import type { GetFilesReturn, IDeleteFilesParam, OnDownloadProgress, OnUploadProgress, Provider, TransferFileSchema } from '../types';
 
 import { API_URL, defaultOptions } from '.';
 import type { IGetFoldersOnlyParams } from './types';
@@ -97,16 +97,16 @@ async function getFoldersOnly(params: IGetFoldersOnlyParams): Promise<GetFilesRe
 }
 
 interface ITransferFileParams {
-    file: TranferFileSchema;
     signal: AbortSignal;
-    onInfoChange: (info: string) => void;
-    onUploadProgress: (progress: number) => void;
-    onDownloadProgress: (progress: number) => void;
+    providerId: Provider;
+    file: TransferFileSchema;
+    onUploadProgress: OnUploadProgress;
+    onDownloadProgress: OnDownloadProgress;
 }
 
 async function transferFile(params: ITransferFileParams): Promise<void> {
 
-    const { file, signal, onUploadProgress, onDownloadProgress, onInfoChange } = params;
+    const { file, signal, onUploadProgress, onDownloadProgress, providerId } = params;
 
     /**
      * Provider Ids
@@ -123,7 +123,7 @@ async function transferFile(params: ITransferFileParams): Promise<void> {
      * /api/microsoft/files
      */
 
-    const [provider, product] = file.providerId.startsWith('google_') ? file.providerId.split('_') : [file.providerId, '']
+    const [provider, product] = providerId.startsWith('google_') ? providerId.split('_') : [providerId, '']
 
     try {
 
@@ -136,7 +136,6 @@ async function transferFile(params: ITransferFileParams): Promise<void> {
 
         const { permissionId, downloadUrl } = downloadUrlData;
 
-        onInfoChange('Downloading your file');
         const { data: fileBuffer,
             status: fileRespStatus,
             statusText: fileRespStatusText
@@ -154,11 +153,10 @@ async function transferFile(params: ITransferFileParams): Promise<void> {
         }
 
         if (fileBuffer.byteLength >= UPLOAD_CHUNK_SIZE) {
-            return transferLargeFile({ file, signal, permissionId, fileBuffer, onUploadProgress, onInfoChange });
+            return transferLargeFile({ file, signal, permissionId, fileBuffer, onUploadProgress, providerId });
         }
 
         // Register the session to get fresh access token
-        onInfoChange('Creating upload session');
         const registerResp = await fetch(`${API_URL}/api/microsoft/files/uploadSession`, {
             ...defaultOptions,
             method: "POST",
@@ -170,7 +168,6 @@ async function transferFile(params: ITransferFileParams): Promise<void> {
             throw new HttpErrorExeption(registerResp.status, errors[0].error);
         }
 
-        onInfoChange('Uploading your file');
         await onedriveClient.uploadFile({
             accessToken,
             buffer: Buffer.from(fileBuffer),
@@ -179,14 +176,13 @@ async function transferFile(params: ITransferFileParams): Promise<void> {
             onUploadProgress
         });
 
-        onInfoChange('Last touch');
         const completeResp = await fetch(`${API_URL}/api/microsoft/files/uploadSession/${sessionId}/complete`, {
             ...defaultOptions,
             method: "POST",
             body: JSON.stringify({
+                providerId,
                 permissionId,
-                fileId: file.id,
-                providerId: file.providerId
+                fileId: file.id
             }),
             signal
         });
@@ -197,8 +193,6 @@ async function transferFile(params: ITransferFileParams): Promise<void> {
             console.log(completeErrors);
             throw new HttpErrorExeption(completeResp.status, completeErrors[0].error);
         }
-
-        onInfoChange('Done');
 
     } catch (error) {
         throw handleHttpError(error);
@@ -237,20 +231,19 @@ async function deleteFiles(files: Array<IDeleteFilesParam>): Promise<void> {
 interface ITransferLargeFileParams {
     signal: AbortSignal;
     permissionId: string;
+    providerId: Provider;
     fileBuffer: ArrayBuffer;
-    file: TranferFileSchema;
-    onInfoChange: (info: string) => void;
-    onUploadProgress: (progress: number) => void;
+    file: TransferFileSchema;
+    onUploadProgress: OnUploadProgress;
 }
 
 async function transferLargeFile(params: ITransferLargeFileParams): Promise<void> {
 
-    const { signal, fileBuffer, permissionId, file, onUploadProgress, onInfoChange } = params;
+    const { signal, fileBuffer, permissionId, file, onUploadProgress, providerId } = params;
 
     try {
 
         // Register the file to be transfered to the server
-        onInfoChange('Creating upload session');
         const registerResp = await fetch(`${API_URL}/api/microsoft/files/uploadSession`, {
             ...defaultOptions,
             method: "POST",
@@ -262,7 +255,6 @@ async function transferLargeFile(params: ITransferLargeFileParams): Promise<void
             throw new HttpErrorExeption(registerResp.status, errors[0].error);
         }
 
-        onInfoChange('Uploading your file');
         await onedriveClient.uploadLargeFile({
             accessToken,
             buffer: Buffer.from(fileBuffer),
@@ -271,14 +263,13 @@ async function transferLargeFile(params: ITransferLargeFileParams): Promise<void
             onUploadProgress
         });
 
-        onInfoChange('Last touch');
         const completeResp = await fetch(`${API_URL}/api/microsoft/files/uploadSession/${sessionId}/complete`, {
             ...defaultOptions,
             method: "POST",
             body: JSON.stringify({
                 permissionId,
                 fileId: file.id,
-                providerId: file.providerId
+                providerId,
             }),
             signal
         });
@@ -289,8 +280,6 @@ async function transferLargeFile(params: ITransferLargeFileParams): Promise<void
             console.log(completeErrors);
             throw new HttpErrorExeption(completeResp.status, completeErrors[0].error);
         }
-
-        onInfoChange('Done');
 
     } catch (error) {
         console.log(error);

@@ -1,20 +1,16 @@
 import { create } from 'zustand';
-import { toast } from 'react-hot-toast';
-
-import type { GlobalItemTypes, Provider } from '../types';
-
-type File = GlobalItemTypes & { providerId: Provider };
+import type { GlobalItemTypes } from '../types';
 
 interface ISelectedFiles {
     cleanFiles: () => void;
 
-    files: File[];
+    files: Array<GlobalItemTypes>;
 
     has: (fileId: string) => boolean;
 
-    addFile: (file: File) => void;
+    addFile: (file: GlobalItemTypes) => void;
 
-    replaceAllFiles: (file: File | Array<File>) => void;
+    replaceAllFiles: (file: GlobalItemTypes | Array<GlobalItemTypes>) => void;
 }
 
 const useSelectedFiles = create<ISelectedFiles>((set, get) => ({
@@ -28,14 +24,6 @@ const useSelectedFiles = create<ISelectedFiles>((set, get) => ({
     addFile(file) {
         const addedFiles = get().files;
         if (addedFiles.find((f) => f.id === file.id)) return;
-
-        if (addedFiles.find((f) => f.providerId !== file.providerId)) {
-            toast.error('You can only select files from the same provider');
-            return;
-        }
-
-        console.log({ addedFiles, file });
-
         set((state) => ({ files: [...state.files, file] }))
     },
 

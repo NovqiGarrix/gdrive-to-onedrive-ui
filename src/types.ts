@@ -134,12 +134,13 @@ export interface ProviderObject {
     accountId: string;
 }
 
-export interface TranferFileSchema {
+export interface TransferFileSchema {
     id: string;
     name: string;
-    providerId: string;
-    downloadUrl: string;
     iconLink: string;
+    downloadUrl: string;
+    providerId: Provider;
+
     path?: string;
 }
 
@@ -176,12 +177,16 @@ export interface AccountObject {
     isConnected: boolean;
 }
 
-export type UploadInfoProgress = TranferFileSchema & {
-    info: string;
+export type UploadInfoProgress = TransferFileSchema & {
     isLoading: boolean;
     uploadProgress: number;
     downloadProgress: number;
+    upload: () => Promise<boolean>;
     abortController: AbortController;
 
     error?: string;
 };
+
+export type OnUploadProgress = (progress: number) => void;
+
+export type OnDownloadProgress = (progress: number) => void;

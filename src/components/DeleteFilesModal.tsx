@@ -7,23 +7,26 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 
 import onedriveApi from "../apis/onedrive.api";
+import googledriveApi from "../apis/googledrive.api";
+
 import type { IDeleteFilesParam } from "../types";
 import { HttpErrorExeption } from "../exeptions/httpErrorExeption";
 
 import useSelectedFiles from "../hooks/useSelectedFiles";
+import useCloudProvider from "../hooks/useCloudProvider";
 import useGooglePhotosFilter from "../hooks/useGooglePhotosFilter";
 import useDeleteFilesModalState from "../hooks/useDeleteFilesModalState";
 
 import LoadingIcon from "./LoadingIcon";
-import googledriveApi from "../apis/googledrive.api";
 
 const DeleteFilesModal: FunctionComponent = () => {
   const cancelButtonRef = useRef(null);
   const queryClient = useQueryClient();
 
+  const providerId = useCloudProvider((s) => s.provider.id);
+
   const open = useDeleteFilesModalState((state) => state.open);
   const path = useDeleteFilesModalState((state) => state.path);
-  const providerId = useDeleteFilesModalState((state) => state.providerId);
   const closeModal = useDeleteFilesModalState((state) => state.closeModal);
   const debounceQuery = useDeleteFilesModalState(
     (state) => state.debounceQuery
@@ -33,11 +36,8 @@ const DeleteFilesModal: FunctionComponent = () => {
   const cleanSelectedFiles = useSelectedFiles((s) => s.cleanFiles);
 
   const deleteFileFunc = useCallback(
-    (
-      files: Array<IDeleteFilesParam>,
-      sFiles: Array<typeof selectedFiles[number]>
-    ) => {
-      switch (sFiles[0].providerId) {
+    (files: Array<IDeleteFilesParam>) => {
+      switch (providerId) {
         case "onedrive":
           return onedriveApi.deleteFiles(files);
 
@@ -48,15 +48,12 @@ const DeleteFilesModal: FunctionComponent = () => {
           throw new Error("Provider not supported");
       }
     },
-    []
+    [providerId]
   );
 
   const { mutateAsync, isLoading } = useMutation<void, HttpErrorExeption>({
     mutationFn: () =>
-      deleteFileFunc(
-        selectedFiles.map((s) => ({ id: s.id, name: s.name })),
-        selectedFiles
-      ),
+      deleteFileFunc(selectedFiles.map((s) => ({ id: s.id, name: s.name }))),
     mutationKey: ["deleteFiles", selectedFiles],
 
     onError(error) {

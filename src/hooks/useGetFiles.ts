@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import toast from "react-hot-toast";
 import { shallow } from "zustand/shallow";
@@ -29,6 +29,18 @@ function useGetFiles() {
     const previousProvider = useRef<ProviderObject>(provider);
     const googlePhotosFilters = useGooglePhotosFilter((s) => s.formattedFilters, shallow);
 
+    const queryKey = useMemo(() => {
+        return [
+            "files",
+            provider.id,
+            debounceQuery,
+            providerPath,
+            provider.id === "google_photos"
+                ? JSON.stringify(googlePhotosFilters)
+                : undefined,
+        ].filter(Boolean);
+    }, [debounceQuery, googlePhotosFilters, provider.id, providerPath]);
+
     const { isLoading, isError, error, isFetching } = useQuery<
         GetFilesReturn,
         HttpErrorExeption
@@ -39,15 +51,7 @@ function useGetFiles() {
                 path: providerPath,
                 filters: googlePhotosFilters,
             }),
-        queryKey: [
-            "files",
-            provider.id,
-            debounceQuery,
-            providerPath,
-            provider.id === "google_photos"
-                ? JSON.stringify(googlePhotosFilters)
-                : undefined,
-        ].filter(Boolean),
+        queryKey,
         retry: false,
         keepPreviousData: true,
         refetchOnWindowFocus: process.env.NODE_ENV === "production",
@@ -83,6 +87,7 @@ function useGetFiles() {
     return {
         data,
         setData,
+        queryKey,
 
         error,
         isError,

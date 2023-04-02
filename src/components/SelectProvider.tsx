@@ -13,6 +13,7 @@ import type { ProviderObject } from "../types";
 
 import useCloudProvider from "../hooks/useCloudProvider";
 import useProviderPath from "../hooks/useProviderPath";
+import useSelectedFiles from "../hooks/useSelectedFiles";
 
 const SelectProvider: FunctionComponent = () => {
   const router = useRouter();
@@ -21,6 +22,7 @@ const SelectProvider: FunctionComponent = () => {
   const setProvider = useCloudProvider((s) => s.setProvider);
 
   const setProviderPath = useProviderPath((s) => s.setPath);
+  const clearSelectedFiles = useSelectedFiles((s) => s.cleanFiles);
 
   async function onProviderChange(provider: ProviderObject) {
     const queryParams = new URLSearchParams(
@@ -32,6 +34,7 @@ const SelectProvider: FunctionComponent = () => {
 
     queryParams.set("provider", provider.id);
     await router.push("/", `/?${queryParams.toString()}`, { shallow: true });
+    clearSelectedFiles();
     setProvider(provider);
   }
 
