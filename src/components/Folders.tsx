@@ -40,7 +40,7 @@ const Folders: FunctionComponent = () => {
     );
     urlParams.set("path", newPath);
 
-    await router.push(`/`, `/?${urlParams.toString()}`, {
+    await router.push(`/?${urlParams.toString()}`, undefined, {
       shallow: true,
     });
     setPath(newPath);

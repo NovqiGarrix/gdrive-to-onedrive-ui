@@ -33,7 +33,9 @@ const SelectProvider: FunctionComponent = () => {
     setProviderPath(undefined);
 
     queryParams.set("provider", provider.id);
-    await router.push("/", `/?${queryParams.toString()}`, { shallow: true });
+    await router.push(`/?${queryParams.toString()}`, undefined, {
+      shallow: true,
+    });
     clearSelectedFiles();
     setProvider(provider);
   }
