@@ -14,7 +14,6 @@ import Image from "next/image";
 
 import { toast } from "react-hot-toast";
 import { shallow } from "zustand/shallow";
-import { useQueryClient } from "@tanstack/react-query";
 import { Popover, Transition } from "@headlessui/react";
 
 import StarIcon from "@heroicons/react/24/outline/StarIcon";
@@ -33,12 +32,13 @@ import type {
 import { PROVIDERS } from "../constants";
 import classNames from "../utils/classNames";
 
+import onedriveApi from "../apis/onedrive.api";
+import googlephotosApi from "../apis/googlephotos.api";
+
 import useGetFiles from "../hooks/useGetFiles";
 import useSelectedFiles from "../hooks/useSelectedFiles";
 import useCloudProvider from "../hooks/useCloudProvider";
 import useUploadInfoProgress from "../hooks/useUploadInfoProgress";
-import googlephotosApi from "../apis/googlephotos.api";
-import onedriveApi from "../apis/onedrive.api";
 
 const FileOptions: FunctionComponent = () => {
   const ref = useRef<HTMLDivElement>(null);
@@ -113,29 +113,25 @@ const FileOptions: FunctionComponent = () => {
       updateUploadInfoProgress({ ...f, downloadProgress: progress });
     }
 
+    const params = {
+      file,
+      signal,
+      onUploadProgress,
+      onDownloadProgress,
+      providerId: provider.id,
+    };
+
     switch (providerTarget) {
       case "onedrive": {
-        return onedriveApi.transferFile({
-          file,
-          signal,
-          onUploadProgress,
-          onDownloadProgress,
-          providerId: providerTarget,
-        });
+        return onedriveApi.transferFile(params);
       }
 
       case "google_photos": {
-        return googlephotosApi.transferFile({
-          file,
-          signal,
-          onUploadProgress,
-          onDownloadProgress,
-          providerId: file.providerId,
-        });
+        return googlephotosApi.transferFile(params);
       }
 
       default:
-        throw new Error("Invalid Provider!");
+        throw new Error("Unsupported Provider!");
     }
   }
 

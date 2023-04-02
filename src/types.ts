@@ -190,3 +190,11 @@ export type UploadInfoProgress = TransferFileSchema & {
 export type OnUploadProgress = (progress: number) => void;
 
 export type OnDownloadProgress = (progress: number) => void;
+
+export interface ITransferFileParams {
+    signal: AbortSignal;
+    providerId: Provider;
+    file: TransferFileSchema;
+    onUploadProgress: OnUploadProgress;
+    onDownloadProgress: OnDownloadProgress;
+}

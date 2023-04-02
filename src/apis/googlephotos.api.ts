@@ -1,10 +1,7 @@
 import type {
-    Provider,
     GetFilesReturn,
-    OnUploadProgress,
     GooglePhotosFilter,
-    OnDownloadProgress,
-    TransferFileSchema
+    ITransferFileParams
 } from '../types';
 
 import toGlobalTypes from '../utils/toGlobalTypes';
@@ -86,15 +83,7 @@ async function getContentCategories(): Promise<Array<string>> {
     }
 }
 
-interface IUploadFileParams {
-    signal: AbortSignal;
-    providerId: Provider;
-    file: TransferFileSchema;
-    onUploadProgress: OnUploadProgress;
-    onDownloadProgress: OnDownloadProgress;
-}
-
-async function transferFile(params: IUploadFileParams): Promise<void> {
+async function transferFile(params: ITransferFileParams): Promise<void> {
 
     const { file, signal, providerId, onUploadProgress, onDownloadProgress } = params;
 
@@ -109,7 +98,7 @@ async function transferFile(params: IUploadFileParams): Promise<void> {
             onDownloadProgress,
         });
 
-        const registerResp = await fetch(`${API_URL}/api/google/uploadSessions`, {
+        const registerResp = await fetch(`${API_URL}/api/google/files/uploadSessions`, {
             ...defaultOptions,
             method: "POST",
             signal
@@ -133,7 +122,7 @@ async function transferFile(params: IUploadFileParams): Promise<void> {
             buffer: Buffer.from(arrayBuffer)
         });
 
-        const completeResp = await fetch(`${API_URL}/api/google/uploadSessions/${sessionId}/complete`, {
+        const completeResp = await fetch(`${API_URL}/api/google/files/uploadSessions/${sessionId}/complete`, {
             ...defaultOptions,
             method: "PUT",
             body: JSON.stringify({
@@ -153,7 +142,7 @@ async function transferFile(params: IUploadFileParams): Promise<void> {
 
     } catch (error) {
         if (_sessionId) {
-            const cancelResp = await fetch(`${API_URL}/api/google/uploadSessions/${_sessionId}/cancel`, {
+            const cancelResp = await fetch(`${API_URL}/api/google/files/uploadSessions/${_sessionId}/cancel`, {
                 ...defaultOptions,
                 method: "PUT"
             });

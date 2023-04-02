@@ -7,10 +7,11 @@ import getPercentageUploadProgress from '../utils/getPercentageUploadProgress';
 import { UPLOAD_CHUNK_SIZE } from '../constants';
 import onedriveClient from '../lib/onedrive.client';
 import { HttpErrorExeption } from '../exeptions/httpErrorExeption';
-import type { GetFilesReturn, IDeleteFilesParam, OnDownloadProgress, OnUploadProgress, Provider, TransferFileSchema } from '../types';
+import type { GetFilesReturn, IDeleteFilesParam, ITransferFileParams, OnDownloadProgress, OnUploadProgress, Provider, TransferFileSchema } from '../types';
 
 import { API_URL, defaultOptions } from '.';
 import type { IGetFoldersOnlyParams } from './types';
+import getFileBuffer from '../utils/getFileBuffer';
 
 
 interface IGetFilesParams {
@@ -96,93 +97,63 @@ async function getFoldersOnly(params: IGetFoldersOnlyParams): Promise<GetFilesRe
 
 }
 
-interface ITransferFileParams {
-    signal: AbortSignal;
-    providerId: Provider;
-    file: TransferFileSchema;
-    onUploadProgress: OnUploadProgress;
-    onDownloadProgress: OnDownloadProgress;
-}
-
 async function transferFile(params: ITransferFileParams): Promise<void> {
 
-    const { file, signal, onUploadProgress, onDownloadProgress, providerId } = params;
+    const { file, signal, providerId, onUploadProgress, onDownloadProgress } = params;
 
-    /**
-     * Provider Ids
-     * 1. google_drive
-     * 2. google_photos
-     * 3. onedrive
-     * 
-     * API URL Formula
-     * /api/{provider}/{product}/files
-     * 
-     * API URL Example
-     * /api/google/drive/files
-     * /api/google/photos/files
-     * /api/microsoft/files
-     */
-
-    const [provider, product] = providerId.startsWith('google_') ? providerId.split('_') : [providerId, '']
+    let _sessionId: string | undefined = undefined;
 
     try {
 
-        const downloadUrlResp = await fetch(`${API_URL}/api/${provider}${product ? `/${product}` : ''}/files/${file.id}/downloadUrl`, { ...defaultOptions, signal });
-
-        const { errors: downloadUrlErrors, data: downloadUrlData } = await downloadUrlResp.json();
-        if (!downloadUrlResp.ok) {
-            throw new HttpErrorExeption(downloadUrlResp.status, downloadUrlErrors[0].error);
-        }
-
-        const { permissionId, downloadUrl } = downloadUrlData;
-
-        const { data: fileBuffer,
-            status: fileRespStatus,
-            statusText: fileRespStatusText
-        } = await axios.get(downloadUrl, {
+        const { arrayBuffer, permissionId } = await getFileBuffer({
+            file,
             signal,
-            responseType: 'arraybuffer',
-            onDownloadProgress(progressEvent) {
-                onDownloadProgress(getPercentageUploadProgress(progressEvent.loaded, progressEvent.total!));
-            },
-            validateStatus: () => true
+            providerId,
+            onDownloadProgress,
         });
 
-        if (fileRespStatus !== 200) {
-            throw new HttpErrorExeption(fileRespStatus, `Error while downloading file: ${fileRespStatusText}`);
+        if (arrayBuffer.byteLength > UPLOAD_CHUNK_SIZE) {
+            return transferLargeFile({
+                file,
+                signal,
+                providerId,
+                permissionId,
+                onUploadProgress,
+                fileBuffer: arrayBuffer,
+            })
         }
 
-        if (fileBuffer.byteLength >= UPLOAD_CHUNK_SIZE) {
-            return transferLargeFile({ file, signal, permissionId, fileBuffer, onUploadProgress, providerId });
-        }
-
-        // Register the session to get fresh access token
-        const registerResp = await fetch(`${API_URL}/api/microsoft/files/uploadSession`, {
+        const registerResp = await fetch(`${API_URL}/api/microsoft/files/uploadSessions`, {
             ...defaultOptions,
             method: "POST",
             signal
         });
 
-        const { errors, data: { sessionId, accessToken } } = await registerResp.json();
+        const registerRespData = await registerResp.json();
         if (!registerResp.ok) {
-            throw new HttpErrorExeption(registerResp.status, errors[0].error);
+            throw new HttpErrorExeption(registerResp.status, registerRespData.errors[0].error);
         }
 
+        const { sessionId, fileId } = registerRespData.data;
+        const accessToken = fileId.split(':')[1];
+
+        _sessionId = sessionId;
+
         await onedriveClient.uploadFile({
+            signal,
             accessToken,
-            buffer: Buffer.from(fileBuffer),
+            onUploadProgress,
             filename: file.name,
-            onedrivePath: file.path,
-            onUploadProgress
+            buffer: Buffer.from(arrayBuffer)
         });
 
-        const completeResp = await fetch(`${API_URL}/api/microsoft/files/uploadSession/${sessionId}/complete`, {
+        const completeResp = await fetch(`${API_URL}/api/microsoft/files/uploadSessions/${sessionId}/complete`, {
             ...defaultOptions,
-            method: "POST",
+            method: "PUT",
             body: JSON.stringify({
                 providerId,
                 permissionId,
-                fileId: file.id
+                fileId: file.id,
             }),
             signal
         });
@@ -195,6 +166,14 @@ async function transferFile(params: ITransferFileParams): Promise<void> {
         }
 
     } catch (error) {
+        if (_sessionId) {
+            const cancelResp = await fetch(`${API_URL}/api/microsoft/files/uploadSessions/${_sessionId}/cancel`, {
+                ...defaultOptions,
+                method: "PUT"
+            });
+
+            await cancelResp.body?.cancel();
+        }
         throw handleHttpError(error);
     }
 
@@ -230,8 +209,8 @@ async function deleteFiles(files: Array<IDeleteFilesParam>): Promise<void> {
 
 interface ITransferLargeFileParams {
     signal: AbortSignal;
-    permissionId: string;
     providerId: Provider;
+    permissionId?: string;
     fileBuffer: ArrayBuffer;
     file: TransferFileSchema;
     onUploadProgress: OnUploadProgress;
@@ -241,19 +220,25 @@ async function transferLargeFile(params: ITransferLargeFileParams): Promise<void
 
     const { signal, fileBuffer, permissionId, file, onUploadProgress, providerId } = params;
 
+    let _sessionId: string | undefined = undefined;
+
     try {
 
         // Register the file to be transfered to the server
-        const registerResp = await fetch(`${API_URL}/api/microsoft/files/uploadSession`, {
+        const registerResp = await fetch(`${API_URL}/api/microsoft/files/uploadSessions`, {
             ...defaultOptions,
             method: "POST",
             signal
         });
 
-        const { errors, data: { sessionId, accessToken } } = await registerResp.json();
+        const { errors, data: { sessionId, fileId } } = await registerResp.json();
         if (!registerResp.ok) {
             throw new HttpErrorExeption(registerResp.status, errors[0].error);
         }
+
+        const accessToken = fileId.split(':')[1];
+
+        _sessionId = sessionId;
 
         await onedriveClient.uploadLargeFile({
             accessToken,
@@ -263,9 +248,9 @@ async function transferLargeFile(params: ITransferLargeFileParams): Promise<void
             onUploadProgress
         });
 
-        const completeResp = await fetch(`${API_URL}/api/microsoft/files/uploadSession/${sessionId}/complete`, {
+        const completeResp = await fetch(`${API_URL}/api/microsoft/files/uploadSessions/${sessionId}/complete`, {
             ...defaultOptions,
-            method: "POST",
+            method: "PUT",
             body: JSON.stringify({
                 permissionId,
                 fileId: file.id,
@@ -282,7 +267,14 @@ async function transferLargeFile(params: ITransferLargeFileParams): Promise<void
         }
 
     } catch (error) {
-        console.log(error);
+        if (_sessionId) {
+            const cancelResp = await fetch(`${API_URL}/api/microsoft/files/uploadSessions/${_sessionId}/cancel`, {
+                ...defaultOptions,
+                method: "PUT"
+            });
+
+            await cancelResp.body?.cancel();
+        }
         throw handleHttpError(error);
     }
 
