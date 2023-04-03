@@ -32,6 +32,8 @@ const DeleteFilesModal: FunctionComponent = () => {
   const selectedFiles = useSelectedFiles((s) => s.files, shallow);
   const cleanSelectedFiles = useSelectedFiles((s) => s.cleanFiles);
 
+  console.log(selectedFiles);
+
   const deleteFileFunc = useCallback(
     (files: Array<IDeleteFilesParam>) => {
       switch (providerId) {
@@ -139,6 +141,7 @@ const DeleteFilesModal: FunctionComponent = () => {
                 <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
                   <button
                     type="button"
+                    data-id="delete-files-modal-delete-button"
                     onClick={() => {
                       toast.promise(onDelete(), {
                         loading: "Deleting...",
@@ -150,13 +153,20 @@ const DeleteFilesModal: FunctionComponent = () => {
                     className="inline-flex w-full justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 sm:ml-3 sm:w-auto focus:outline-none"
                   >
                     {isLoading ? (
-                      <LoadingIcon fill="#fff" className="w-5 h-5" />
+                      <LoadingIcon
+                        data-id="delete-files-modal-delete-button-loading"
+                        fill="#fff"
+                        className="w-5 h-5"
+                      />
                     ) : (
-                      <span>Delete</span>
+                      <span data-id="delete-files-modal-delete-button-span">
+                        Delete
+                      </span>
                     )}
                   </button>
                   <button
                     type="button"
+                    data-id="delete-files-modal-cancel-button"
                     disabled={isLoading}
                     onClick={closeModal}
                     ref={cancelButtonRef}
