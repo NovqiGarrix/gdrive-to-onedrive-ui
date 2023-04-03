@@ -24,12 +24,14 @@ import BeautifulError from "./BeautifulError";
 import useGetFilesFunc from "./useGetFilesFunc";
 import FileSkeletonLoading from "./FileSkeletonLoading";
 import UploadProgressInfo from "./UploadProgressInfo";
+import useCloudProvider from "../hooks/useCloudProvider";
 
 const FilesContainer: FunctionComponent = () => {
   const selectedFiles = useSelectedFiles((s) => s.files, shallow);
   const openModalFunc = useDeleteFilesModalState((s) => s.openModal);
 
   const providerPath = useProviderPath((s) => s.path);
+  const providerId = useCloudProvider((s) => s.provider.id);
 
   const debounceQuery = useSearchQuery((s) => s.debounceQuery);
   const googlePhotosFilters = useGooglePhotosFilter(
@@ -86,10 +88,14 @@ const FilesContainer: FunctionComponent = () => {
 
   // Filter the files to only show files (not folders)
   const files = useMemo(() => {
-    return debounceQuery
-      ? data.files
-      : data.files.filter((f) => f.type === "file");
-  }, [data.files, debounceQuery]);
+    if (providerId === "onedrive") {
+      return debounceQuery
+        ? data.files
+        : data.files.filter((f) => f.type === "file");
+    }
+
+    return data.files;
+  }, [data.files, debounceQuery, providerId]);
 
   const openModal = useEffectEvent(() => {
     openModalFunc();
@@ -140,8 +146,7 @@ const FilesContainer: FunctionComponent = () => {
               <File key={file.id} file={file} files={data.files} />
             ))}
             {/* End of element. Use for infinite scrolling */}
-            {/* TODO: Uncomment this */}
-            {/* <div ref={infiniteScrollLoadingRef}></div> */}
+            <div ref={infiniteScrollLoadingRef}></div>
           </div>
         )}
       </div>
