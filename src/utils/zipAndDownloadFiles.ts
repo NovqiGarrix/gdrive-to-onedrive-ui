@@ -2,13 +2,11 @@ import JSZip from 'jszip';
 import FileSaver from 'file-saver';
 import { toast } from 'react-hot-toast';
 
-import { GlobalItemTypes } from '../types';
+import type { GlobalItemTypes } from '../types';
 import { API_URL, defaultOptions } from '../apis';
+import { NEXT_PUBLIC_INFILE_HELPER_URL } from '../constants';
 
 import getFileBuffer from './getFileBuffer';
-
-const NEXT_PUBLIC_INFILE_HELPER_URL = process.env.NEXT_PUBLIC_INFILE_HELPER_URL;
-if (!NEXT_PUBLIC_INFILE_HELPER_URL) throw new Error('Missing NEXT_PUBLIC_INFILE_HELPER_URL from env variable');
 
 export default async function zipAndDownloadFiles(files: Array<GlobalItemTypes>, toastId: string) {
 

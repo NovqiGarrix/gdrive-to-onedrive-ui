@@ -1,4 +1,5 @@
 import { API_URL, defaultOptions } from "../apis";
+import { NEXT_PUBLIC_INFILE_HELPER_URL } from "../constants";
 import { HttpErrorExeption } from "../exeptions/httpErrorExeption";
 import type { OnDownloadProgress, Provider, TransferFileSchema } from "../types";
 
@@ -38,6 +39,17 @@ export default async function getFileBuffer(params: IGetFileBufferParams): Promi
             signal,
             downloadUrl,
             onDownloadProgress,
+        });
+    } else if (providerId === 'google_photos') {
+        arrayBuffer = await downloadFile({
+            signal,
+            onDownloadProgress,
+
+            /**
+             * Using proxy server to download files from google photos
+             * in order to avoid CORS error
+             */
+            downloadUrl: `${NEXT_PUBLIC_INFILE_HELPER_URL}/api/v1/serve?url=${file.downloadUrl}`,
         });
     } else {
         arrayBuffer = await downloadFile({
