@@ -7,6 +7,7 @@ import {
   useState,
   // @ts-ignore - No types
   experimental_useEffectEvent as useEffectEvent,
+  useCallback,
 } from "react";
 
 import Link from "next/link";
@@ -16,7 +17,7 @@ import { toast } from "react-hot-toast";
 import { shallow } from "zustand/shallow";
 import { Popover, Transition } from "@headlessui/react";
 
-import StarIcon from "@heroicons/react/24/outline/StarIcon";
+// import StarIcon from "@heroicons/react/24/outline/StarIcon";
 import BoltIcon from "@heroicons/react/24/outline/BoltIcon";
 import TrashIcon from "@heroicons/react/24/outline/TrashIcon";
 import PaperClipIcon from "@heroicons/react/24/outline/PaperClipIcon";
@@ -30,16 +31,19 @@ import type {
   UploadInfoProgress,
 } from "../types";
 import { PROVIDERS } from "../constants";
+
 import classNames from "../utils/classNames";
+import zipAndDownloadFiles from "../utils/zipAndDownloadFiles";
 
 import onedriveApi from "../apis/onedrive.api";
+import googledriveApi from "../apis/googledrive.api";
 import googlephotosApi from "../apis/googlephotos.api";
 
 import useGetFiles from "../hooks/useGetFiles";
 import useSelectedFiles from "../hooks/useSelectedFiles";
 import useCloudProvider from "../hooks/useCloudProvider";
 import useUploadInfoProgress from "../hooks/useUploadInfoProgress";
-import googledriveApi from "../apis/googledrive.api";
+import useDeleteFilesModalState from "../hooks/useDeleteFilesModalState";
 
 const FileOptions: FunctionComponent = () => {
   const ref = useRef<HTMLDivElement>(null);
@@ -53,30 +57,65 @@ const FileOptions: FunctionComponent = () => {
 
   const provider = useCloudProvider((s) => s.provider, shallow);
 
+  const openDeleteModal = useDeleteFilesModalState((s) => s.openModal);
+
+  const downloadFiles = useCallback(async () => {
+    setIsShowingOptions(false);
+
+    // If the selected files more than 1, we will download them as a zip file
+    if (selectedFiles.length > 1) {
+      const toastId = "zipAndDownloadFiles";
+      toast.loading("Zipping files...", { id: toastId });
+      await zipAndDownloadFiles(selectedFiles, toastId);
+
+      toast.success("Downloading files...", { id: toastId });
+      return;
+    }
+
+    return window.open(selectedFiles[0].downloadUrl, "_blank");
+  }, [selectedFiles]);
+
+  const getFileLink = useCallback(async () => {
+    setIsShowingOptions(false);
+
+    const file = selectedFiles[0];
+    await toast.promise(navigator.clipboard.writeText(file.webUrl), {
+      error: "Failed to copy link!",
+      loading: "Copying link...",
+      success: "Copied to clipboard!",
+    });
+  }, [selectedFiles]);
+
   const otherActions = useMemo(() => {
     return [
       {
         Icon: PaperClipIcon,
         label: "Get Link",
-        onClick: () => {},
+        onClick: getFileLink,
+        show: selectedFiles.length === 1,
       },
-      {
-        Icon: StarIcon,
-        label: "Add to favorites",
-        onClick: () => {},
-      },
+      // {
+      //   Icon: StarIcon,
+      //   label: "Add to favorites",
+      //   onClick: () => {},
+      // },
       {
         Icon: ArrowDownTrayIcon,
         label: "Download",
-        onClick: () => {},
+        onClick: downloadFiles,
+        show: true,
       },
       {
         Icon: TrashIcon,
         label: "Delete",
-        onClick: () => {},
+        onClick: () => {
+          setIsShowingOptions(false);
+          openDeleteModal();
+        },
+        show: true,
       },
     ];
-  }, []);
+  }, [downloadFiles, getFileLink, openDeleteModal, selectedFiles.length]);
 
   const targetUploadProviders = useMemo(
     () => PROVIDERS.filter((p) => p.id !== provider.id),
@@ -376,7 +415,12 @@ const FileOptions: FunctionComponent = () => {
 
           {selectedFiles.length === 1 ? (
             <li className="py-[10px] px-[10px] cursor-pointer group rounded-[10px] hover:bg-gray-50">
-              <Link passHref href="/" className="flex items-center">
+              <Link
+                passHref
+                target="_blank"
+                className="flex items-center"
+                href={selectedFiles[0].webUrl}
+              >
                 <div className="p-2 bg-gray-50 rounded-[8px] group-hover:bg-white">
                   <Image
                     src={provider.image}
@@ -454,24 +498,27 @@ const FileOptions: FunctionComponent = () => {
         </ul>
 
         <ul className="pt-3">
-          {otherActions.map((menu) => (
-            <li
-              key={menu.label}
-              className="py-[10px] px-[10px] cursor-pointer group rounded-[10px] hover:bg-gray-50"
-            >
-              <div className="flex items-center">
-                <div className="p-2 bg-gray-50 rounded-[8px] group-hover:bg-white">
-                  <menu.Icon
-                    aria-hidden="true"
-                    className="w-[22px] h-[22px] text-gray-500 group-hover:text-gray-600"
-                  />
-                </div>
-                <span className="ml-3 font-inter font-medium text-sm">
-                  {menu.label}
-                </span>
-              </div>
-            </li>
-          ))}
+          {otherActions.map((menu) =>
+            menu.show ? (
+              <li key={menu.label}>
+                <button
+                  type="button"
+                  onClick={menu.onClick}
+                  className="w-full flex items-center py-[10px] px-[10px] cursor-pointer group rounded-[10px] hover:bg-gray-50"
+                >
+                  <div className="p-2 bg-gray-50 rounded-[8px] group-hover:bg-white">
+                    <menu.Icon
+                      aria-hidden="true"
+                      className="w-[22px] h-[22px] text-gray-500 group-hover:text-gray-600"
+                    />
+                  </div>
+                  <span className="ml-3 font-inter font-medium text-sm">
+                    {menu.label}
+                  </span>
+                </button>
+              </li>
+            ) : null
+          )}
         </ul>
       </div>
     </div>

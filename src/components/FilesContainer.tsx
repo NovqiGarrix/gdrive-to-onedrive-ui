@@ -92,10 +92,7 @@ const FilesContainer: FunctionComponent = () => {
   }, [data.files, debounceQuery]);
 
   const openModal = useEffectEvent(() => {
-    openModalFunc({
-      debounceQuery,
-      path: providerPath,
-    });
+    openModalFunc();
   });
 
   useEffect(() => {

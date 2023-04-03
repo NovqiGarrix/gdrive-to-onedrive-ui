@@ -1,31 +1,21 @@
 import { create } from "zustand";
 
-interface DeleteModalParams {
-    debounceQuery: string;
-    path: string | undefined;
-}
-
 type IDeleteFilesModalState = {
     open: boolean;
-    openModal: (params: DeleteModalParams) => void;
+    openModal: () => void;
     closeModal: () => void;
-} & DeleteModalParams;
+}
 
 const useDeleteFilesModalState = create<IDeleteFilesModalState>((set) => ({
     open: false,
 
-    openModal(params) {
-        set({ open: true, ...params });
+    openModal() {
+        set({ open: true });
     },
 
     closeModal() {
-        set({ open: false, debounceQuery: "", path: undefined });
+        set({ open: false });
     },
-
-    debounceQuery: "",
-
-    path: undefined,
-
 }));
 
 export default useDeleteFilesModalState;

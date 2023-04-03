@@ -8,7 +8,7 @@ interface IGetFileBufferParams {
     signal: AbortSignal;
     providerId: Provider;
     file: TransferFileSchema;
-    onDownloadProgress: OnDownloadProgress;
+    onDownloadProgress?: OnDownloadProgress;
 }
 
 interface IGetFileBufferReturn {

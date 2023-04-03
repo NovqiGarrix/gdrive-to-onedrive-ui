@@ -14,23 +14,20 @@ import { HttpErrorExeption } from "../exeptions/httpErrorExeption";
 
 import useSelectedFiles from "../hooks/useSelectedFiles";
 import useCloudProvider from "../hooks/useCloudProvider";
-import useGooglePhotosFilter from "../hooks/useGooglePhotosFilter";
 import useDeleteFilesModalState from "../hooks/useDeleteFilesModalState";
 
 import LoadingIcon from "./LoadingIcon";
+import useGetFiles from "../hooks/useGetFiles";
 
 const DeleteFilesModal: FunctionComponent = () => {
   const cancelButtonRef = useRef(null);
   const queryClient = useQueryClient();
 
+  const { queryKey: getFilesQueryKey } = useGetFiles();
   const providerId = useCloudProvider((s) => s.provider.id);
 
   const open = useDeleteFilesModalState((state) => state.open);
-  const path = useDeleteFilesModalState((state) => state.path);
   const closeModal = useDeleteFilesModalState((state) => state.closeModal);
-  const debounceQuery = useDeleteFilesModalState(
-    (state) => state.debounceQuery
-  );
 
   const selectedFiles = useSelectedFiles((s) => s.files, shallow);
   const cleanSelectedFiles = useSelectedFiles((s) => s.cleanFiles);
@@ -78,18 +75,7 @@ const DeleteFilesModal: FunctionComponent = () => {
 
   async function onDelete() {
     await mutateAsync();
-
-    await queryClient.invalidateQueries(
-      [
-        "files",
-        providerId,
-        debounceQuery,
-        path,
-        providerId === "google_photos"
-          ? JSON.stringify(useGooglePhotosFilter.getState().formattedFilters)
-          : undefined,
-      ].filter(Boolean)
-    );
+    await queryClient.invalidateQueries(getFilesQueryKey);
 
     cleanSelectedFiles();
   }

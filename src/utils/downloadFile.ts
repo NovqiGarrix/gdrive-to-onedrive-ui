@@ -1,11 +1,13 @@
 import axios from "axios";
+
+import type { OnDownloadProgress } from "../types";
 import { HttpErrorExeption } from '../exeptions/httpErrorExeption';
 import getPercentageUploadProgress from "./getPercentageUploadProgress";
 
 interface IDownloadFileParams {
     downloadUrl: string;
     signal: AbortSignal;
-    onDownloadProgress: (percentage: number) => void;
+    onDownloadProgress?: OnDownloadProgress;
 }
 
 export default async function downloadFile(params: IDownloadFileParams): Promise<ArrayBuffer> {
@@ -18,9 +20,11 @@ export default async function downloadFile(params: IDownloadFileParams): Promise
     } = await axios.get(downloadUrl, {
         signal,
         responseType: 'arraybuffer',
-        onDownloadProgress(progressEvent) {
-            onDownloadProgress(getPercentageUploadProgress(progressEvent.loaded, progressEvent.total!));
-        },
+        ...(typeof onDownloadProgress === "function" ? {
+            onDownloadProgress(progressEvent) {
+                onDownloadProgress(getPercentageUploadProgress(progressEvent.loaded, progressEvent.total!));
+            }
+        } : {}),
         validateStatus: () => true
     });
 

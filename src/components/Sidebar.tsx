@@ -7,8 +7,8 @@ import { useRouter } from "next/router";
 import SolidFolder from "@heroicons/react/24/solid/FolderIcon";
 import OutlineFolder from "@heroicons/react/24/outline/FolderIcon";
 
-import SolidStar from "@heroicons/react/24/solid/StarIcon";
-import OutlineStar from "@heroicons/react/24/outline/StarIcon";
+// import SolidStar from "@heroicons/react/24/solid/StarIcon";
+// import OutlineStar from "@heroicons/react/24/outline/StarIcon";
 
 import SolidCog from "@heroicons/react/24/solid/Cog6ToothIcon";
 import OutlineCog from "@heroicons/react/24/outline/Cog6ToothIcon";
@@ -25,12 +25,12 @@ const generalMenus = [
     ActiveIcon: SolidFolder,
     InActiveIcon: OutlineFolder,
   },
-  {
-    label: "Favorites",
-    href: "/favs",
-    ActiveIcon: SolidStar,
-    InActiveIcon: OutlineStar,
-  },
+  // {
+  //   label: "Favorites",
+  //   href: "/favs",
+  //   ActiveIcon: SolidStar,
+  //   InActiveIcon: OutlineStar,
+  // },
   {
     label: "Settings",
     href: "/settings",
