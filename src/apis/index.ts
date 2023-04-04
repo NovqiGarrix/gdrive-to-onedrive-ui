@@ -48,7 +48,7 @@ export async function cancelGoogleUploadSession(sessionId: string) {
 
 }
 
-export async function cancelOnedriveUploadSession(sessionId: string) {
+export async function cancelMicrosoftUploadSession(sessionId: string) {
 
     const cancelResp = await fetch(`${API_URL}/api/microsoft/files/uploadSessions/${sessionId}/cancel`, {
         ...defaultOptions,
@@ -56,5 +56,44 @@ export async function cancelOnedriveUploadSession(sessionId: string) {
     });
 
     await cancelResp.body?.cancel();
+
+}
+
+export async function createMicorosftUploadSession(signal: AbortSignal) {
+
+    const registerResp = await fetch(`${API_URL}/api/microsoft/files/uploadSessions`, {
+        ...defaultOptions,
+        signal,
+        method: "POST"
+    });
+
+    const registerRespData = await registerResp.json();
+    if (!registerResp.ok) {
+        throw new HttpErrorExeption(registerResp.status, registerRespData.errors[0].error);
+    }
+
+    const { sessionId, fileId } = registerRespData.data;
+    const accessToken = fileId.split(':')[1];
+
+    return {
+        sessionId,
+        accessToken
+    }
+
+}
+
+export async function completeMicrosoftUploadSession(sessionId: string, signal: AbortSignal) {
+
+    const completeResp = await fetch(`${API_URL}/api/microsoft/files/uploadSessions/${sessionId}/complete`, {
+        ...defaultOptions,
+        signal,
+        method: "PUT"
+    });
+
+    const { errors: completeErrors } = await completeResp.json();
+
+    if (!completeResp.ok) {
+        throw new HttpErrorExeption(completeResp.status, completeErrors[0].error);
+    }
 
 }

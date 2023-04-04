@@ -2,9 +2,7 @@ import type {
     GetFilesReturn,
     IDeleteFilesParam,
     ITransferFileParams,
-    OnUploadProgress,
-    Provider,
-    TransferFileSchema
+    IUploadFileParams,
 } from '../types';
 
 import toGlobalTypes from '../utils/toGlobalTypes';
@@ -16,7 +14,7 @@ import onedriveClient from '../lib/onedrive.client';
 import { HttpErrorExeption } from '../exeptions/httpErrorExeption';
 
 import type { IGetFoldersOnlyParams } from './types';
-import { API_URL, cancelOnedriveUploadSession, defaultOptions } from '.';
+import { API_URL, cancelMicrosoftUploadSession, completeMicrosoftUploadSession, createMicorosftUploadSession, defaultOptions } from '.';
 
 
 interface IGetFilesParams {
@@ -117,55 +115,32 @@ async function transferFile(params: ITransferFileParams): Promise<void> {
             downloadUrl: file.downloadUrl
         });
 
+        const { sessionId, accessToken } = await createMicorosftUploadSession(signal);
+        _sessionId = sessionId;
+
         if (arrayBuffer.byteLength > UPLOAD_CHUNK_SIZE) {
-            return transferLargeFile({
-                file,
+            await onedriveClient.uploadLargeFile({
+                accessToken,
+                buffer: Buffer.from(arrayBuffer),
+                filename: file.name,
+                onedrivePath: file.path,
+                onUploadProgress
+            });
+        } else {
+            await onedriveClient.uploadFile({
                 signal,
+                accessToken,
                 onUploadProgress,
-                fileBuffer: arrayBuffer,
+                filename: file.name,
+                buffer: Buffer.from(arrayBuffer)
             });
         }
 
-        const registerResp = await fetch(`${API_URL}/api/microsoft/files/uploadSessions`, {
-            ...defaultOptions,
-            method: "POST",
-            signal
-        });
-
-        const registerRespData = await registerResp.json();
-        if (!registerResp.ok) {
-            throw new HttpErrorExeption(registerResp.status, registerRespData.errors[0].error);
-        }
-
-        const { sessionId, fileId } = registerRespData.data;
-        const accessToken = fileId.split(':')[1];
-
-        _sessionId = sessionId;
-
-        await onedriveClient.uploadFile({
-            signal,
-            accessToken,
-            onUploadProgress,
-            filename: file.name,
-            buffer: Buffer.from(arrayBuffer)
-        });
-
-        const completeResp = await fetch(`${API_URL}/api/microsoft/files/uploadSessions/${sessionId}/complete`, {
-            ...defaultOptions,
-            signal,
-            method: "PUT"
-        });
-
-        const { errors: completeErrors } = await completeResp.json();
-
-        if (!completeResp.ok) {
-            console.log(completeErrors);
-            throw new HttpErrorExeption(completeResp.status, completeErrors[0].error);
-        }
+        await completeMicrosoftUploadSession(sessionId, signal);
 
     } catch (error) {
         if (_sessionId) {
-            await cancelOnedriveUploadSession(_sessionId);
+            await cancelMicrosoftUploadSession(_sessionId);
         }
         throw handleHttpError(error);
     }
@@ -200,60 +175,43 @@ async function deleteFiles(files: Array<IDeleteFilesParam>): Promise<void> {
 
 }
 
-interface ITransferLargeFileParams {
-    signal: AbortSignal;
-    fileBuffer: ArrayBuffer;
-    file: TransferFileSchema;
-    onUploadProgress: OnUploadProgress;
-}
+async function uploadFile(params: IUploadFileParams): Promise<void> {
 
-async function transferLargeFile(params: ITransferLargeFileParams): Promise<void> {
-
-    const { signal, fileBuffer, file, onUploadProgress } = params;
+    const { file, signal, onUploadProgress, path } = params;
 
     let _sessionId: string | undefined = undefined;
 
     try {
 
-        // Register the file to be transfered to the server
-        const registerResp = await fetch(`${API_URL}/api/microsoft/files/uploadSessions`, {
-            ...defaultOptions,
-            method: "POST",
-            signal
-        });
+        const arrayBuffer = await file.arrayBuffer();
 
-        const { errors, data: { sessionId, fileId } } = await registerResp.json();
-        if (!registerResp.ok) {
-            throw new HttpErrorExeption(registerResp.status, errors[0].error);
-        }
-
-        const accessToken = fileId.split(':')[1];
-
+        const { sessionId, accessToken } = await createMicorosftUploadSession(signal);
         _sessionId = sessionId;
 
-        await onedriveClient.uploadLargeFile({
-            accessToken,
-            buffer: Buffer.from(fileBuffer),
-            filename: file.name,
-            onedrivePath: file.path,
-            onUploadProgress
-        });
-
-        const completeResp = await fetch(`${API_URL}/api/microsoft/files/uploadSessions/${sessionId}/complete`, {
-            ...defaultOptions,
-            signal,
-            method: "PUT"
-        });
-
-        const { errors: completeErrors } = await completeResp.json();
-
-        if (!completeResp.ok) {
-            throw new HttpErrorExeption(completeResp.status, completeErrors[0].error);
+        if (arrayBuffer.byteLength > UPLOAD_CHUNK_SIZE) {
+            await onedriveClient.uploadLargeFile({
+                accessToken,
+                onUploadProgress,
+                filename: file.name,
+                buffer: Buffer.from(arrayBuffer),
+                onedrivePath: cleanPathFromFolderId(path)
+            });
+        } else {
+            await onedriveClient.uploadFile({
+                signal,
+                accessToken,
+                onUploadProgress,
+                filename: file.name,
+                buffer: Buffer.from(arrayBuffer),
+                onedrivePath: cleanPathFromFolderId(path)
+            });
         }
+
+        await completeMicrosoftUploadSession(sessionId, signal);
 
     } catch (error) {
         if (_sessionId) {
-            await cancelOnedriveUploadSession(_sessionId);
+            await cancelMicrosoftUploadSession(_sessionId);
         }
         throw handleHttpError(error);
     }
@@ -263,5 +221,6 @@ async function transferLargeFile(params: ITransferLargeFileParams): Promise<void
 // eslint-disable-next-line import/no-anonymous-default-export
 export default {
     getFiles,
-    transferFile, deleteFiles
+    transferFile, deleteFiles,
+    uploadFile
 }

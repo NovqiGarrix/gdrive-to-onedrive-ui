@@ -20,6 +20,7 @@ import { toast } from "react-hot-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 
+import onedriveApi from "../apis/onedrive.api";
 import googledriveApi from "../apis/googledrive.api";
 import googlephotosApi from "../apis/googlephotos.api";
 
@@ -114,6 +115,9 @@ const UploadArea: FunctionComponent = () => {
         case "google_photos":
           return googlephotosApi.uploadFile(params);
 
+        case "onedrive":
+          return onedriveApi.uploadFile(params);
+
         default:
           throw new Error("Unsupported provider");
       }
@@ -168,10 +172,11 @@ const UploadArea: FunctionComponent = () => {
         abortController: new AbortController(),
         upload: () =>
           uploadFuncUtil({
-            file: f,
             onUploadProgress,
-            signal: file.abortController.signal,
+
+            file: f,
             id: file.id,
+            signal: file.abortController.signal,
           }),
       };
 
