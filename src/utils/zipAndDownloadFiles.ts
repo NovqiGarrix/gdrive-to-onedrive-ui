@@ -57,15 +57,9 @@ export default async function zipAndDownloadFiles(files: Array<GlobalItemTypes>,
                     try {
 
                         const arrayBuffer = await getFileBuffer({
-                            file: {
-                                providerId,
-                                id: file.id,
-                                name: file.name,
-                                downloadUrl: file.downloadUrl,
-                                iconLink: file.iconLink,
-                            },
+                            providerId,
+                            downloadUrl: file.downloadUrl,
                             signal: new AbortController().signal,
-                            providerId
                         });
 
                         return arrayBuffer;

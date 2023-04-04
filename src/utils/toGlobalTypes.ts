@@ -1,4 +1,11 @@
-import { DriveItem, GlobalItemTypes, OneDriveItem, PhotosItem, Provider } from "../types";
+import type {
+    DriveItem,
+    GlobalItemTypes,
+    OneDriveItem,
+    PhotosItem,
+    Provider
+} from "../types";
+
 import getIconExtensionUrl from "./getIconExtensionUrl";
 
 export default function toGlobalTypes(data: any, provider: Provider): GlobalItemTypes {
@@ -15,7 +22,17 @@ export default function toGlobalTypes(data: any, provider: Provider): GlobalItem
                 type: isFolder ? 'folder' : 'file',
                 mimeType: d.mimeType,
                 webUrl: d.webViewLink,
-                image: d.mimeType.includes("image") ? d.webContentLink : d.hasThumbnail ? d.thumbnailLink : undefined,
+                image: (() => {
+
+                    if (d.mimeType.includes("image")) {
+                        return d.webContentLink;
+                    } else if (d.hasThumbnail) {
+                        return d.thumbnailLink
+                    } else {
+                        return undefined
+                    }
+
+                })(),
                 iconLink: getIconExtensionUrl(d.name),
                 downloadUrl: d.webContentLink,
                 createdAt: new Date(d.createdTime)

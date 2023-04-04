@@ -160,10 +160,10 @@ async function transferFile(params: ITransferFileParams): Promise<void> {
     try {
 
         const arrayBuffer = await getFileBuffer({
-            file,
             signal,
             providerId,
             onDownloadProgress,
+            downloadUrl: file.downloadUrl
         });
 
         const { sessionId, accessToken } = await createGoogleUploadSession(signal);

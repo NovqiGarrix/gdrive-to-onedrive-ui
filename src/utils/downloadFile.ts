@@ -6,8 +6,9 @@ import getPercentageUploadProgress from "./getPercentageUploadProgress";
 
 interface IDownloadFileParams {
     downloadUrl: string;
-    signal: AbortSignal;
     providerId: Provider;
+
+    signal?: AbortSignal;
     onDownloadProgress?: OnDownloadProgress;
 }
 

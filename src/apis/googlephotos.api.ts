@@ -40,7 +40,7 @@ async function getFiles(nextPageToken?: string, filter?: GooglePhotosFilter): Pr
             throw new HttpErrorExeption(resp.status, errors[0].error);
         }
 
-        const files = data.files.map((file: any) => toGlobalTypes(file, 'google_photos'));
+        const files = data.files.map((file: any) => toGlobalTypes(file, 'google_photos'))
 
         return {
             files,
@@ -92,10 +92,10 @@ async function transferFile(params: ITransferFileParams): Promise<void> {
     try {
 
         const arrayBuffer = await getFileBuffer({
-            file,
             signal,
             providerId,
             onDownloadProgress,
+            downloadUrl: file.downloadUrl
         });
 
         googlephotosClient.validateFile(file.name, arrayBuffer.byteLength);

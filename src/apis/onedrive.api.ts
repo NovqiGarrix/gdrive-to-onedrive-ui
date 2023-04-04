@@ -54,7 +54,7 @@ async function getFiles(params: IGetFilesParams): Promise<GetFilesReturn> {
             throw new HttpErrorExeption(resp.status, errors[0].error);
         }
 
-        const files = data.files.map((file: any) => toGlobalTypes(file, 'onedrive'));
+        const files = data.files.map((file: any) => toGlobalTypes(file, 'onedrive'))
 
         return {
             files,
@@ -111,10 +111,10 @@ async function transferFile(params: ITransferFileParams): Promise<void> {
     try {
 
         const arrayBuffer = await getFileBuffer({
-            file,
             signal,
             providerId,
             onDownloadProgress,
+            downloadUrl: file.downloadUrl
         });
 
         if (arrayBuffer.byteLength > UPLOAD_CHUNK_SIZE) {
