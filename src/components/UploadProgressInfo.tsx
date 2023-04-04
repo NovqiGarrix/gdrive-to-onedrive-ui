@@ -223,9 +223,9 @@ const IndividualFileInfo = memo<IIndividualFileInfoProps>(
           </div>
           <div className="ml-2 -mt-1 w-full">
             <Link href="/" passHref>
-              <p className="text-gray-500 w-full font-inter text-sm text-ellipsis overflow-hidden whitespace-nowrap hover:text-gray-700">
+              <h3 className="text-gray-500 w-full font-inter text-sm text-ellipsis overflow-hidden whitespace-nowrap hover:text-gray-700">
                 {info.name}
-              </p>
+              </h3>
             </Link>
 
             {isError ? (

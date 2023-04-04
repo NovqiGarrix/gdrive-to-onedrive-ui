@@ -3,7 +3,7 @@ import FileSaver from 'file-saver';
 import { toast } from 'react-hot-toast';
 
 import type { GlobalItemTypes } from '../types';
-import { API_URL, defaultOptions } from '../apis';
+import { deleteGoogleDriveFilePermission } from '../apis';
 import { NEXT_PUBLIC_INFILE_HELPER_URL } from '../constants';
 
 import getFileBuffer from './getFileBuffer';
@@ -70,12 +70,7 @@ export default async function zipAndDownloadFiles(files: Array<GlobalItemTypes>,
                         });
 
                         if (permissionId) {
-                            const deletePermissionResp = await fetch(`${API_URL}/api/google/drive/files/${file.id}/permissions/${permissionId}`, {
-                                ...defaultOptions,
-                                method: 'DELETE',
-                            });
-
-                            await deletePermissionResp.body?.cancel();
+                            await deleteGoogleDriveFilePermission(file.id, permissionId);
                         }
 
                         return arrayBuffer;

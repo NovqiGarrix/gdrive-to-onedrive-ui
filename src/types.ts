@@ -198,3 +198,11 @@ export interface ITransferFileParams {
     onUploadProgress: OnUploadProgress;
     onDownloadProgress: OnDownloadProgress;
 }
+
+export interface IUploadFileParams {
+    file: File;
+    signal: AbortSignal;
+    onUploadProgress: OnUploadProgress;
+
+    path: string | undefined;
+}

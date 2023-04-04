@@ -1,6 +1,5 @@
 import { create } from "zustand";
 import type { UploadInfoProgress } from "../types";
-import { TEMP_UPLOAD_INFO_PROGRESS } from "../constants";
 
 interface UseUploadInfoProgress {
     show: boolean;

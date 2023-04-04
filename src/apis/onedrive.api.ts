@@ -9,7 +9,7 @@ import onedriveClient from '../lib/onedrive.client';
 import { HttpErrorExeption } from '../exeptions/httpErrorExeption';
 import type { GetFilesReturn, IDeleteFilesParam, ITransferFileParams, OnDownloadProgress, OnUploadProgress, Provider, TransferFileSchema } from '../types';
 
-import { API_URL, defaultOptions } from '.';
+import { API_URL, cancelOnedriveUploadSession, defaultOptions, deleteGoogleDriveFilePermission } from '.';
 import type { IGetFoldersOnlyParams } from './types';
 import getFileBuffer from '../utils/getFileBuffer';
 
@@ -147,14 +147,18 @@ async function transferFile(params: ITransferFileParams): Promise<void> {
             buffer: Buffer.from(arrayBuffer)
         });
 
+        if (permissionId) {
+            await deleteGoogleDriveFilePermission(file.id, permissionId);
+        }
+
         const completeResp = await fetch(`${API_URL}/api/microsoft/files/uploadSessions/${sessionId}/complete`, {
             ...defaultOptions,
             method: "PUT",
-            body: JSON.stringify({
-                providerId,
-                permissionId,
-                fileId: file.id,
-            }),
+            // body: JSON.stringify({
+            //     providerId,
+            //     permissionId,
+            //     fileId: file.id,
+            // }),
             signal
         });
 
@@ -167,12 +171,7 @@ async function transferFile(params: ITransferFileParams): Promise<void> {
 
     } catch (error) {
         if (_sessionId) {
-            const cancelResp = await fetch(`${API_URL}/api/microsoft/files/uploadSessions/${_sessionId}/cancel`, {
-                ...defaultOptions,
-                method: "PUT"
-            });
-
-            await cancelResp.body?.cancel();
+            await cancelOnedriveUploadSession(_sessionId);
         }
         throw handleHttpError(error);
     }
@@ -248,15 +247,14 @@ async function transferLargeFile(params: ITransferLargeFileParams): Promise<void
             onUploadProgress
         });
 
+        if (permissionId) {
+            await deleteGoogleDriveFilePermission(file.id, permissionId);
+        }
+
         const completeResp = await fetch(`${API_URL}/api/microsoft/files/uploadSessions/${sessionId}/complete`, {
             ...defaultOptions,
-            method: "PUT",
-            body: JSON.stringify({
-                permissionId,
-                fileId: file.id,
-                providerId,
-            }),
-            signal
+            signal,
+            method: "PUT"
         });
 
         const { errors: completeErrors } = await completeResp.json();
@@ -268,12 +266,7 @@ async function transferLargeFile(params: ITransferLargeFileParams): Promise<void
 
     } catch (error) {
         if (_sessionId) {
-            const cancelResp = await fetch(`${API_URL}/api/microsoft/files/uploadSessions/${_sessionId}/cancel`, {
-                ...defaultOptions,
-                method: "PUT"
-            });
-
-            await cancelResp.body?.cancel();
+            await cancelOnedriveUploadSession(_sessionId);
         }
         throw handleHttpError(error);
     }

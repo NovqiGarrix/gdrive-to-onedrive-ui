@@ -1,4 +1,9 @@
-import type { GetFilesReturn, IDeleteFilesParam, ITransferFileParams } from '../types';
+import type {
+    GetFilesReturn,
+    IDeleteFilesParam,
+    ITransferFileParams,
+    IUploadFileParams
+} from '../types';
 
 import googledrive from '../lib/googledrive.client';
 import { HttpErrorExeption } from '../exeptions/httpErrorExeption';
@@ -7,7 +12,13 @@ import toGlobalTypes from '../utils/toGlobalTypes';
 import getFileBuffer from '../utils/getFileBuffer';
 import handleHttpError from '../utils/handleHttpError';
 
-import { API_URL, defaultOptions } from '.';
+import {
+    API_URL,
+    cancelGoogleUploadSession,
+    createGoogleUploadSession,
+    defaultOptions,
+    deleteGoogleDriveFilePermission
+} from '.';
 import type { IGetFoldersOnlyParams } from './types';
 
 interface IGetFilesParams {
@@ -156,20 +167,7 @@ async function transferFile(params: ITransferFileParams): Promise<void> {
             onDownloadProgress,
         });
 
-        const registerResp = await fetch(`${API_URL}/api/google/files/uploadSessions`, {
-            ...defaultOptions,
-            method: "POST",
-            signal
-        });
-
-        const registerRespData = await registerResp.json();
-        if (!registerResp.ok) {
-            throw new HttpErrorExeption(registerResp.status, registerRespData.errors[0].error);
-        }
-
-        const { sessionId, fileId } = registerRespData.data;
-        const accessToken = fileId.split(':')[1];
-
+        const { sessionId, accessToken } = await createGoogleUploadSession(signal);
         _sessionId = sessionId;
 
         await googledrive.uploadFile({
@@ -180,15 +178,14 @@ async function transferFile(params: ITransferFileParams): Promise<void> {
             filename: file.name,
         });
 
+        if (permissionId) {
+            await deleteGoogleDriveFilePermission(file.id, permissionId);
+        }
+
         const completeResp = await fetch(`${API_URL}/api/google/files/uploadSessions/${sessionId}/complete`, {
             ...defaultOptions,
-            method: "PUT",
-            body: JSON.stringify({
-                providerId,
-                permissionId,
-                fileId: file.id,
-            }),
-            signal
+            signal,
+            method: "PUT"
         });
 
         const { errors: completeErrors } = await completeResp.json();
@@ -199,12 +196,52 @@ async function transferFile(params: ITransferFileParams): Promise<void> {
 
     } catch (error) {
         if (_sessionId) {
-            const cancelResp = await fetch(`${API_URL}/api/google/files/uploadSessions/${_sessionId}/cancel`, {
-                ...defaultOptions,
-                method: "PUT"
-            });
+            await cancelGoogleUploadSession(_sessionId);
+        }
+        throw handleHttpError(error);
+    }
 
-            await cancelResp.body?.cancel();
+}
+
+async function uploadFile(params: IUploadFileParams): Promise<void> {
+
+    const { file, signal, path, onUploadProgress } = params;
+
+    let _sessionId: string | undefined = undefined;
+
+    try {
+
+        const arrayBuffer = await file.arrayBuffer();
+
+        const { sessionId, accessToken } = await createGoogleUploadSession(signal);
+        _sessionId = sessionId;
+
+        const folderId = getParentIdFromPath(path);
+
+        await googledrive.uploadFile({
+            signal,
+            folderId,
+            accessToken,
+            arrayBuffer,
+            onUploadProgress,
+            filename: file.name,
+        });
+
+        const completeResp = await fetch(`${API_URL}/api/google/files/uploadSessions/${sessionId}/complete`, {
+            ...defaultOptions,
+            signal,
+            method: "PUT"
+        });
+
+        const { errors: completeErrors } = await completeResp.json();
+
+        if (!completeResp.ok) {
+            throw new HttpErrorExeption(completeResp.status, completeErrors[0].error);
+        }
+
+    } catch (error) {
+        if (_sessionId) {
+            await cancelGoogleUploadSession(_sessionId);
         }
         throw handleHttpError(error);
     }
@@ -214,5 +251,6 @@ async function transferFile(params: ITransferFileParams): Promise<void> {
 // eslint-disable-next-line import/no-anonymous-default-export
 export default {
     getFiles,
-    deleteFiles, transferFile
+    deleteFiles, transferFile,
+    uploadFile
 }

@@ -1,8 +1,74 @@
-import { DragEvent, FunctionComponent, useState } from "react";
+import {
+  Dispatch,
+  DragEvent,
+  FunctionComponent,
+  SetStateAction,
+  memo,
+  useCallback,
+  useMemo,
+  useState,
+} from "react";
+
+import Image from "next/legacy/image";
+
+import {
+  CheckCircleIcon,
+  XMarkIcon,
+  ArrowPathIcon,
+} from "@heroicons/react/24/outline";
+import { toast } from "react-hot-toast";
+import { useQueryClient } from "@tanstack/react-query";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
+
+import googledriveApi from "../apis/googledrive.api";
+import type { IUploadFileParams, OnUploadProgress } from "../types";
+
+import useGetFiles from "../hooks/useGetFiles";
+import useProviderPath from "../hooks/useProviderPath";
+import useCloudProvider from "../hooks/useCloudProvider";
+
+import classNames from "../utils/classNames";
+import getIconExtensionUrl from "../utils/getIconExtensionUrl";
+
 import LoadingIcon from "./LoadingIcon";
 
+interface IUploadFileObject {
+  id: string;
+
+  size: number;
+  filename: string;
+  progress: number;
+  isLoading: boolean;
+  abortController: AbortController;
+  upload: () => Promise<void>;
+
+  error?: string;
+}
+
+interface IUploadFuncUtilParams {
+  file: File;
+  id: string;
+  signal: AbortSignal;
+  onUploadProgress: OnUploadProgress;
+}
+
 const UploadArea: FunctionComponent = () => {
+  const queryClient = useQueryClient();
+
   const [isDragOver, setIsDragOver] = useState(false);
+  const [files, setFiles] = useState<Array<IUploadFileObject>>([]);
+
+  const providerPath = useProviderPath((s) => s.path);
+  const providerId = useCloudProvider((s) => s.provider.id);
+
+  const { queryKey: getFilesQueryKey } = useGetFiles();
+  const [animationParenntRef] = useAutoAnimate({ duration: 200 });
+
+  const [isClearingUploadedFiles, setIsClearingUploadedFiles] = useState(false);
+  const isStillLoading = useMemo(
+    () => files.filter((f) => f.isLoading).length > 0,
+    [files]
+  );
 
   function onDragOver(event: DragEvent<HTMLDivElement>) {
     event.preventDefault();
@@ -18,13 +84,128 @@ const UploadArea: FunctionComponent = () => {
     setIsDragOver(false);
   }
 
+  async function clearUploadedFiles() {
+    setIsClearingUploadedFiles(true);
+
+    // Let's give some delay for each file to be removed
+    // so that the user can see the animation
+    const delay = 300;
+
+    for await (const file of files) {
+      await new Promise<void>((resolve) => {
+        setTimeout(() => {
+          setFiles((prev) => prev.filter((f) => f.id !== file.id));
+          resolve();
+        }, delay);
+      });
+    }
+
+    setIsClearingUploadedFiles(false);
+  }
+
+  const uploadFunc = useCallback(
+    (params: IUploadFileParams) => {
+      switch (providerId) {
+        case "google_drive":
+          return googledriveApi.uploadFile(params);
+
+        default:
+          throw new Error("Unsupported provider");
+      }
+    },
+    [providerId]
+  );
+
   async function onDrop(event: DragEvent<HTMLDivElement>) {
     event.preventDefault();
     event.stopPropagation();
 
     setIsDragOver(false);
+    const droppedFiles = Array.from(event.dataTransfer.files);
 
-    const files = Array.from(event.dataTransfer.files);
+    const uploadFuncUtil = async (params: IUploadFuncUtilParams) => {
+      const { file, id, onUploadProgress, signal } = params;
+
+      try {
+        await uploadFunc({
+          file,
+          onUploadProgress,
+          signal,
+          path: providerPath,
+        });
+
+        setFiles((prev) =>
+          prev.map((prevFile) =>
+            prevFile.id === id ? { ...prevFile, isLoading: false } : prevFile
+          )
+        );
+
+        await queryClient.refetchQueries(getFilesQueryKey);
+      } catch (error: any) {
+        setFiles((prev) =>
+          prev.map((prevFile) =>
+            prevFile.id === id
+              ? { ...prevFile, error: error.message, isLoading: false }
+              : prevFile
+          )
+        );
+      }
+    };
+
+    const files = droppedFiles.map((f) => {
+      const file: IUploadFileObject = {
+        id: Math.random().toString(36).slice(0, 20),
+
+        progress: 0,
+        size: f.size,
+        filename: f.name,
+        isLoading: true,
+        abortController: new AbortController(),
+        upload: () =>
+          uploadFuncUtil({
+            file: f,
+            onUploadProgress,
+            signal: file.abortController.signal,
+            id: file.id,
+          }),
+      };
+
+      setFiles((prev) => [...prev, file]);
+
+      const onUploadProgress: OnUploadProgress = (progress) => {
+        setFiles((prev) =>
+          prev.map((prevFile) =>
+            prevFile.id === file.id ? { ...prevFile, progress } : prevFile
+          )
+        );
+      };
+
+      return {
+        id: file.id,
+        upload: file.upload,
+      };
+    });
+
+    try {
+      await Promise.all(
+        files.map(async ({ upload, id }) => {
+          try {
+            await upload();
+          } catch (error: any) {
+            // Set the error message, and set isLoading to false
+            setFiles((prev) =>
+              prev.map((prevFile) =>
+                prevFile.id === id
+                  ? { ...prevFile, error: error.message, isLoading: false }
+                  : prevFile
+              )
+            );
+          }
+        })
+      );
+    } catch (error: any) {
+      toast.error(error.message);
+    }
   }
 
   return (
@@ -105,8 +286,143 @@ const UploadArea: FunctionComponent = () => {
           Support zip, rar and even folder
         </p>
       </div>
+
+      <div className="bg-white mt-5 py-3 pr-2">
+        {/* Upload Progress */}
+        <div ref={animationParenntRef} className="space-y-2">
+          {files.map((file) => (
+            <IndividualUploadInfoProgress
+              file={file}
+              key={file.id}
+              setFiles={setFiles}
+            />
+          ))}
+        </div>
+
+        {files.length > 0 ? (
+          <button
+            type="button"
+            onClick={clearUploadedFiles}
+            disabled={isStillLoading || isClearingUploadedFiles}
+            className="mt-3 w-full text-white text-sm py-3 rounded-lg bg-primary/90 hover:bg-primary focus:bg-primary focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-70 disabled:cursor-not-allowed disabled:bg-primary"
+          >
+            Clear All
+          </button>
+        ) : null}
+      </div>
     </section>
   );
 };
 
 export default UploadArea;
+
+interface IIndividualUploadInfoProgressProps {
+  file: IUploadFileObject;
+  setFiles: Dispatch<SetStateAction<IUploadFileObject[]>>;
+}
+
+const IndividualUploadInfoProgress = memo<IIndividualUploadInfoProgressProps>(
+  function IndividualUploadInfoProgress(props) {
+    const { file, setFiles } = props;
+
+    const isError = !!file.error;
+    const isLoading = file.isLoading;
+    const isDone = !isLoading && !isError;
+
+    const iconLink = useMemo(() => {
+      return getIconExtensionUrl(file.filename);
+    }, [file.filename]);
+
+    function cancelUpload() {
+      file.abortController.abort("User canceled upload");
+      setFiles((prev) => prev.filter((f) => f.id !== file.id));
+    }
+
+    async function retryUpload() {
+      try {
+        setFiles((prev) =>
+          prev.map((prevFile) =>
+            prevFile.id === file.id
+              ? {
+                  ...prevFile,
+                  isLoading: true,
+                  error: undefined,
+                  progress: 0,
+                }
+              : prevFile
+          )
+        );
+
+        await file.upload();
+      } catch (error) {}
+    }
+
+    return (
+      <div className="flex justify-between border rounded-[10px] p-3 space-x-5">
+        <div
+          className={classNames(
+            "flex w-full overflow-hidden",
+            isError ? "items-start" : "items-center"
+          )}
+        >
+          <Image
+            width={35}
+            height={35}
+            loading="lazy"
+            src={iconLink}
+            objectFit="contain"
+            alt={`${file.filename} icon`}
+          />
+          <div className="ml-2 -mt-1 w-full">
+            <h3 className="text-gray-600 w-full font-inter font-medium text-base">
+              {file.filename}
+            </h3>
+
+            {isError ? (
+              <p className="text-red-500 font-medium text-xs">{file.error}</p>
+            ) : (
+              <div className="relative mt-1.5">
+                <div
+                  style={{ width: `${file.progress}%` }}
+                  className="ring-1 absolute inset-0 z-10 ring-primary/70"
+                ></div>
+                <div className="ring-1 absolute inset-0 w-full ring-gray-200"></div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Percentage, Loading Icon, and Cancel button */}
+        <div className="flex items-center space-x-3 pr-1 flex-shrink-0">
+          {isLoading ? (
+            <span className="font-inter font-medium text-xs text-gray-500">
+              {file.progress}%
+            </span>
+          ) : null}
+
+          {isDone ? (
+            <CheckCircleIcon
+              aria-hidden="true"
+              className="w-6 h-6 -mr-0.5 text-green-500"
+            />
+          ) : !isError ? (
+            <LoadingIcon className="w-5 h-5" fill="#2F80ED" />
+          ) : null}
+
+          {file.isLoading ? (
+            <button type="button" onClick={cancelUpload}>
+              <XMarkIcon className="w-5 h-5 text-gray-500" aria-hidden="true" />
+            </button>
+          ) : isError ? (
+            <button type="button" className="group" onClick={retryUpload}>
+              <ArrowPathIcon
+                aria-hidden="true"
+                className="w-5 h-5 text-gray-500 group-hover:text-primary"
+              />
+            </button>
+          ) : null}
+        </div>
+      </div>
+    );
+  }
+);
