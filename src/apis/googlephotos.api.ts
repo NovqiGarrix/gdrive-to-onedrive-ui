@@ -1,7 +1,8 @@
 import type {
     GetFilesReturn,
     GooglePhotosFilter,
-    ITransferFileParams
+    ITransferFileParams,
+    IUploadFileParams
 } from '../types';
 
 import toGlobalTypes from '../utils/toGlobalTypes';
@@ -12,7 +13,7 @@ import formatGooglePhotosFilter from '../utils/formatGooglePhotosFilter';
 import googlephotosClient from '../lib/googlephotos.client';
 import { HttpErrorExeption } from '../exeptions/httpErrorExeption';
 
-import { API_URL, defaultOptions } from '.';
+import { API_URL, cancelGoogleUploadSession, createGoogleUploadSession, defaultOptions } from '.';
 
 async function getFiles(nextPageToken?: string, filter?: GooglePhotosFilter): Promise<GetFilesReturn> {
 
@@ -150,10 +151,52 @@ async function transferFile(params: ITransferFileParams): Promise<void> {
 
 }
 
+async function uploadFile(params: IUploadFileParams): Promise<void> {
+
+    const { file, signal, onUploadProgress } = params;
+
+    let _sessionId: string | undefined = undefined;
+
+    try {
+
+        const arrayBuffer = await file.arrayBuffer();
+
+        const { sessionId, accessToken } = await createGoogleUploadSession(signal);
+        _sessionId = sessionId;
+
+        await googlephotosClient.uploadFile({
+            signal,
+            accessToken,
+            onUploadProgress,
+            filename: file.name,
+            buffer: Buffer.from(arrayBuffer)
+        });
+
+        const completeResp = await fetch(`${API_URL}/api/google/files/uploadSessions/${sessionId}/complete`, {
+            ...defaultOptions,
+            signal,
+            method: "PUT"
+        });
+
+        const { errors: completeErrors } = await completeResp.json();
+
+        if (!completeResp.ok) {
+            throw new HttpErrorExeption(completeResp.status, completeErrors[0].error);
+        }
+
+    } catch (error) {
+        if (_sessionId) {
+            await cancelGoogleUploadSession(_sessionId);
+        }
+        throw handleHttpError(error);
+    }
+
+}
+
 // eslint-disable-next-line import/no-anonymous-default-export
 export default {
     getFiles,
     getMediaTypes,
     getContentCategories,
-    transferFile,
+    transferFile, uploadFile
 }

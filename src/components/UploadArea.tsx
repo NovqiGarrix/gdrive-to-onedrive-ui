@@ -21,7 +21,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 
 import googledriveApi from "../apis/googledrive.api";
-import type { IUploadFileParams, OnUploadProgress } from "../types";
+import googlephotosApi from "../apis/googlephotos.api";
 
 import useGetFiles from "../hooks/useGetFiles";
 import useProviderPath from "../hooks/useProviderPath";
@@ -29,6 +29,8 @@ import useCloudProvider from "../hooks/useCloudProvider";
 
 import classNames from "../utils/classNames";
 import getIconExtensionUrl from "../utils/getIconExtensionUrl";
+
+import type { IUploadFileParams, OnUploadProgress } from "../types";
 
 import LoadingIcon from "./LoadingIcon";
 
@@ -109,6 +111,9 @@ const UploadArea: FunctionComponent = () => {
         case "google_drive":
           return googledriveApi.uploadFile(params);
 
+        case "google_photos":
+          return googlephotosApi.uploadFile(params);
+
         default:
           throw new Error("Unsupported provider");
       }
@@ -187,8 +192,9 @@ const UploadArea: FunctionComponent = () => {
     });
 
     try {
-      await Promise.all(
-        files.map(async ({ upload, id }) => {
+      if (providerId === "google_photos") {
+        // Google Photos does not support simultaneous uploads
+        for await (const { upload, id } of files) {
           try {
             await upload();
           } catch (error: any) {
@@ -201,8 +207,25 @@ const UploadArea: FunctionComponent = () => {
               )
             );
           }
-        })
-      );
+        }
+      } else {
+        await Promise.all(
+          files.map(async ({ upload, id }) => {
+            try {
+              await upload();
+            } catch (error: any) {
+              // Set the error message, and set isLoading to false
+              setFiles((prev) =>
+                prev.map((prevFile) =>
+                  prevFile.id === id
+                    ? { ...prevFile, error: error.message, isLoading: false }
+                    : prevFile
+                )
+              );
+            }
+          })
+        );
+      }
     } catch (error: any) {
       toast.error(error.message);
     }
