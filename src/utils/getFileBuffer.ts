@@ -24,25 +24,10 @@ export default async function getFileBuffer(params: IGetFileBufferParams): Promi
     let arrayBuffer: ArrayBuffer;
     let permissionId: string | undefined = undefined;
 
-    if (providerId === 'google_drive') {
-        const downloadUrlResp = await fetch(`${API_URL}/api/google/drive/files/${file.id}/downloadUrl`, defaultOptions);
-        const { data, errors } = await downloadUrlResp.json();
-
-        if (!downloadUrlResp.ok) {
-            throw new HttpErrorExeption(downloadUrlResp.status, errors[0].error);
-        }
-
-        const { permissionId: pId, downloadUrl } = data;
-        permissionId = pId;
-
+    if (providerId === 'google_photos') {
         arrayBuffer = await downloadFile({
             signal,
-            downloadUrl,
-            onDownloadProgress,
-        });
-    } else if (providerId === 'google_photos') {
-        arrayBuffer = await downloadFile({
-            signal,
+            providerId,
             onDownloadProgress,
 
             /**
@@ -54,6 +39,7 @@ export default async function getFileBuffer(params: IGetFileBufferParams): Promi
     } else {
         arrayBuffer = await downloadFile({
             signal,
+            providerId,
             downloadUrl: file.downloadUrl,
             onDownloadProgress,
         });

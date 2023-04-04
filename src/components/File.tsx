@@ -80,14 +80,15 @@ const File: FunctionComponent<IFileProps> = (props) => {
         )}
       >
         {file.image ? (
-          // Do not cache the image in CDN (Privacy concern). That's why we don't use next/image
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             alt={file.name}
             loading="lazy"
             src={file.image}
             data-id={file.id}
-            className="object-cover rounded-t-[10px] w-full h-full"
+            objectFit="cover"
+            width={1000}
+            height={1000}
+            className="rounded-t-[10px] w-full h-full"
           />
         ) : (
           <Image

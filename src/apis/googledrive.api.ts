@@ -178,10 +178,6 @@ async function transferFile(params: ITransferFileParams): Promise<void> {
             filename: file.name,
         });
 
-        if (permissionId) {
-            await deleteGoogleDriveFilePermission(file.id, permissionId);
-        }
-
         const completeResp = await fetch(`${API_URL}/api/google/files/uploadSessions/${sessionId}/complete`, {
             ...defaultOptions,
             signal,

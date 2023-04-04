@@ -32,8 +32,6 @@ const DeleteFilesModal: FunctionComponent = () => {
   const selectedFiles = useSelectedFiles((s) => s.files, shallow);
   const cleanSelectedFiles = useSelectedFiles((s) => s.cleanFiles);
 
-  console.log(selectedFiles);
-
   const deleteFileFunc = useCallback(
     (files: Array<IDeleteFilesParam>) => {
       switch (providerId) {

@@ -247,10 +247,6 @@ async function transferLargeFile(params: ITransferLargeFileParams): Promise<void
             onUploadProgress
         });
 
-        if (permissionId) {
-            await deleteGoogleDriveFilePermission(file.id, permissionId);
-        }
-
         const completeResp = await fetch(`${API_URL}/api/microsoft/files/uploadSessions/${sessionId}/complete`, {
             ...defaultOptions,
             signal,
