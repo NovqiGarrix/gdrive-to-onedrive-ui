@@ -16,8 +16,7 @@ import {
     API_URL,
     cancelGoogleUploadSession,
     createGoogleUploadSession,
-    defaultOptions,
-    deleteGoogleDriveFilePermission
+    defaultOptions
 } from '.';
 import type { IGetFoldersOnlyParams } from './types';
 
@@ -160,7 +159,7 @@ async function transferFile(params: ITransferFileParams): Promise<void> {
 
     try {
 
-        const { arrayBuffer, permissionId } = await getFileBuffer({
+        const arrayBuffer = await getFileBuffer({
             file,
             signal,
             providerId,

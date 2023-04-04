@@ -3,7 +3,6 @@ import FileSaver from 'file-saver';
 import { toast } from 'react-hot-toast';
 
 import type { GlobalItemTypes } from '../types';
-import { deleteGoogleDriveFilePermission } from '../apis';
 import { NEXT_PUBLIC_INFILE_HELPER_URL } from '../constants';
 
 import getFileBuffer from './getFileBuffer';
@@ -57,7 +56,7 @@ export default async function zipAndDownloadFiles(files: Array<GlobalItemTypes>,
 
                     try {
 
-                        const { arrayBuffer, permissionId } = await getFileBuffer({
+                        const arrayBuffer = await getFileBuffer({
                             file: {
                                 providerId,
                                 id: file.id,
@@ -68,10 +67,6 @@ export default async function zipAndDownloadFiles(files: Array<GlobalItemTypes>,
                             signal: new AbortController().signal,
                             providerId
                         });
-
-                        if (permissionId) {
-                            await deleteGoogleDriveFilePermission(file.id, permissionId);
-                        }
 
                         return arrayBuffer;
 

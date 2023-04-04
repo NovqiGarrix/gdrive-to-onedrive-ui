@@ -91,7 +91,7 @@ async function transferFile(params: ITransferFileParams): Promise<void> {
 
     try {
 
-        const { arrayBuffer, permissionId } = await getFileBuffer({
+        const arrayBuffer = await getFileBuffer({
             file,
             signal,
             providerId,
@@ -126,13 +126,8 @@ async function transferFile(params: ITransferFileParams): Promise<void> {
 
         const completeResp = await fetch(`${API_URL}/api/google/files/uploadSessions/${sessionId}/complete`, {
             ...defaultOptions,
-            method: "PUT",
-            body: JSON.stringify({
-                providerId,
-                permissionId,
-                fileId: file.id,
-            }),
-            signal
+            signal,
+            method: "PUT"
         });
 
         const { errors: completeErrors } = await completeResp.json();

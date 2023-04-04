@@ -1,17 +1,22 @@
-import axios from 'axios';
+import type {
+    GetFilesReturn,
+    IDeleteFilesParam,
+    ITransferFileParams,
+    OnUploadProgress,
+    Provider,
+    TransferFileSchema
+} from '../types';
 
 import toGlobalTypes from '../utils/toGlobalTypes';
+import getFileBuffer from '../utils/getFileBuffer';
 import handleHttpError from '../utils/handleHttpError';
-import getPercentageUploadProgress from '../utils/getPercentageUploadProgress';
 
 import { UPLOAD_CHUNK_SIZE } from '../constants';
 import onedriveClient from '../lib/onedrive.client';
 import { HttpErrorExeption } from '../exeptions/httpErrorExeption';
-import type { GetFilesReturn, IDeleteFilesParam, ITransferFileParams, OnDownloadProgress, OnUploadProgress, Provider, TransferFileSchema } from '../types';
 
-import { API_URL, cancelOnedriveUploadSession, defaultOptions, deleteGoogleDriveFilePermission } from '.';
 import type { IGetFoldersOnlyParams } from './types';
-import getFileBuffer from '../utils/getFileBuffer';
+import { API_URL, cancelOnedriveUploadSession, defaultOptions } from '.';
 
 
 interface IGetFilesParams {
@@ -105,7 +110,7 @@ async function transferFile(params: ITransferFileParams): Promise<void> {
 
     try {
 
-        const { arrayBuffer, permissionId } = await getFileBuffer({
+        const arrayBuffer = await getFileBuffer({
             file,
             signal,
             providerId,
@@ -116,11 +121,9 @@ async function transferFile(params: ITransferFileParams): Promise<void> {
             return transferLargeFile({
                 file,
                 signal,
-                providerId,
-                permissionId,
                 onUploadProgress,
                 fileBuffer: arrayBuffer,
-            })
+            });
         }
 
         const registerResp = await fetch(`${API_URL}/api/microsoft/files/uploadSessions`, {
@@ -147,19 +150,10 @@ async function transferFile(params: ITransferFileParams): Promise<void> {
             buffer: Buffer.from(arrayBuffer)
         });
 
-        if (permissionId) {
-            await deleteGoogleDriveFilePermission(file.id, permissionId);
-        }
-
         const completeResp = await fetch(`${API_URL}/api/microsoft/files/uploadSessions/${sessionId}/complete`, {
             ...defaultOptions,
-            method: "PUT",
-            // body: JSON.stringify({
-            //     providerId,
-            //     permissionId,
-            //     fileId: file.id,
-            // }),
-            signal
+            signal,
+            method: "PUT"
         });
 
         const { errors: completeErrors } = await completeResp.json();
@@ -208,8 +202,6 @@ async function deleteFiles(files: Array<IDeleteFilesParam>): Promise<void> {
 
 interface ITransferLargeFileParams {
     signal: AbortSignal;
-    providerId: Provider;
-    permissionId?: string;
     fileBuffer: ArrayBuffer;
     file: TransferFileSchema;
     onUploadProgress: OnUploadProgress;
@@ -217,7 +209,7 @@ interface ITransferLargeFileParams {
 
 async function transferLargeFile(params: ITransferLargeFileParams): Promise<void> {
 
-    const { signal, fileBuffer, permissionId, file, onUploadProgress, providerId } = params;
+    const { signal, fileBuffer, file, onUploadProgress } = params;
 
     let _sessionId: string | undefined = undefined;
 
@@ -256,7 +248,6 @@ async function transferLargeFile(params: ITransferLargeFileParams): Promise<void
         const { errors: completeErrors } = await completeResp.json();
 
         if (!completeResp.ok) {
-            console.log(completeErrors);
             throw new HttpErrorExeption(completeResp.status, completeErrors[0].error);
         }
 

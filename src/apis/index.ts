@@ -37,17 +37,6 @@ export async function createGoogleUploadSession(signal: AbortSignal): Promise<IC
 
 }
 
-export async function deleteGoogleDriveFilePermission(fileId: string, permissionId: string) {
-
-    const deletePermissionResp = await fetch(`${API_URL}/api/google/drive/files/${fileId}/permissions/${permissionId}`, {
-        ...defaultOptions,
-        method: 'DELETE',
-    });
-
-    await deletePermissionResp.body?.cancel();
-
-}
-
 export async function cancelGoogleUploadSession(sessionId: string) {
 
     const cancelResp = await fetch(`${API_URL}/api/google/files/uploadSessions/${sessionId}/cancel`, {

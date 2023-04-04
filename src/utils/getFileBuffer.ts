@@ -1,6 +1,4 @@
-import { API_URL, defaultOptions } from "../apis";
 import { NEXT_PUBLIC_INFILE_HELPER_URL } from "../constants";
-import { HttpErrorExeption } from "../exeptions/httpErrorExeption";
 import type { OnDownloadProgress, Provider, TransferFileSchema } from "../types";
 
 import downloadFile from "./downloadFile";
@@ -12,17 +10,11 @@ interface IGetFileBufferParams {
     onDownloadProgress?: OnDownloadProgress;
 }
 
-interface IGetFileBufferReturn {
-    arrayBuffer: ArrayBuffer;
-    permissionId?: string;
-}
-
-export default async function getFileBuffer(params: IGetFileBufferParams): Promise<IGetFileBufferReturn> {
+export default async function getFileBuffer(params: IGetFileBufferParams): Promise<ArrayBuffer> {
 
     const { file, signal, providerId, onDownloadProgress } = params;
 
     let arrayBuffer: ArrayBuffer;
-    let permissionId: string | undefined = undefined;
 
     if (providerId === 'google_photos') {
         arrayBuffer = await downloadFile({
@@ -45,9 +37,6 @@ export default async function getFileBuffer(params: IGetFileBufferParams): Promi
         });
     }
 
-    return {
-        arrayBuffer,
-        permissionId
-    }
+    return arrayBuffer;
 
 }
