@@ -15,6 +15,7 @@ import handleHttpError from '../utils/handleHttpError';
 import {
     API_URL,
     cancelGoogleUploadSession,
+    completeGoogleUploadSession,
     createGoogleUploadSession,
     defaultOptions
 } from '.';
@@ -177,17 +178,7 @@ async function transferFile(params: ITransferFileParams): Promise<void> {
             filename: file.name,
         });
 
-        const completeResp = await fetch(`${API_URL}/api/google/files/uploadSessions/${sessionId}/complete`, {
-            ...defaultOptions,
-            signal,
-            method: "PUT"
-        });
-
-        const { errors: completeErrors } = await completeResp.json();
-
-        if (!completeResp.ok) {
-            throw new HttpErrorExeption(completeResp.status, completeErrors[0].error);
-        }
+        await completeGoogleUploadSession(sessionId, signal);
 
     } catch (error) {
         if (_sessionId) {
@@ -222,17 +213,7 @@ async function uploadFile(params: IUploadFileParams): Promise<void> {
             filename: file.name,
         });
 
-        const completeResp = await fetch(`${API_URL}/api/google/files/uploadSessions/${sessionId}/complete`, {
-            ...defaultOptions,
-            signal,
-            method: "PUT"
-        });
-
-        const { errors: completeErrors } = await completeResp.json();
-
-        if (!completeResp.ok) {
-            throw new HttpErrorExeption(completeResp.status, completeErrors[0].error);
-        }
+        await completeGoogleUploadSession(sessionId, signal);
 
     } catch (error) {
         if (_sessionId) {

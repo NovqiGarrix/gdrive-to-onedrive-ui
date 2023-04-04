@@ -13,7 +13,7 @@ import formatGooglePhotosFilter from '../utils/formatGooglePhotosFilter';
 import googlephotosClient from '../lib/googlephotos.client';
 import { HttpErrorExeption } from '../exeptions/httpErrorExeption';
 
-import { API_URL, cancelGoogleUploadSession, createGoogleUploadSession, defaultOptions } from '.';
+import { API_URL, cancelGoogleUploadSession, completeGoogleUploadSession, createGoogleUploadSession, defaultOptions } from '.';
 
 async function getFiles(nextPageToken?: string, filter?: GooglePhotosFilter): Promise<GetFilesReturn> {
 
@@ -125,17 +125,7 @@ async function transferFile(params: ITransferFileParams): Promise<void> {
             buffer: Buffer.from(arrayBuffer)
         });
 
-        const completeResp = await fetch(`${API_URL}/api/google/files/uploadSessions/${sessionId}/complete`, {
-            ...defaultOptions,
-            signal,
-            method: "PUT"
-        });
-
-        const { errors: completeErrors } = await completeResp.json();
-
-        if (!completeResp.ok) {
-            throw new HttpErrorExeption(completeResp.status, completeErrors[0].error);
-        }
+        await completeGoogleUploadSession(sessionId, signal);
 
     } catch (error) {
         if (_sessionId) {
@@ -172,17 +162,7 @@ async function uploadFile(params: IUploadFileParams): Promise<void> {
             buffer: Buffer.from(arrayBuffer)
         });
 
-        const completeResp = await fetch(`${API_URL}/api/google/files/uploadSessions/${sessionId}/complete`, {
-            ...defaultOptions,
-            signal,
-            method: "PUT"
-        });
-
-        const { errors: completeErrors } = await completeResp.json();
-
-        if (!completeResp.ok) {
-            throw new HttpErrorExeption(completeResp.status, completeErrors[0].error);
-        }
+        await completeGoogleUploadSession(sessionId, signal);
 
     } catch (error) {
         if (_sessionId) {

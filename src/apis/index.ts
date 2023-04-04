@@ -37,6 +37,22 @@ export async function createGoogleUploadSession(signal: AbortSignal): Promise<IC
 
 }
 
+export async function completeGoogleUploadSession(sessionId: string, signal: AbortSignal) {
+
+    const completeResp = await fetch(`${API_URL}/api/google/files/uploadSessions/${sessionId}/complete`, {
+        ...defaultOptions,
+        signal,
+        method: "PUT"
+    });
+
+    const { errors: completeErrors } = await completeResp.json();
+
+    if (!completeResp.ok) {
+        throw new HttpErrorExeption(completeResp.status, completeErrors[0].error);
+    }
+
+}
+
 export async function cancelGoogleUploadSession(sessionId: string) {
 
     const cancelResp = await fetch(`${API_URL}/api/google/files/uploadSessions/${sessionId}/cancel`, {
