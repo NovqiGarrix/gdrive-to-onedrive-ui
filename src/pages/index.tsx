@@ -12,10 +12,13 @@ import {
   FilesContainerWrapper,
   LoadingIcon,
   DisconnectedProviderAccount,
+  Breadcrumbs,
 } from "../components";
 
 import { initializeCloudProvider } from "../hooks/useCloudProvider";
-import { initializedProviderPath } from "../hooks/useProviderPath";
+import useProviderPath, {
+  initializedProviderPath,
+} from "../hooks/useProviderPath";
 import useGetProviderAccountInfo from "../hooks/useGetProviderAccountInfo";
 import BeautifulError from "../components/BeautifulError";
 import { useRouter } from "next/router";
@@ -29,6 +32,8 @@ const Home: NextPage<IHomePageProps> = (props) => {
   const { path, provider } = props;
 
   const router = useRouter();
+  const providerPath = useProviderPath((s) => s.path);
+  const setProviderPath = useProviderPath((s) => s.setPath);
 
   const {
     data: providerAccountInfo,
@@ -68,12 +73,9 @@ const Home: NextPage<IHomePageProps> = (props) => {
         <Navbar />
         {isGettingProviderAccountInfo ? (
           <div className="w-full mt-[50px] min-h-[70vh] flex items-center justify-center">
-            {/* <div className="flex items-center justify-center flex-col"> */}
             <LoadingIcon className="w-10 h-10" fill="rgb(114 93 255)" />
-            {/* </div> */}
           </div>
         ) : isProviderAccountInfoError ? (
-          // <DisconnectedProviderAccountError error={providerAccountInfoError!} />
           <BeautifulError.Root>
             <BeautifulError.Title title="Something went wrong" />
             <BeautifulError.Message
@@ -88,6 +90,7 @@ const Home: NextPage<IHomePageProps> = (props) => {
           <DisconnectedProviderAccount accountInfo={providerAccountInfo!} />
         ) : (
           <Fragment>
+            <Breadcrumbs path={providerPath} setPath={setProviderPath} />
             <UploadArea />
             <Folders />
             <FilesContainerWrapper />

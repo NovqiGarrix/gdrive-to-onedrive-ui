@@ -1,4 +1,5 @@
 import {
+  Fragment,
   FunctionComponent,
   useEffect,
   // @ts-ignore - No types
@@ -141,13 +142,21 @@ const FilesContainer: FunctionComponent = () => {
             <BeautifulError.Message message={error?.message!} />
           </BeautifulError.Root>
         ) : (
-          <div className="grid grid-cols-4 gap-5 mt-[30px]">
-            {files.map((file) => (
-              <File key={file.id} file={file} files={data.files} />
-            ))}
-            {/* End of element. Use for infinite scrolling */}
-            <div ref={infiniteScrollLoadingRef}></div>
-          </div>
+          <Fragment>
+            {files.length > 0 ? (
+              <div className="grid grid-cols-4 gap-5 mt-[30px]">
+                {files.map((file) => (
+                  <File key={file.id} file={file} files={data.files} />
+                ))}
+                {/* End of element. Use for infinite scrolling */}
+                <div ref={infiniteScrollLoadingRef}></div>
+              </div>
+            ) : (
+              <p className="text-base font-inter font-medium mt-2 text-gray-600">
+                Your files should appear here
+              </p>
+            )}
+          </Fragment>
         )}
       </div>
     </div>

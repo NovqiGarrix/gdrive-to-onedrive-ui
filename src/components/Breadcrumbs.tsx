@@ -1,4 +1,4 @@
-import { Dispatch, FunctionComponent, SetStateAction, useMemo } from "react";
+import { FunctionComponent, useMemo } from "react";
 
 interface IBreadcrumbsProps {
   path: string | undefined;
@@ -35,12 +35,12 @@ const Breadcrumbs: FunctionComponent<IBreadcrumbsProps> = (props) => {
   }
 
   return (
-    <div className="text-sm breadcrumbs mt-3">
-      <ul>
+    <div className="mt-[50px]">
+      <ul className="text-lg flex flex-wrap items-center">
         {paths
           .map((path) => path.split("~")[0])
           .map((path, index) => (
-            <li key={path}>
+            <li key={path} className="flex items-center">
               <button
                 type="button"
                 onClick={() => onPathClick(index)}
@@ -50,7 +50,7 @@ const Breadcrumbs: FunctionComponent<IBreadcrumbsProps> = (props) => {
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
                   viewBox="0 0 24 24"
-                  className="w-4 h-4 mr-2 stroke-current"
+                  className="w-5 h-5 mr-2 stroke-current"
                 >
                   <path
                     strokeLinecap="round"
@@ -61,6 +61,21 @@ const Breadcrumbs: FunctionComponent<IBreadcrumbsProps> = (props) => {
                 </svg>
                 {path}
               </button>
+
+              {index !== paths.length - 1 ? (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  className="w-5 h-5 mx-2 flex-shrink-0"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              ) : null}
             </li>
           ))}
       </ul>
