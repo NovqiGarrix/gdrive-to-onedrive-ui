@@ -237,7 +237,7 @@ const UploadArea: FunctionComponent = () => {
   }
 
   return (
-    <section className="w-full mt-[50px]">
+    <section className="w-full mt-[40px]">
       <h2 className="font-medium font-inter text-2xl">Upload Files</h2>
       {/* Droparea */}
       <div

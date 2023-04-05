@@ -90,8 +90,8 @@ const Home: NextPage<IHomePageProps> = (props) => {
           <DisconnectedProviderAccount accountInfo={providerAccountInfo!} />
         ) : (
           <Fragment>
-            <Breadcrumbs path={providerPath} setPath={setProviderPath} />
             <UploadArea />
+            <Breadcrumbs path={providerPath} setPath={setProviderPath} />
             <Folders />
             <FilesContainerWrapper />
           </Fragment>

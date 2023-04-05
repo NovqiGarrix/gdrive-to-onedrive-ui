@@ -35,7 +35,7 @@ const Breadcrumbs: FunctionComponent<IBreadcrumbsProps> = (props) => {
   }
 
   return (
-    <div className="mt-[50px]">
+    <div className="mt-[30px]">
       <ul className="text-lg flex flex-wrap items-center">
         {paths
           .map((path) => path.split("~")[0])
