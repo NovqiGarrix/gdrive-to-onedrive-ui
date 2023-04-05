@@ -7,9 +7,9 @@ import googlephotosApi from "../apis/googlephotos.api";
 import useCloudProvider from "../hooks/useCloudProvider";
 
 
-function useGetFilesFunc() {
+function useGetFilesFunc(_providerId?: string) {
 
-    const providerId = useCloudProvider((s) => s.provider.id);
+    const providerId = useCloudProvider((s) => _providerId || s.provider.id);
 
     const getFiles = useCallback(
         (params: GetFilesFuncParams) => {

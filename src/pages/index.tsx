@@ -1,7 +1,8 @@
+import { Fragment, useEffect } from "react";
 import type { GetServerSideProps, NextPage } from "next";
 
 import Head from "next/head";
-import { Fragment, useEffect } from "react";
+import { useRouter } from "next/router";
 
 import authApi from "../apis/auth.api";
 import {
@@ -13,15 +14,14 @@ import {
   LoadingIcon,
   DisconnectedProviderAccount,
   Breadcrumbs,
+  BeautifulError,
 } from "../components";
 
-import { initializeCloudProvider } from "../hooks/useCloudProvider";
 import useProviderPath, {
   initializedProviderPath,
 } from "../hooks/useProviderPath";
+import { initializeCloudProvider } from "../hooks/useCloudProvider";
 import useGetProviderAccountInfo from "../hooks/useGetProviderAccountInfo";
-import BeautifulError from "../components/BeautifulError";
-import { useRouter } from "next/router";
 
 interface IHomePageProps {
   path: string | null;

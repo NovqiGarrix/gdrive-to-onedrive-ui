@@ -25,27 +25,26 @@ const FilesContainerWrapper: FunctionComponent = () => {
   });
 
   useEffect(() => {
+    const el = ref.current;
+
     const handleMouseDown = (e: MouseEvent) => {
       const target = e.target as HTMLElement | null;
       if (!target) return;
 
-      const fileOptionsEl = document.getElementById("file-options");
-
-      const shouldClean =
-        !target.hasAttribute("data-id") && !fileOptionsEl?.contains(target);
+      const shouldClean = !el?.contains(target);
       if (!shouldClean || !selectedFiles.length) return;
       cleanSelectedFiles();
     };
 
-    document.addEventListener("mousedown", handleMouseDown);
+    el?.addEventListener("mousedown", handleMouseDown);
 
     return () => {
-      document.removeEventListener("mousedown", handleMouseDown);
+      el?.removeEventListener("mousedown", handleMouseDown);
     };
   }, [cleanSelectedFiles, selectedFiles.length]);
 
   return (
-    <div ref={ref} id="files-container-wrapper" className="w-full">
+    <div ref={ref} className="w-full">
       <FilesContainer />
       <DeleteFilesModal />
     </div>

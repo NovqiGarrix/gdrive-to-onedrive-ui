@@ -140,8 +140,6 @@ export interface TransferFileSchema {
     iconLink: string;
     downloadUrl: string;
     providerId: Provider;
-
-    path?: string;
 }
 
 export interface IDeleteFilesParam {
@@ -197,6 +195,8 @@ export interface ITransferFileParams {
     file: TransferFileSchema;
     onUploadProgress: OnUploadProgress;
     onDownloadProgress: OnDownloadProgress;
+
+    path: string | undefined;
 }
 
 export interface IUploadFileParams {

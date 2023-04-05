@@ -10,4 +10,5 @@ export { default as FilesContainerWrapper } from './FilesContainerWrapper';
 export { default as AccountSettings } from './AccountSettings';
 export { default as LoadingIcon } from './LoadingIcon';
 export { default as Breadcrumbs } from './Breadcrumbs';
+export { default as BeautifulError } from './BeautifulError';
 export { default as DisconnectedProviderAccount } from './DisconnectedProviderAccount';

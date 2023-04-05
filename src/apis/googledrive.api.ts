@@ -154,7 +154,7 @@ async function deleteFiles(files: Array<IDeleteFilesParam>): Promise<void> {
 
 async function transferFile(params: ITransferFileParams): Promise<void> {
 
-    const { file, signal, providerId, onUploadProgress, onDownloadProgress } = params;
+    const { file, signal, providerId, onUploadProgress, onDownloadProgress, path } = params;
 
     let _sessionId: string | undefined = undefined;
 
@@ -176,6 +176,8 @@ async function transferFile(params: ITransferFileParams): Promise<void> {
             arrayBuffer,
             onUploadProgress,
             filename: file.name,
+
+            folderId: getParentIdFromPath(path)
         });
 
         await completeGoogleUploadSession(sessionId, signal);

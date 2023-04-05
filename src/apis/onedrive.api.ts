@@ -102,7 +102,7 @@ async function getFoldersOnly(params: IGetFoldersOnlyParams): Promise<GetFilesRe
 
 async function transferFile(params: ITransferFileParams): Promise<void> {
 
-    const { file, signal, providerId, onUploadProgress, onDownloadProgress } = params;
+    const { file, signal, providerId, onUploadProgress, onDownloadProgress, path } = params;
 
     let _sessionId: string | undefined = undefined;
 
@@ -121,10 +121,10 @@ async function transferFile(params: ITransferFileParams): Promise<void> {
         if (arrayBuffer.byteLength > UPLOAD_CHUNK_SIZE) {
             await onedriveClient.uploadLargeFile({
                 accessToken,
-                buffer: Buffer.from(arrayBuffer),
+                onUploadProgress,
                 filename: file.name,
-                onedrivePath: file.path,
-                onUploadProgress
+                buffer: Buffer.from(arrayBuffer),
+                onedrivePath: cleanPathFromFolderId(path)
             });
         } else {
             await onedriveClient.uploadFile({
@@ -132,7 +132,8 @@ async function transferFile(params: ITransferFileParams): Promise<void> {
                 accessToken,
                 onUploadProgress,
                 filename: file.name,
-                buffer: Buffer.from(arrayBuffer)
+                buffer: Buffer.from(arrayBuffer),
+                onedrivePath: cleanPathFromFolderId(path)
             });
         }
 

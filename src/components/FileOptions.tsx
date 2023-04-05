@@ -25,6 +25,7 @@ import ArrowDownTrayIcon from "@heroicons/react/24/outline/ArrowDownTrayIcon";
 import ArrowSmallDownIcon from "@heroicons/react/24/outline/ArrowSmallDownIcon";
 
 import type {
+  ITransferFileParams,
   Provider,
   ProviderObject,
   TransferFileSchema,
@@ -45,12 +46,20 @@ import useCloudProvider from "../hooks/useCloudProvider";
 import useUploadInfoProgress from "../hooks/useUploadInfoProgress";
 import useDeleteFilesModalState from "../hooks/useDeleteFilesModalState";
 
+import TransferFilesModal from "./TransferFilesModal";
+import useTransferFilesModal from "../hooks/useTransferFilesModal";
+
 const FileOptions: FunctionComponent = () => {
   const ref = useRef<HTMLDivElement>(null);
   const { data: allFiles } = useGetFiles();
 
   const [coord, setCoord] = useState({ x: 0, y: 0 });
   const [isShowingOptions, setIsShowingOptions] = useState(false);
+
+  const [transferToPath, setTransferToPath] = useState<string | undefined>(
+    undefined
+  );
+  const [openTransferModal, setOpenTransferModal] = useState(false);
 
   const selectedFiles = useSelectedFiles((s) => s.files, shallow);
   const replaceAllSelectedFiles = useSelectedFiles((s) => s.replaceAllFiles);
@@ -126,176 +135,186 @@ const FileOptions: FunctionComponent = () => {
   const addUploadInfoProgress = useUploadInfoProgress(
     (s) => s.addUploadInfoProgress
   );
-  const updateUploadInfoProgress = useUploadInfoProgress(
-    (s) => s.updateUploadInfoProgress
+
+  const transferFileFunc = useCallback(
+    (
+      file: TransferFileSchema,
+      providerTarget: Provider,
+      signal: AbortSignal,
+      updateUploadInfoProgress: (
+        uploadInfoProgress: Partial<UploadInfoProgress> & {
+          id: string;
+        }
+      ) => void
+    ) => {
+      function onUploadProgress(progress: number) {
+        const uploadInfoProgress =
+          useUploadInfoProgress.getState().uploadInfoProgress;
+        const f = uploadInfoProgress.find((f) => f.id === file.id);
+        if (!f) return;
+
+        updateUploadInfoProgress({ ...f, uploadProgress: progress });
+      }
+
+      function onDownloadProgress(progress: number) {
+        const uploadInfoProgress =
+          useUploadInfoProgress.getState().uploadInfoProgress;
+        const f = uploadInfoProgress.find((f) => f.id === file.id);
+        if (!f) return;
+
+        updateUploadInfoProgress({ ...f, downloadProgress: progress });
+      }
+
+      const params: ITransferFileParams = {
+        file,
+        signal,
+        onUploadProgress,
+        onDownloadProgress,
+        providerId: provider.id,
+
+        path: transferToPath,
+      };
+
+      switch (providerTarget) {
+        case "onedrive": {
+          return onedriveApi.transferFile(params);
+        }
+
+        case "google_photos": {
+          return googlephotosApi.transferFile(params);
+        }
+
+        case "google_drive": {
+          return googledriveApi.transferFile(params);
+        }
+
+        default:
+          throw new Error("Unsupported Provider!");
+      }
+    },
+    [provider.id, transferToPath]
   );
 
-  async function transferFileFunc(
-    file: TransferFileSchema,
-    providerTarget: Provider,
-    signal: AbortSignal
-  ) {
-    function onUploadProgress(progress: number) {
-      const uploadInfoProgress =
-        useUploadInfoProgress.getState().uploadInfoProgress;
-      const f = uploadInfoProgress.find((f) => f.id === file.id);
-      if (!f) return;
+  const transferFiles = useCallback(
+    async (providerTarget: ProviderObject) => {
+      setIsShowingOptions(false);
 
-      updateUploadInfoProgress({ ...f, uploadProgress: progress });
-    }
+      const transferFileToastId = `transfer-files-${Math.random()
+        .toString(36)
+        .substring(7)}`;
 
-    function onDownloadProgress(progress: number) {
-      const uploadInfoProgress =
-        useUploadInfoProgress.getState().uploadInfoProgress;
-      const f = uploadInfoProgress.find((f) => f.id === file.id);
-      if (!f) return;
+      // Func to update upload info progress
+      const updateUploadInfoProgress =
+        useUploadInfoProgress.getState().updateUploadInfoProgress;
 
-      updateUploadInfoProgress({ ...f, downloadProgress: progress });
-    }
+      // Func to upload each file
+      const upload = async (
+        file: Omit<UploadInfoProgress, "upload">,
+        providerTarget: ProviderObject,
+        transferFileToastId: string
+      ) => {
+        try {
+          await transferFileFunc(
+            file,
+            providerTarget.id,
+            file.abortController.signal,
+            updateUploadInfoProgress
+          );
 
-    const params = {
-      file,
-      signal,
-      onUploadProgress,
-      onDownloadProgress,
-      providerId: provider.id,
-    };
+          updateUploadInfoProgress({
+            id: file.id,
+            isLoading: false,
+          });
+          return true;
+        } catch (error: any) {
+          if (error.message === "cancelled") {
+            toast.success(`${file.name}: Transfer cancelled!`, {
+              id: transferFileToastId,
+            });
+          }
 
-    switch (providerTarget) {
-      case "onedrive": {
-        return onedriveApi.transferFile(params);
-      }
+          updateUploadInfoProgress({
+            id: file.id,
+            isLoading: false,
+            error: error.message,
+          });
 
-      case "google_photos": {
-        return googlephotosApi.transferFile(params);
-      }
+          return false;
+        }
+      };
 
-      case "google_drive": {
-        return googledriveApi.transferFile(params);
-      }
+      try {
+        // Initiate upload info progress
+        const selectedFilesWithAbortController = selectedFiles.map((file) => {
+          const abortController = new AbortController();
 
-      default:
-        throw new Error("Unsupported Provider!");
-    }
-  }
+          const requiredParams: UploadInfoProgress = {
+            ...file,
+            abortController,
+            isLoading: true,
+            uploadProgress: 0,
+            downloadProgress: 0,
+            providerId: file.from,
+            upload: () =>
+              upload(requiredParams, providerTarget, transferFileToastId),
+          };
 
-  async function upload(
-    file: Omit<UploadInfoProgress, "upload">,
-    providerTarget: ProviderObject,
-    transferFileToastId: string
-  ) {
-    try {
-      await transferFileFunc(
-        file,
-        providerTarget.id,
-        file.abortController.signal
-      );
+          const isExist = useUploadInfoProgress
+            .getState()
+            .uploadInfoProgress.find((f) => f.id === file.id);
+          if (isExist) {
+            updateUploadInfoProgress(requiredParams);
+          } else {
+            addUploadInfoProgress(requiredParams);
+          }
 
-      updateUploadInfoProgress({
-        id: file.id,
-        isLoading: false,
-      });
-      return true;
-    } catch (error: any) {
-      if (error.message === "cancelled") {
-        toast.success(`${file.name}: Transfer cancelled!`, {
-          id: transferFileToastId,
+          return requiredParams;
         });
-      }
 
-      updateUploadInfoProgress({
-        id: file.id,
-        isLoading: false,
-        error: error.message,
-      });
-
-      return false;
-    }
-  }
-
-  async function transferFile(providerTarget: ProviderObject) {
-    setIsShowingOptions(false);
-
-    const transferFileToastId = `transfer-files-${Math.random()
-      .toString(36)
-      .substring(7)}`;
-
-    try {
-      // Initiate upload info progress
-      const selectedFilesWithAbortController = selectedFiles.map((file) => {
-        const abortController = new AbortController();
-
-        const requiredParams: UploadInfoProgress = {
-          ...file,
-          abortController,
-          isLoading: true,
-          uploadProgress: 0,
-          downloadProgress: 0,
-          providerId: file.from,
-          upload: () =>
-            upload(requiredParams, providerTarget, transferFileToastId),
-        };
-
-        const isExist = useUploadInfoProgress
-          .getState()
-          .uploadInfoProgress.find((f) => f.id === file.id);
-        if (isExist) {
-          updateUploadInfoProgress(requiredParams);
-        } else {
-          addUploadInfoProgress(requiredParams);
-        }
-
-        return requiredParams;
-      });
-
-      toast.loading(
-        `Transferring ${selectedFilesWithAbortController.length} to ${providerTarget.name}`,
-        {
-          duration: 3000,
-          id: transferFileToastId,
-        }
-      );
-
-      // Show upload info progress,
-      setShowUploadInfoProgress(true);
-
-      if (providerTarget.id === "google_photos") {
-        // Google Photos only support upload one by one
-        for await (const file of selectedFilesWithAbortController) {
-          await file.upload();
-        }
-      } else {
-        await Promise.all(
-          selectedFilesWithAbortController.map((file) => file.upload())
+        toast.loading(
+          `Transferring ${selectedFilesWithAbortController.length} files to ${providerTarget.name}`,
+          {
+            duration: 3000,
+            id: transferFileToastId,
+          }
         );
-      }
 
-      const isAllError =
-        useUploadInfoProgress
-          .getState()
-          .uploadInfoProgress.filter((info) => info.error).length ===
-        selectedFilesWithAbortController.length;
+        // Show upload info progress,
+        setShowUploadInfoProgress(true);
 
-      if (isAllError) {
-        toast.error(`Transfer failed`, {
+        if (providerTarget.id === "google_photos") {
+          // Google Photos only support upload one by one
+          for await (const file of selectedFilesWithAbortController) {
+            await file.upload();
+          }
+        } else {
+          await Promise.all(
+            selectedFilesWithAbortController.map((file) => file.upload())
+          );
+        }
+
+        const isAllError =
+          useUploadInfoProgress
+            .getState()
+            .uploadInfoProgress.filter((info) => info.error).length ===
+          selectedFilesWithAbortController.length;
+
+        if (isAllError) {
+          toast.error(`Transfer failed`, {
+            id: transferFileToastId,
+          });
+        }
+      } catch (error: any) {
+        toast.error(error.message, {
           id: transferFileToastId,
         });
+      } finally {
+        setTransferToPath(undefined);
       }
-
-      // if (uploadedFiles.length) {
-      //   toast.success(
-      //     `Transferred ${uploadedFiles.length} to ${providerTarget.name}`,
-      //     {
-      //       id: transferFileToastId,
-      //     }
-      //   );
-      // }
-    } catch (error: any) {
-      toast.error(error.message, {
-        id: transferFileToastId,
-      });
-    }
-  }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [selectedFiles, transferFileFunc]
+  );
 
   const getAndAddFile = useEffectEvent((fileIdFromAttribute: string) => {
     if (selectedFiles.find((f) => f.id === fileIdFromAttribute)) return true;
@@ -309,6 +328,19 @@ const FileOptions: FunctionComponent = () => {
     replaceAllSelectedFiles(fileFromId);
     return true;
   });
+
+  function onTransferClick(providerTarget: ProviderObject) {
+    if (providerTarget.id === "google_photos") {
+      return transferFiles(providerTarget);
+    }
+
+    if (openTransferModal) {
+      return transferFiles(providerTarget);
+    }
+
+    useTransferFilesModal.setState({ providerTarget });
+    setOpenTransferModal(true);
+  }
 
   useEffect(() => {
     function isOutsideWindow(
@@ -408,6 +440,14 @@ const FileOptions: FunctionComponent = () => {
       )}
       style={{ top: coord.y, left: coord.x }}
     >
+      <TransferFilesModal
+        path={transferToPath}
+        setPath={setTransferToPath}
+        open={openTransferModal}
+        setOpen={setOpenTransferModal}
+        transferFiles={transferFiles}
+      />
+
       <div className="divide-y divide-[#EBEBEB] w-full">
         <ul className="pb-2 mb-1 rounded-[20px]">
           {/* Open in Google Drive */}
@@ -472,7 +512,7 @@ const FileOptions: FunctionComponent = () => {
                     <li key={p.id}>
                       <button
                         type="button"
-                        onClick={() => transferFile(p)}
+                        onClick={() => onTransferClick(p)}
                         className="w-full flex items-center py-[10px] px-[10px] cursor-pointer group rounded-[10px] hover:bg-youngPrimary"
                       >
                         <div className="p-2 bg-gray-50 rounded-[8px] group-hover:bg-white">
