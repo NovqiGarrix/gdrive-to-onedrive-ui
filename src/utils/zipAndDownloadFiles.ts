@@ -1,5 +1,3 @@
-import JSZip from 'jszip';
-import FileSaver from 'file-saver';
 import { toast } from 'react-hot-toast';
 
 import type { GlobalItemTypes } from '../types';
@@ -8,6 +6,8 @@ import { NEXT_PUBLIC_INFILE_HELPER_URL } from '../constants';
 import getFileBuffer from './getFileBuffer';
 
 export default async function zipAndDownloadFiles(files: Array<GlobalItemTypes>, toastId: string) {
+
+    const JSZip = (await import("jszip")).default;
 
     const zip = new JSZip();
     const dateInString = new Date().toISOString().replace(/:/g, '-');
@@ -87,6 +87,8 @@ export default async function zipAndDownloadFiles(files: Array<GlobalItemTypes>,
     });
 
     const content = await zip.generateAsync({ type: 'blob' });
+
+    const FileSaver = (await import('file-saver')).default;
     FileSaver.saveAs(content, `infile_io-${dateInString}.zip`);
 
 }
