@@ -5,6 +5,7 @@ import type {
     IUploadFileParams,
 } from '../types';
 
+import getFilename from '../utils/getFilename';
 import toGlobalTypes from '../utils/toGlobalTypes';
 import getFileBuffer from '../utils/getFileBuffer';
 import handleHttpError from '../utils/handleHttpError';
@@ -15,7 +16,6 @@ import { HttpErrorExeption } from '../exeptions/httpErrorExeption';
 
 import type { IGetFoldersOnlyParams } from './types';
 import { API_URL, cancelMicrosoftUploadSession, completeMicrosoftUploadSession, createMicorosftUploadSession, defaultOptions } from '.';
-
 
 interface IGetFilesParams {
     path?: string;
@@ -112,26 +112,30 @@ async function transferFile(params: ITransferFileParams): Promise<void> {
             signal,
             providerId,
             onDownloadProgress,
+            mimeType: file.mimeType,
             downloadUrl: file.downloadUrl
         });
 
         const { sessionId, accessToken } = await createMicorosftUploadSession(signal);
         _sessionId = sessionId;
 
+        const filename = getFilename(file.name, file.mimeType);
+
         if (arrayBuffer.byteLength > UPLOAD_CHUNK_SIZE) {
             await onedriveClient.uploadLargeFile({
+                signal,
+                filename,
                 accessToken,
                 onUploadProgress,
-                filename: file.name,
                 buffer: Buffer.from(arrayBuffer),
                 onedrivePath: cleanPathFromFolderId(path)
             });
         } else {
             await onedriveClient.uploadFile({
                 signal,
+                filename,
                 accessToken,
                 onUploadProgress,
-                filename: file.name,
                 buffer: Buffer.from(arrayBuffer),
                 onedrivePath: cleanPathFromFolderId(path)
             });

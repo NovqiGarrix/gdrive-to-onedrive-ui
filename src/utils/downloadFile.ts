@@ -2,6 +2,7 @@ import axios from "axios";
 
 import type { OnDownloadProgress, Provider } from "../types";
 import { HttpErrorExeption } from '../exeptions/httpErrorExeption';
+
 import getPercentageUploadProgress from "./getPercentageUploadProgress";
 
 interface IDownloadFileParams {
@@ -18,7 +19,6 @@ export default async function downloadFile(params: IDownloadFileParams): Promise
 
     const { data: fileBuffer,
         status: fileRespStatus,
-        statusText: fileRespStatusText
     } = await axios.get(downloadUrl, {
         signal,
         ...(providerId === 'google_drive' ? () => {
@@ -51,7 +51,8 @@ export default async function downloadFile(params: IDownloadFileParams): Promise
     });
 
     if (fileRespStatus !== 200) {
-        throw new HttpErrorExeption(fileRespStatus, `Error while downloading file: ${fileRespStatusText}`);
+        const parsedBody = JSON.parse(new TextDecoder().decode(fileBuffer));
+        throw new HttpErrorExeption(fileRespStatus, parsedBody.error?.message || parsedBody.error);
     }
 
     return fileBuffer;

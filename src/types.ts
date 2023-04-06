@@ -140,6 +140,8 @@ export interface TransferFileSchema {
     iconLink: string;
     downloadUrl: string;
     providerId: Provider;
+
+    mimeType?: string;
 }
 
 export interface IDeleteFilesParam {

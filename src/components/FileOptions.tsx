@@ -75,9 +75,14 @@ const FileOptions: FunctionComponent = () => {
     if (selectedFiles.length > 1) {
       const toastId = "zipAndDownloadFiles";
       toast.loading("Zipping files...", { id: toastId });
-      await zipAndDownloadFiles(selectedFiles, toastId);
+      try {
+        await zipAndDownloadFiles(selectedFiles, toastId);
 
-      toast.success("Downloading files...", { id: toastId });
+        toast.success("Downloading files...", { id: toastId });
+        return;
+      } catch (error: any) {
+        toast.error(error.message, { id: toastId });
+      }
       return;
     }
 
@@ -209,10 +214,12 @@ const FileOptions: FunctionComponent = () => {
 
       // Func to upload each file
       const upload = async (
-        file: Omit<UploadInfoProgress, "upload">,
+        file: UploadInfoProgress,
         providerTarget: ProviderObject,
         transferFileToastId: string
       ) => {
+        console.log(file, "upload");
+
         try {
           await transferFileFunc(
             file,
