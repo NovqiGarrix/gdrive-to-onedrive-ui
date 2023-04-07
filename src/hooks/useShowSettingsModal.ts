@@ -7,7 +7,7 @@ interface IUseShowSettingsModal {
 }
 
 const useShowSettingsModal = create<IUseShowSettingsModal>((set) => ({
-    open: true,
+    open: false,
 
     setOpen: (show) => set({ open: show }),
 
