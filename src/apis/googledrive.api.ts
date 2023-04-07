@@ -54,7 +54,7 @@ async function getFiles(params: IGetFilesParams): Promise<GetFilesReturn> {
     const urlInURL = new URL(`${API_URL}/api/google/drive/files`);
 
     urlInURL.searchParams.append('fields', '*');
-    urlInURL.searchParams.append('query', !query ? `mimeType != 'application/vnd.google-apps.folder' and ${getParentQuery(parentId)}` : `name contains '${query}' and mimeType != 'application/vnd.google-apps.folder'`);
+    urlInURL.searchParams.append('query', `mimeType != 'application/vnd.google-apps.folder' and ${!query ? `(${getParentQuery(parentId, false)})` : `name contains '${query}'`}`);
 
     Object.entries({ next_token: nextPageToken }).forEach(([key, value]) => {
         if (value) {
