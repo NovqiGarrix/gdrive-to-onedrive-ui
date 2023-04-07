@@ -9,23 +9,23 @@ import {
 
 import { toast } from "react-hot-toast";
 import { shallow } from "zustand/shallow";
-import useInfiniteScroll from "react-infinite-scroll-hook";
 import { useMutation } from "@tanstack/react-query";
+import useInfiniteScroll from "react-infinite-scroll-hook";
 
 import useGetFiles from "../hooks/useGetFiles";
 import useSearchQuery from "../hooks/useSearchQuery";
 import useProviderPath from "../hooks/useProviderPath";
+import useGetFilesFunc from "../hooks/useGetFilesFunc";
 import useSelectedFiles from "../hooks/useSelectedFiles";
+import useCloudProvider from "../hooks/useCloudProvider";
 import useGooglePhotosFilter from "../hooks/useGooglePhotosFilter";
 import useDeleteFilesModalState from "../hooks/useDeleteFilesModalState";
 
 import File from "./File";
 import FileOptions from "./FileOptions";
 import BeautifulError from "./BeautifulError";
-import useGetFilesFunc from "./useGetFilesFunc";
-import FileSkeletonLoading from "./FileSkeletonLoading";
 import UploadProgressInfo from "./UploadProgressInfo";
-import useCloudProvider from "../hooks/useCloudProvider";
+import FileSkeletonLoading from "./FileSkeletonLoading";
 
 const FilesContainer: FunctionComponent = () => {
   const selectedFiles = useSelectedFiles((s) => s.files, shallow);

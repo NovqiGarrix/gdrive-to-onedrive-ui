@@ -4,7 +4,7 @@ import toast from "react-hot-toast";
 import { shallow } from "zustand/shallow";
 import { useQuery } from "@tanstack/react-query";
 
-import useGetFilesFunc from "../components/useGetFilesFunc";
+import useGetFilesFunc from "./useGetFilesFunc";
 import type { GetFilesReturn, ProviderObject } from "../types";
 import { HttpErrorExeption } from "../exeptions/httpErrorExeption";
 

@@ -8,6 +8,7 @@ import {
 } from "react";
 
 import { shallow } from "zustand/shallow";
+import { useQuery } from "@tanstack/react-query";
 import { Transition, Dialog } from "@headlessui/react";
 import { ArrowsRightLeftIcon } from "@heroicons/react/24/outline";
 
@@ -17,20 +18,16 @@ import type {
   Provider,
   ProviderObject,
 } from "../types";
+import { HttpErrorExeption } from "../exeptions/httpErrorExeption";
+
+import useGetFilesFunc from "../hooks/useGetFilesFunc";
 import useTransferFilesModal from "../hooks/useTransferFilesModal";
 
-import Breadcrumbs from "./Breadcrumbs";
-import { useRouter } from "next/router";
-import useCloudProvider from "../hooks/useCloudProvider";
-import useGetFolders from "../hooks/useGetFolders";
-import useProviderPath from "../hooks/useProviderPath";
-import BeautifulError from "./BeautifulError";
 import Folder from "./Folder";
-import FoldersSkeletonLoading from "./FoldersSkeletonLoading";
 import LoadingIcon from "./LoadingIcon";
-import { useQuery } from "@tanstack/react-query";
-import { HttpErrorExeption } from "../exeptions/httpErrorExeption";
-import useGetFilesFunc from "./useGetFilesFunc";
+import Breadcrumbs from "./Breadcrumbs";
+import BeautifulError from "./BeautifulError";
+import FoldersSkeletonLoading from "./FoldersSkeletonLoading";
 
 interface ITransferFilesModalProps {
   path: string | undefined;

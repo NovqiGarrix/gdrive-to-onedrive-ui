@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { GetFilesReturn } from '../types';
-import useGetFilesFunc from '../components/useGetFilesFunc';
+import useGetFilesFunc from './useGetFilesFunc';
 import { HttpErrorExeption } from '../exeptions/httpErrorExeption';
 
 import useSearchQuery from './useSearchQuery';

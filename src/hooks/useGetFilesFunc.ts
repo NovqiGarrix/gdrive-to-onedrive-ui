@@ -4,7 +4,7 @@ import type { GetFilesFuncParams } from "../types";
 import onedriveApi from "../apis/onedrive.api";
 import googledriveApi from "../apis/googledrive.api";
 import googlephotosApi from "../apis/googlephotos.api";
-import useCloudProvider from "../hooks/useCloudProvider";
+import useCloudProvider from "./useCloudProvider";
 
 
 function useGetFilesFunc(_providerId?: string) {
