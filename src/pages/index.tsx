@@ -15,6 +15,7 @@ import {
   DisconnectedProviderAccount,
   Breadcrumbs,
   BeautifulError,
+  Settings,
 } from "../components";
 
 import useProviderPath, {
@@ -63,12 +64,14 @@ const Home: NextPage<IHomePageProps> = (props) => {
   return (
     <main className="bg-white pb-8 relative inline-flex overflow-x-hidden w-full">
       <Head>
-        <title>infile.io | Manage your files in one place</title>
-        <meta name="description" content="Manage your files in one place" />
+        <title>Dashboard | cloudtransfer.io</title>
+        <meta name="robots" content="noindex" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
       <Sidebar />
+      <Settings />
+
       <div className="py-[40px] pl-[42px] pr-[35px] w-full">
         <Navbar />
         {isGettingProviderAccountInfo ? (

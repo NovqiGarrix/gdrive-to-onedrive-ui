@@ -6,6 +6,7 @@ module.exports = {
       "127.0.0.1",
       "docs.google.com",
       "drive.google.com",
+      "cdn.discordapp.com",
       "infile-helper.deno.dev",
       "lh3.googleusercontent.com",
       "lh4.googleusercontent.com",

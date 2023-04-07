@@ -1,6 +1,7 @@
 export { default as Navbar } from './Navbar';
 export { default as Sidebar } from './Sidebar';
 export { default as Folders } from './Folders';
+export { default as Settings } from './Settings';
 export { default as UploadArea } from './UploadArea';
 export { default as LoadingIcon } from './LoadingIcon';
 export { default as Breadcrumbs } from './Breadcrumbs';
