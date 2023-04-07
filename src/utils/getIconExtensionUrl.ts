@@ -21,6 +21,7 @@ class IconExtensionMem {
         'docm': '/icons/docs.png',
         'dotx': '/icons/docs.png',
         'pdf': '/icons/pdf.png',
+        'pptx': '/icons/pptx.png',
         'xlsx': '/icons/sheets.png',
         'xlsm': '/icons/sheets.png',
         'xlsb': '/icons/sheets.png',
@@ -42,12 +43,15 @@ export default function getIconExtensionUrl(filename: string, mimeType?: string)
             ext = 'docx'
             break;
 
+        case 'application/vnd.google-apps.presentation':
+            ext = 'pptx'
+            break;
+
         default:
             break;
     }
 
-    if (!ext) return '/icons/file.png';
-
-    return IconExtensionMem.icons[ext] || '/icons/file.png';
+    if (!ext) return '/icons/any.png';
+    return IconExtensionMem.icons[ext] || '/icons/any.png';
 
 }
