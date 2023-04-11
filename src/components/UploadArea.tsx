@@ -528,14 +528,16 @@ const IndividualUploadInfoProgress = memo<IIndividualUploadInfoProgressProps>(
             isError ? "items-start" : "items-center"
           )}
         >
-          <Image
-            width={35}
-            height={35}
-            loading="lazy"
-            src={iconLink}
-            objectFit="contain"
-            alt={`${file.filename} icon`}
-          />
+          <div className="w-[35px] h-[35px]">
+            <Image
+              width={500}
+              height={500}
+              loading="lazy"
+              src={iconLink}
+              objectFit="contain"
+              alt={`${file.filename} icon`}
+            />
+          </div>
           <div className="ml-2 -mt-1 w-full">
             <h3 className="text-gray-600 w-full font-inter font-medium text-base">
               {file.filename}
