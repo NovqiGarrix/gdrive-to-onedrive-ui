@@ -1,5 +1,6 @@
 import type {
     GetFilesReturn,
+    GlobalItemTypes,
     IDeleteFilesParam,
     ITransferFileParams,
     IUploadFileParams,
@@ -9,6 +10,7 @@ import getFilename from '../utils/getFilename';
 import toGlobalTypes from '../utils/toGlobalTypes';
 import getFileBuffer from '../utils/getFileBuffer';
 import handleHttpError from '../utils/handleHttpError';
+import getParentIdFromPath from '../utils/getParentIdFromPath';
 
 import { UPLOAD_CHUNK_SIZE } from '../constants';
 import onedriveClient from '../lib/onedrive.client';
@@ -223,9 +225,36 @@ async function uploadFile(params: IUploadFileParams): Promise<void> {
 
 }
 
+async function createFolder(foldername: string, path?: string): Promise<GlobalItemTypes> {
+
+    const parentId = getParentIdFromPath(path);
+
+    try {
+
+        const resp = await fetch(`${API_URL}/api/microsoft/folders`, {
+            ...defaultOptions,
+            method: "POST",
+            body: JSON.stringify({ foldername, parentId })
+        });
+
+        const { data, errors } = await resp.json();
+
+        if (!resp.ok) {
+            throw new HttpErrorExeption(resp.status, errors[0].error);
+        }
+
+        return toGlobalTypes(data, 'onedrive');
+
+    } catch (error) {
+        console.log(error);
+        throw handleHttpError(error);
+    }
+
+}
+
 // eslint-disable-next-line import/no-anonymous-default-export
 export default {
     getFiles,
     transferFile, deleteFiles,
-    uploadFile
+    uploadFile, createFolder
 }

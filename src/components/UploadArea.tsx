@@ -1,4 +1,5 @@
 import {
+  ChangeEvent,
   Dispatch,
   DragEvent,
   FunctionComponent,
@@ -34,6 +35,7 @@ import getIconExtensionUrl from "../utils/getIconExtensionUrl";
 import type { IUploadFileParams, OnUploadProgress } from "../types";
 
 import LoadingIcon from "./LoadingIcon";
+import useGetFolders from "../hooks/useGetFolders";
 
 interface IUploadFileObject {
   id: string;
@@ -55,6 +57,13 @@ interface IUploadFuncUtilParams {
   onUploadProgress: OnUploadProgress;
 }
 
+interface Folder {
+  path: string;
+  cleanPath: string;
+
+  files: Array<File>;
+}
+
 const UploadArea: FunctionComponent = () => {
   const queryClient = useQueryClient();
 
@@ -65,6 +74,10 @@ const UploadArea: FunctionComponent = () => {
   const providerId = useCloudProvider((s) => s.provider.id);
 
   const { queryKey: getFilesQueryKey } = useGetFiles();
+  const { queryKey: getFoldersQueryKey } = useGetFolders(
+    providerId !== "google_photos"
+  );
+
   const [animationParenntRef] = useAutoAnimate({ duration: 200 });
 
   const [isClearingUploadedFiles, setIsClearingUploadedFiles] = useState(false);
@@ -125,97 +138,92 @@ const UploadArea: FunctionComponent = () => {
     [providerId]
   );
 
-  async function onDrop(event: DragEvent<HTMLDivElement>) {
-    event.preventDefault();
-    event.stopPropagation();
+  const createFolderFunc = useCallback(
+    (foldername: string, path?: string) => {
+      switch (providerId) {
+        case "google_drive":
+          return googledriveApi.createFolder(foldername, path);
 
-    setIsDragOver(false);
-    const droppedFiles = Array.from(event.dataTransfer.files);
+        case "onedrive":
+          return onedriveApi.createFolder(foldername, path);
 
-    const uploadFuncUtil = async (params: IUploadFuncUtilParams) => {
-      const { file, id, onUploadProgress, signal } = params;
+        default:
+          throw new Error("Unsupported provider");
+      }
+    },
+    [providerId]
+  );
+
+  const uploadFiles = useCallback(
+    async (droppedFiles: Array<File>, path?: string) => {
+      const uploadFuncUtil = async (params: IUploadFuncUtilParams) => {
+        const { file, id, onUploadProgress, signal } = params;
+
+        try {
+          await uploadFunc({
+            file,
+            onUploadProgress,
+            signal,
+            path: path ?? providerPath,
+          });
+
+          setFiles((prev) =>
+            prev.map((prevFile) =>
+              prevFile.id === id ? { ...prevFile, isLoading: false } : prevFile
+            )
+          );
+
+          await queryClient.refetchQueries(getFilesQueryKey);
+        } catch (error: any) {
+          setFiles((prev) =>
+            prev.map((prevFile) =>
+              prevFile.id === id
+                ? { ...prevFile, error: error.message, isLoading: false }
+                : prevFile
+            )
+          );
+        }
+      };
+
+      const files = droppedFiles.map((f) => {
+        const file: IUploadFileObject = {
+          id: Math.random().toString(36).slice(0, 20),
+
+          progress: 0,
+          size: f.size,
+          filename: f.name,
+          isLoading: true,
+          abortController: new AbortController(),
+          upload: () =>
+            uploadFuncUtil({
+              onUploadProgress,
+
+              file: f,
+              id: file.id,
+              signal: file.abortController.signal,
+            }),
+        };
+
+        setFiles((prev) => [...prev, file]);
+
+        const onUploadProgress: OnUploadProgress = (progress) => {
+          setFiles((prev) =>
+            prev.map((prevFile) =>
+              prevFile.id === file.id ? { ...prevFile, progress } : prevFile
+            )
+          );
+        };
+
+        return {
+          id: file.id,
+          upload: file.upload,
+        };
+      });
 
       try {
-        await uploadFunc({
-          file,
-          onUploadProgress,
-          signal,
-          path: providerPath,
-        });
-
-        setFiles((prev) =>
-          prev.map((prevFile) =>
-            prevFile.id === id ? { ...prevFile, isLoading: false } : prevFile
-          )
-        );
-
-        await queryClient.refetchQueries(getFilesQueryKey);
-      } catch (error: any) {
-        setFiles((prev) =>
-          prev.map((prevFile) =>
-            prevFile.id === id
-              ? { ...prevFile, error: error.message, isLoading: false }
-              : prevFile
-          )
-        );
-      }
-    };
-
-    const files = droppedFiles.map((f) => {
-      const file: IUploadFileObject = {
-        id: Math.random().toString(36).slice(0, 20),
-
-        progress: 0,
-        size: f.size,
-        filename: f.name,
-        isLoading: true,
-        abortController: new AbortController(),
-        upload: () =>
-          uploadFuncUtil({
-            onUploadProgress,
-
-            file: f,
-            id: file.id,
-            signal: file.abortController.signal,
-          }),
-      };
-
-      setFiles((prev) => [...prev, file]);
-
-      const onUploadProgress: OnUploadProgress = (progress) => {
-        setFiles((prev) =>
-          prev.map((prevFile) =>
-            prevFile.id === file.id ? { ...prevFile, progress } : prevFile
-          )
-        );
-      };
-
-      return {
-        id: file.id,
-        upload: file.upload,
-      };
-    });
-
-    try {
-      if (providerId === "google_photos") {
-        // Google Photos does not support simultaneous uploads
-        for await (const { upload, id } of files) {
-          try {
-            await upload();
-          } catch (error: any) {
-            // Set the error message, and set isLoading to false
-            setFiles((prev) =>
-              prev.map((prevFile) =>
-                prevFile.id === id
-                  ? { ...prevFile, error: error.message, isLoading: false }
-                  : prevFile
-              )
-            );
-          }
-        }
-      } else {
-        await Promise.all(
-          files.map(async ({ upload, id }) => {
+        if (providerId === "google_photos") {
+          // Google Photos does not support simultaneous uploads
+          for await (const { upload, id } of files) {
             try {
               await upload();
             } catch (error: any) {
@@ -228,12 +236,138 @@ const UploadArea: FunctionComponent = () => {
                 )
               );
             }
+          }
+        } else {
+          await Promise.all(
+            files.map(async ({ upload, id }) => {
+              try {
+                await upload();
+              } catch (error: any) {
+                // Set the error message, and set isLoading to false
+                setFiles((prev) =>
+                  prev.map((prevFile) =>
+                    prevFile.id === id
+                      ? { ...prevFile, error: error.message, isLoading: false }
+                      : prevFile
+                  )
+                );
+              }
+            })
+          );
+        }
+      } catch (error: any) {
+        toast.error(error.message);
+      }
+    },
+    [getFilesQueryKey, providerId, providerPath, queryClient, uploadFunc]
+  );
+
+  const uploadFolder = useCallback(
+    async (files: Array<File>) => {
+      const toastId = "uploading-folder-toast-id";
+
+      toast.loading("Creating folders...", { id: toastId });
+
+      try {
+        // Webkit relative paths are like this:
+        // img/hello2.png
+        // img/img/hello.png
+
+        const filteredUniqueFolder = new Map<string, File>();
+
+        files.forEach((file) => {
+          const splittedPath = file.webkitRelativePath.split("/");
+          // Remove the file (not folder)
+          splittedPath.pop();
+
+          filteredUniqueFolder.set(splittedPath.join("/"), file);
+        });
+
+        let createdFolders: Array<Folder> = [];
+
+        // Create all folders
+        for (const file of filteredUniqueFolder.values()) {
+          const splittedPath = file.webkitRelativePath.split("/");
+
+          // Remove the file (not folder)
+          splittedPath.pop();
+
+          for await (const foldername of splittedPath) {
+            const lastCreatedFolder = createdFolders.at(-1);
+
+            if (lastCreatedFolder) {
+              if (lastCreatedFolder.cleanPath === splittedPath.join("/"))
+                continue;
+
+              const createdFolder = await createFolderFunc(
+                foldername,
+                lastCreatedFolder.path
+              );
+
+              createdFolders.push({
+                files: [],
+                cleanPath: splittedPath.join("/"),
+                path: `${lastCreatedFolder.path}/${foldername}~${createdFolder.id}`,
+              });
+            } else {
+              const createdFolder = await createFolderFunc(foldername);
+              createdFolders.push({
+                files: [],
+                cleanPath: foldername,
+                path: `${foldername}~${createdFolder.id}`,
+              });
+            }
+          }
+        }
+
+        toast.success("Done. Uploading your file...", { id: toastId });
+
+        // Add the files to the related folders
+        files.forEach((file) => {
+          const splittedPath = file.webkitRelativePath.split("/");
+          splittedPath.pop();
+
+          const cleanPath = splittedPath.join("/");
+
+          createdFolders = createdFolders.map((folder) => {
+            return folder.cleanPath === cleanPath
+              ? {
+                  ...folder,
+                  files: [...folder.files, file],
+                }
+              : folder;
+          });
+        });
+
+        await Promise.all(
+          createdFolders.map(async (folder) => {
+            await uploadFiles(folder.files, folder.path);
+            await queryClient.refetchQueries(getFoldersQueryKey);
           })
         );
+      } catch (error: any) {
+        toast.error(error.message, { id: toastId });
       }
-    } catch (error: any) {
-      toast.error(error.message);
-    }
+    },
+    [createFolderFunc, getFoldersQueryKey, queryClient, uploadFiles]
+  );
+
+  async function onFolderInputChange(event: ChangeEvent<HTMLInputElement>) {
+    event.preventDefault();
+    if (!event.target.files?.length) return;
+
+    const files = Array.from(event.target.files);
+    await uploadFolder(files);
+  }
+
+  async function onDrop(event: DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    setIsDragOver(false);
+    const droppedFiles = Array.from(event.dataTransfer.files);
+
+    await uploadFiles(droppedFiles);
   }
 
   return (
@@ -244,7 +378,7 @@ const UploadArea: FunctionComponent = () => {
         onDrop={onDrop}
         onDragOver={onDragOver}
         onDragLeave={onDragLeave}
-        className="mt-[30px] h-[250px] bg-[#F5F8FC] border border-dashed border-primary rounded-[10px] flex items-center justify-center flex-col"
+        className="mt-[30px] relative h-[250px] bg-[#F5F8FC] border border-dashed border-primary rounded-[10px] flex items-center justify-center flex-col"
       >
         <div className="p-2 rounded-full bg-youngPrimary">
           {isDragOver ? (
@@ -297,18 +431,19 @@ const UploadArea: FunctionComponent = () => {
         </div>
 
         <h5 className="mt-[23px] font-inter font-medium text-base">
-          Drag and drop files, or{" "}
-          <label
-            htmlFor="upload-file-input"
-            className="text-primary cursor-pointer"
-          >
+          Drag and drop, or{" "}
+          <label htmlFor="folder-input" className="text-primary cursor-pointer">
             Browse
-          </label>
+          </label>{" "}
+          to upload folders
         </h5>
         <input
           type="file"
-          id="upload-file-input"
-          className="w-0 h-0 invisible -z-50"
+          id="folder-input"
+          // @ts-ignore - JSX does not recognize webkitdirectory
+          webkitdirectory="true"
+          onChange={onFolderInputChange}
+          className="w-0 absolute h-0 rounded-[10px] -z-10"
         />
         <p className="font-medium mt-2 text-sm text-fontGray">
           Support zip, rar and even folder

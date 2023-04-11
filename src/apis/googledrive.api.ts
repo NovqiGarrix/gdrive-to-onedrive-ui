@@ -11,6 +11,7 @@ import { HttpErrorExeption } from '../exeptions/httpErrorExeption';
 import toGlobalTypes from '../utils/toGlobalTypes';
 import getFileBuffer from '../utils/getFileBuffer';
 import handleHttpError from '../utils/handleHttpError';
+import getParentIdFromPath from '../utils/getParentIdFromPath';
 
 import {
     API_URL,
@@ -19,6 +20,7 @@ import {
     createGoogleUploadSession,
     defaultOptions
 } from '.';
+import type { GlobalItemTypes } from '../types';
 import type { IGetFoldersOnlyParams } from './types';
 
 interface IGetFilesParams {
@@ -26,10 +28,6 @@ interface IGetFilesParams {
     query?: string;
     foldersOnly?: boolean;
     nextPageToken?: string;
-}
-
-function getParentIdFromPath(path: string | undefined): string | undefined {
-    return path?.split("/").pop()?.split("~")[1];
 }
 
 function getParentQuery(parentId: string | undefined, foldersOnly?: boolean): string {
@@ -226,9 +224,35 @@ async function uploadFile(params: IUploadFileParams): Promise<void> {
 
 }
 
+async function createFolder(foldername: string, path?: string): Promise<GlobalItemTypes> {
+
+    const parentId = getParentIdFromPath(path);
+
+    try {
+
+        const resp = await fetch(`${API_URL}/api/google/drive/folders`, {
+            ...defaultOptions,
+            method: "POST",
+            body: JSON.stringify({ foldername, parentId })
+        });
+
+        const { data, errors } = await resp.json();
+
+        if (!resp.ok) {
+            throw new HttpErrorExeption(resp.status, errors[0].error);
+        }
+
+        return toGlobalTypes(data, 'google_drive');
+
+    } catch (error) {
+        throw handleHttpError(error);
+    }
+
+}
+
 // eslint-disable-next-line import/no-anonymous-default-export
 export default {
     getFiles,
     deleteFiles, transferFile,
-    uploadFile
+    uploadFile, createFolder
 }

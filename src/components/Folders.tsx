@@ -78,7 +78,9 @@ const Folders: FunctionComponent = () => {
       ) : isError && error?.message !== "Unauthorized" ? (
         <BeautifulError.Root>
           <BeautifulError.Title title="Something went wrong" />
-          <BeautifulError.Message message={error.message} />
+          <BeautifulError.Message
+            message={error?.message || "Something went wrong"}
+          />
         </BeautifulError.Root>
       ) : (
         <div
