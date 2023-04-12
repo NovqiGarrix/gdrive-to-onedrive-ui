@@ -1,10 +1,9 @@
 import {
   Dispatch,
-  Fragment,
   FunctionComponent,
   MouseEvent,
-  ReactNode,
   SetStateAction,
+  useEffect,
   useMemo,
   useState,
 } from "react";
@@ -12,26 +11,22 @@ import {
 import SolidFolder from "@heroicons/react/24/solid/FolderIcon";
 import OutlineFolder from "@heroicons/react/24/outline/FolderIcon";
 
-// import SolidStar from "@heroicons/react/24/solid/StarIcon";
-// import OutlineStar from "@heroicons/react/24/outline/StarIcon";
-
 import SolidCog from "@heroicons/react/24/solid/Cog6ToothIcon";
 import OutlineCog from "@heroicons/react/24/outline/Cog6ToothIcon";
-import useShowSettingsModal from "../hooks/useShowSettingsModal";
-import Link from "next/link";
-import { useRouter } from "next/router";
+
 import classNames from "../utils/classNames";
+import useShowSettingsModal from "../hooks/useShowSettingsModal";
 
 const SidebarMenu: FunctionComponent = () => {
   const [activeIndex, setActiveIndex] = useState(0);
   const generalMenus: Array<GeneralMenu> = useMemo(() => {
     return [
       {
-        type: "link",
+        type: "button",
         label: "My Files",
-        href: "/",
         ActiveIcon: SolidFolder,
         InActiveIcon: OutlineFolder,
+        onClick: () => {},
       },
       // {
       //   label: "Favorites",
@@ -53,6 +48,16 @@ const SidebarMenu: FunctionComponent = () => {
     ];
   }, []);
 
+  const showSettingsModal = useShowSettingsModal((state) => state.open);
+
+  useEffect(() => {
+    // If user closes the settings modal, set the active index
+    // back to 0 (My Files)
+    if (!showSettingsModal) {
+      setActiveIndex(0);
+    }
+  }, [showSettingsModal]);
+
   return (
     <ul className="mt-[30px] pl-[24px] pr-[34px] space-y-[6px]">
       {generalMenus.map((menu, index) => (
@@ -70,88 +75,14 @@ const SidebarMenu: FunctionComponent = () => {
 
 export default SidebarMenu;
 
-type GeneralMenu =
-  | {
-      type: "link";
-
-      href: "/";
-      label: "My Files";
-      ActiveIcon: typeof SolidFolder;
-      InActiveIcon: typeof SolidFolder;
-    }
-  | {
-      type: "button";
-
-      onClick: (
-        event: MouseEvent<HTMLButtonElement, globalThis.MouseEvent>
-      ) => void;
-      label: "Settings";
-      ActiveIcon: typeof SolidFolder;
-      InActiveIcon: typeof SolidFolder;
-    };
-
-type IWrapperEachMenuListProps =
-  | {
-      type: "link";
-      href: string;
-      index: number;
-      isActive: boolean;
-      children: ReactNode;
-      setActiveIndex: Dispatch<SetStateAction<number>>;
-    }
-  | {
-      type: "button";
-      index: number;
-      isActive: boolean;
-      children: ReactNode;
-      setActiveIndex: Dispatch<SetStateAction<number>>;
-      onClick: (
-        event: MouseEvent<HTMLButtonElement, globalThis.MouseEvent>
-      ) => void;
-    };
-
-const WrapperEachMenuList: FunctionComponent<IWrapperEachMenuListProps> = (
-  props
-) => {
-  const { type, isActive, children, setActiveIndex, index } = props;
-
-  const classes = useMemo(
-    () =>
-      classNames(
-        "p-[15px] w-full flex items-center space-x-[15px] rounded-[10px] group",
-        isActive ? "bg-white shadow-2xl" : "shadow-none"
-      ),
-    [isActive]
-  );
-
-  return (
-    <Fragment>
-      {type === "button" ? (
-        <button
-          type="button"
-          onClick={(e) => {
-            setActiveIndex(index);
-            props.onClick(e);
-          }}
-          className={classes}
-        >
-          {children}
-        </button>
-      ) : (
-        <Link
-          passHref
-          href={props.href}
-          onClick={() => {
-            setActiveIndex(index);
-          }}
-          className={classes}
-        >
-          {children}
-        </Link>
-      )}
-    </Fragment>
-  );
-};
+interface GeneralMenu {
+  onClick: (
+    event: MouseEvent<HTMLButtonElement, globalThis.MouseEvent>
+  ) => void;
+  label: string;
+  ActiveIcon: typeof SolidFolder;
+  InActiveIcon: typeof SolidFolder;
+}
 
 type IEachMenuListProps = {
   index: number;
@@ -160,7 +91,15 @@ type IEachMenuListProps = {
 } & GeneralMenu;
 
 const EachMenuList: FunctionComponent<IEachMenuListProps> = (props) => {
-  const { ActiveIcon, InActiveIcon, label, index, activeIndex } = props;
+  const {
+    ActiveIcon,
+    InActiveIcon,
+    label,
+    index,
+    activeIndex,
+    setActiveIndex,
+    onClick,
+  } = props;
 
   const [isHovering, setIsHovering] = useState(false);
   const isActive = activeIndex === index || isHovering;
@@ -171,7 +110,17 @@ const EachMenuList: FunctionComponent<IEachMenuListProps> = (props) => {
       onMouseOver={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
     >
-      <WrapperEachMenuList {...props} isActive={isActive}>
+      <button
+        type="button"
+        onClick={(e) => {
+          setActiveIndex(index);
+          onClick(e);
+        }}
+        className={classNames(
+          "p-[15px] w-full flex items-center space-x-[15px] rounded-[10px] group",
+          isActive ? "bg-white shadow-2xl" : "shadow-none"
+        )}
+      >
         <div className="w-5 h-5 relative">
           <InActiveIcon
             className={classNames(
@@ -194,7 +143,7 @@ const EachMenuList: FunctionComponent<IEachMenuListProps> = (props) => {
         >
           {label}
         </span>
-      </WrapperEachMenuList>
+      </button>
     </li>
   );
 };
