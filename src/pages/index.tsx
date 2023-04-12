@@ -17,6 +17,7 @@ import {
   DisconnectedProviderAccount,
   Breadcrumbs,
   BeautifulError,
+  ScrollToTop,
 } from "../components";
 
 import useProviderPath, {
@@ -138,6 +139,7 @@ const Home: NextPage<IHomePageProps> = (props) => {
             <Breadcrumbs path={providerPath} setPath={setProviderPath} />
             <Folders />
             <FilesContainerWrapper />
+            <ScrollToTop />
           </Fragment>
         )}
       </div>
