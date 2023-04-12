@@ -28,9 +28,17 @@ class IconExtensionMem {
         'dotm': '/icons/docs.png',
         'docm': '/icons/docs.png',
         'dotx': '/icons/docs.png',
+        'txt': '/icons/docs.png',
         'pdf': '/icons/pdf.png',
         'pptx': '/icons/pptx.png',
         'xlsx': '/icons/sheets.png',
+        'gform': '/icons/gforms.png',
+        'gjam': '/icons/jamboard.png',
+        'gcolab': '/icons/gcolab.png',
+        'gmap': '/icons/google-maps.png',
+        'gdrawing': '/icons/google-drawings.png',
+        'gscript': '/icons/google-apps-script.png',
+        'gfusiontable': '/icons/google-drive-fusion-tables-logo.png',
         'xlsm': '/icons/sheets.png',
         'xlsb': '/icons/sheets.png',
         'xlam': '/icons/sheets.png',
@@ -53,6 +61,42 @@ export default function getIconExtensionUrl(filename: string, mimeType?: string)
 
         case 'application/vnd.google-apps.presentation':
             ext = 'pptx'
+            break;
+
+        case 'application/vnd.google-apps.script':
+            ext = 'gscript'
+            break;
+
+        case 'application/vnd.google-apps.jam':
+            ext = 'gjam'
+            break;
+
+        case 'application/vnd.google-apps.form':
+            ext = 'gform'
+            break;
+
+        case 'application/vnd.google-apps.drawing':
+            ext = 'gdrawing'
+            break;
+
+        case 'application/vnd.google-apps.fusiontable':
+            ext = 'gfusiontable'
+            break;
+
+        case 'application/vnd.google-apps.map':
+            ext = 'gmap'
+            break;
+
+        case 'application/vnd.google.colaboratory':
+            ext = 'gcolab'
+            break;
+
+        case 'application/pdf':
+            ext = 'pdf'
+            break;
+
+        case 'video/mp4':
+            ext = 'mp4'
             break;
 
         default:
