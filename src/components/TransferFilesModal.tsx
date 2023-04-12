@@ -68,6 +68,7 @@ const TransferFilesModal = memo<ITransferFilesModalProps>(
           className="relative z-10"
           initialFocus={cancelButtonRef}
           onClose={setOpen}
+          id="transfer-files-modal"
         >
           <Transition.Child
             as={Fragment}

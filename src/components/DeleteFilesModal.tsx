@@ -87,6 +87,7 @@ const DeleteFilesModal: FunctionComponent = () => {
         className="relative z-10"
         initialFocus={cancelButtonRef}
         onClose={closeModal}
+        id="delete-files-modal"
       >
         <Transition.Child
           as={Fragment}

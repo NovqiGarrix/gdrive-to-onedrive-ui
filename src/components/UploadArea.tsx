@@ -26,6 +26,7 @@ import googledriveApi from "../apis/googledrive.api";
 import googlephotosApi from "../apis/googlephotos.api";
 
 import useGetFiles from "../hooks/useGetFiles";
+import useGetFolders from "../hooks/useGetFolders";
 import useProviderPath from "../hooks/useProviderPath";
 import useCloudProvider from "../hooks/useCloudProvider";
 
@@ -35,7 +36,6 @@ import getIconExtensionUrl from "../utils/getIconExtensionUrl";
 import type { IUploadFileParams, OnUploadProgress } from "../types";
 
 import LoadingIcon from "./LoadingIcon";
-import useGetFolders from "../hooks/useGetFolders";
 
 interface IUploadFileObject {
   id: string;

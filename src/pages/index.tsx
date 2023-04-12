@@ -1,9 +1,10 @@
-import { Fragment, useEffect } from "react";
+import { Fragment, useEffect, useRef } from "react";
 import type { GetServerSideProps, NextPage } from "next";
 
 import Head from "next/head";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
+import { shallow } from "zustand/shallow";
 
 import authApi from "../apis/auth.api";
 import {
@@ -21,6 +22,7 @@ import {
 import useProviderPath, {
   initializedProviderPath,
 } from "../hooks/useProviderPath";
+import useSelectedFiles from "../hooks/useSelectedFiles";
 import { initializeCloudProvider } from "../hooks/useCloudProvider";
 import useGetProviderAccountInfo from "../hooks/useGetProviderAccountInfo";
 
@@ -35,8 +37,13 @@ const Home: NextPage<IHomePageProps> = (props) => {
   const { path, provider } = props;
 
   const router = useRouter();
+  const rightComponentRef = useRef<HTMLDivElement>(null);
+
   const providerPath = useProviderPath((s) => s.path);
   const setProviderPath = useProviderPath((s) => s.setPath);
+
+  const selectedFiles = useSelectedFiles((s) => s.files, shallow);
+  const cleanSelectedFiles = useSelectedFiles((s) => s.cleanFiles);
 
   const {
     data: providerAccountInfo,
@@ -63,6 +70,35 @@ const Home: NextPage<IHomePageProps> = (props) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    const el = rightComponentRef.current;
+
+    const handleMouseDown = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+
+      const fileOptionsEl = document.getElementById("file-options");
+      const transferFilesModalEl = document.getElementById(
+        "transfer-files-modal"
+      );
+      const deleteFilesModal = document.getElementById("delete-files-modal");
+
+      const shouldClean =
+        !target.getAttribute("data-id") &&
+        !fileOptionsEl?.contains(target) &&
+        !transferFilesModalEl?.contains(target) &&
+        !deleteFilesModal?.contains(target);
+      if (!shouldClean || !selectedFiles.length) return;
+      cleanSelectedFiles();
+    };
+
+    el?.addEventListener("mousedown", handleMouseDown);
+
+    return () => {
+      el?.removeEventListener("mousedown", handleMouseDown);
+    };
+  }, [cleanSelectedFiles, selectedFiles.length]);
+
   return (
     <main className="bg-white pb-8 relative inline-flex overflow-x-hidden w-full">
       <Head>
@@ -74,7 +110,10 @@ const Home: NextPage<IHomePageProps> = (props) => {
       <Sidebar />
       <Settings />
 
-      <div className="py-[40px] pl-[42px] pr-[35px] w-full">
+      <div
+        ref={rightComponentRef}
+        className="py-[40px] pl-[42px] pr-[35px] w-full"
+      >
         <Navbar />
         {isGettingProviderAccountInfo ? (
           <div className="w-full mt-[50px] min-h-[70vh] flex items-center justify-center">
