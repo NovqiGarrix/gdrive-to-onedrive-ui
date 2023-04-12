@@ -7,6 +7,7 @@ import {
   useMemo,
 } from "react";
 
+import dynamic from "next/dynamic";
 import { toast } from "react-hot-toast";
 import { shallow } from "zustand/shallow";
 import { useMutation } from "@tanstack/react-query";
@@ -24,8 +25,9 @@ import useDeleteFilesModalState from "../hooks/useDeleteFilesModalState";
 import File from "./File";
 import FileOptions from "./FileOptions";
 import BeautifulError from "./BeautifulError";
-import UploadProgressInfo from "./UploadProgressInfo";
 import FileSkeletonLoading from "./FileSkeletonLoading";
+
+const UploadProgressInfo = dynamic(() => import("./UploadProgressInfo"));
 
 const FilesContainer: FunctionComponent = () => {
   const selectedFiles = useSelectedFiles((s) => s.files, shallow);

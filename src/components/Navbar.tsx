@@ -1,18 +1,20 @@
 import { FunctionComponent } from "react";
 import { shallow } from "zustand/shallow";
 
+import dynamic from "next/dynamic";
 import Image from "next/legacy/image";
 import { useRouter } from "next/router";
 import { BellIcon } from "@heroicons/react/24/outline";
 
 import authApi from "../apis/auth.api";
+import classNames from "../utils/classNames";
 
 import useUser from "../hooks/useUser";
 import useCloudProvider from "../hooks/useCloudProvider";
 
 import Search from "./Search";
-import GooglePhotosFilter from "./GooglePhotosFilter";
-import classNames from "../utils/classNames";
+
+const GooglePhotosFilter = dynamic(() => import("./GooglePhotosFilter"));
 
 const Navbar: FunctionComponent = () => {
   const router = useRouter();

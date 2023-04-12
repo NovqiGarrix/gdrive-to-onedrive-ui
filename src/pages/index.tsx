@@ -2,6 +2,7 @@ import { Fragment, useEffect } from "react";
 import type { GetServerSideProps, NextPage } from "next";
 
 import Head from "next/head";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
 
 import authApi from "../apis/auth.api";
@@ -15,7 +16,6 @@ import {
   DisconnectedProviderAccount,
   Breadcrumbs,
   BeautifulError,
-  Settings,
 } from "../components";
 
 import useProviderPath, {
@@ -23,6 +23,8 @@ import useProviderPath, {
 } from "../hooks/useProviderPath";
 import { initializeCloudProvider } from "../hooks/useCloudProvider";
 import useGetProviderAccountInfo from "../hooks/useGetProviderAccountInfo";
+
+const Settings = dynamic(() => import("../components/Settings"));
 
 interface IHomePageProps {
   path: string | null;
