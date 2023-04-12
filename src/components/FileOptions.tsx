@@ -12,6 +12,7 @@ import {
 
 import Link from "next/link";
 import Image from "next/image";
+import dynamic from "next/dynamic";
 
 import { toast } from "react-hot-toast";
 import { shallow } from "zustand/shallow";
@@ -44,10 +45,10 @@ import useGetFiles from "../hooks/useGetFiles";
 import useSelectedFiles from "../hooks/useSelectedFiles";
 import useCloudProvider from "../hooks/useCloudProvider";
 import useUploadInfoProgress from "../hooks/useUploadInfoProgress";
+import useTransferFilesModal from "../hooks/useTransferFilesModal";
 import useDeleteFilesModalState from "../hooks/useDeleteFilesModalState";
 
-import TransferFilesModal from "./TransferFilesModal";
-import useTransferFilesModal from "../hooks/useTransferFilesModal";
+const TransferFilesModal = dynamic(() => import("./TransferFilesModal"));
 
 const FileOptions: FunctionComponent = () => {
   const ref = useRef<HTMLDivElement>(null);

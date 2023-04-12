@@ -1,11 +1,14 @@
 import { FunctionComponent, useRef } from "react";
+
+import dynamic from "next/dynamic";
 import { shallow } from "zustand/shallow";
 
 import useBeforeUnload from "../hooks/useBeforeUnload";
 import useUploadInfoProgress from "../hooks/useUploadInfoProgress";
 
 import FilesContainer from "./FilesContainer";
-import DeleteFilesModal from "./DeleteFilesModal";
+
+const DeleteFilesModal = dynamic(() => import("./DeleteFilesModal"));
 
 const FilesContainerWrapper: FunctionComponent = () => {
   const ref = useRef<HTMLDivElement>(null);
