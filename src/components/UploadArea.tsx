@@ -155,7 +155,7 @@ const UploadArea: FunctionComponent = () => {
   );
 
   const uploadFiles = useCallback(
-    async (droppedFiles: Array<File>, path?: string) => {
+    async (droppedFiles: Array<File>, path?: string, revalidate?: boolean) => {
       const uploadFuncUtil = async (params: IUploadFuncUtilParams) => {
         const { file, id, onUploadProgress, signal } = params;
 
@@ -173,7 +173,7 @@ const UploadArea: FunctionComponent = () => {
             )
           );
 
-          await queryClient.refetchQueries(getFilesQueryKey);
+          if (revalidate) await queryClient.refetchQueries(getFilesQueryKey);
         } catch (error: any) {
           setFiles((prev) =>
             prev.map((prevFile) =>
@@ -341,7 +341,7 @@ const UploadArea: FunctionComponent = () => {
 
         await Promise.all(
           createdFolders.map(async (folder) => {
-            await uploadFiles(folder.files, folder.path);
+            await uploadFiles(folder.files, folder.path, false);
             await queryClient.refetchQueries(getFoldersQueryKey);
           })
         );
