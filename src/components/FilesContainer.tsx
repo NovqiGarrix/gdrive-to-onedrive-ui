@@ -22,11 +22,11 @@ import useCloudProvider from "../hooks/useCloudProvider";
 import useGooglePhotosFilter from "../hooks/useGooglePhotosFilter";
 import useDeleteFilesModalState from "../hooks/useDeleteFilesModalState";
 
-import File from "./File";
-import FileOptions from "./FileOptions";
 import BeautifulError from "./BeautifulError";
 import FileSkeletonLoading from "./FileSkeletonLoading";
 
+const File = dynamic(() => import("./File"));
+const FileOptions = dynamic(() => import("./FileOptions"));
 const UploadProgressInfo = dynamic(() => import("./UploadProgressInfo"));
 
 const FilesContainer: FunctionComponent = () => {

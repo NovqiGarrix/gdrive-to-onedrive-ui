@@ -4,14 +4,14 @@ import Link from "next/link";
 import Image from "next/legacy/image";
 
 import { shallow } from "zustand/shallow";
-import { EllipsisHorizontalIcon } from "@heroicons/react/20/solid";
+import EllipsisHorizontalIcon from "@heroicons/react/20/solid/EllipsisHorizontalIcon";
 
 import type { GlobalItemTypes } from "../types";
+import useSelectedFiles from "../hooks/useSelectedFiles";
 
+import classNames from "../utils/classNames";
 import dateFromNow from "../utils/dateFromNow";
 import getIconExtensionUrl from "../utils/getIconExtensionUrl";
-import classNames from "../utils/classNames";
-import useSelectedFiles from "../hooks/useSelectedFiles";
 
 interface IFileProps {
   file: GlobalItemTypes;

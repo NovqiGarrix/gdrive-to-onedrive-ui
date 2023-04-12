@@ -14,7 +14,6 @@ import {
   Folders,
   FilesContainerWrapper,
   LoadingIcon,
-  DisconnectedProviderAccount,
   Breadcrumbs,
   BeautifulError,
   ScrollToTop,
@@ -28,6 +27,9 @@ import { initializeCloudProvider } from "../hooks/useCloudProvider";
 import useGetProviderAccountInfo from "../hooks/useGetProviderAccountInfo";
 
 const Settings = dynamic(() => import("../components/Settings"));
+const DisconnectedProviderAccount = dynamic(
+  () => import("../components/DisconnectedProviderAccount")
+);
 
 interface IHomePageProps {
   path: string | null;

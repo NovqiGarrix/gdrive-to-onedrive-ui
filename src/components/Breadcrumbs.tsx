@@ -1,6 +1,7 @@
 import { FunctionComponent, useMemo } from "react";
-import classNames from "../utils/classNames";
+
 import { useRouter } from "next/router";
+import classNames from "../utils/classNames";
 
 interface IBreadcrumbsProps {
   path: string | undefined;

@@ -11,8 +11,9 @@ import {
 import Image from "next/legacy/image";
 import { toast } from "react-hot-toast";
 import { shallow } from "zustand/shallow";
+import { useMutation } from "@tanstack/react-query";
 import { Transition, Dialog } from "@headlessui/react";
-import Cog6ToothIcon from "@heroicons/react/24/outline/Cog6ToothIcon";
+import PencilSquareIcon from "@heroicons/react/24/outline/PencilSquareIcon";
 
 import userApi from "../apis/user.api";
 import classNames from "../utils/classNames";
@@ -20,10 +21,8 @@ import classNames from "../utils/classNames";
 import useUser from "../hooks/useUser";
 import useShowSettingsModal from "../hooks/useShowSettingsModal";
 
-import AccountSettings from "./AccountSettings";
-import { PencilSquareIcon } from "@heroicons/react/24/outline";
-import { useMutation } from "@tanstack/react-query";
 import LoadingIcon from "./LoadingIcon";
+import AccountSettings from "./AccountSettings";
 
 const settings = [
   {

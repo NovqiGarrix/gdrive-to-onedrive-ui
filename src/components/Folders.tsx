@@ -15,12 +15,13 @@ import useGetFolders from "../hooks/useGetFolders";
 import useProviderPath from "../hooks/useProviderPath";
 import useCloudProvider from "../hooks/useCloudProvider";
 
-import Folder from "./Folder";
-import LoadingIcon from "./LoadingIcon";
 import BeautifulError from "./BeautifulError";
 import FoldersSkeletonLoading from "./FoldersSkeletonLoading";
 
+const LoadingIcon = dynamic(() => import("./LoadingIcon"));
 const DeleteFolderModal = dynamic(() => import("./DeleteFolderModal"));
+
+const Folder = dynamic(() => import("./Folder"));
 
 const Folders: FunctionComponent = () => {
   const router = useRouter();

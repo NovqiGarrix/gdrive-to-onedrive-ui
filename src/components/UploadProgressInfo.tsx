@@ -18,6 +18,7 @@ import CheckCircleIcon from "@heroicons/react/24/solid/CheckCircleIcon";
 import ChevronDownIcon from "@heroicons/react/24/outline/ChevronDownIcon";
 import ExclamationTriangleIcon from "@heroicons/react/24/outline/ExclamationTriangleIcon";
 
+import dynamic from "next/dynamic";
 import { toast } from "react-hot-toast";
 import { Transition, Dialog } from "@headlessui/react";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
@@ -26,7 +27,7 @@ import classNames from "../utils/classNames";
 import type { UploadInfoProgress } from "../types";
 import useUploadInfoProgress from "../hooks/useUploadInfoProgress";
 
-import LoadingIcon from "./LoadingIcon";
+const LoadingIcon = dynamic(() => import("./LoadingIcon"));
 
 const UploadProgressInfo: FunctionComponent = () => {
   const [isMinimized, setIsMinimized] = useState(false);
