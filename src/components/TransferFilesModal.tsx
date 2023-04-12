@@ -219,7 +219,7 @@ const Folders: FunctionComponent<IFoldersProps> = (props) => {
   if (!enabled) return null;
 
   return (
-    <div className="w-full mt-[30px]" id="folders-container">
+    <div className="w-full mt-[30px]">
       <div className="flex items-center space-x-3">
         <h2 className="font-medium font-inter text-fontBlack2 text-xl">
           Folders

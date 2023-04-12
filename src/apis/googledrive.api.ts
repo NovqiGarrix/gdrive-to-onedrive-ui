@@ -250,9 +250,30 @@ async function createFolder(foldername: string, path?: string): Promise<GlobalIt
 
 }
 
+async function deleteFolder(folderId: string): Promise<void> {
+
+    try {
+
+        const resp = await fetch(`${API_URL}/api/google/drive/folders/${folderId}`, {
+            ...defaultOptions,
+            method: "DELETE"
+        });
+
+        const { errors } = await resp.json();
+
+        if (!resp.ok) {
+            throw new HttpErrorExeption(resp.status, errors[0].error);
+        }
+
+    } catch (error) {
+        throw handleHttpError(error);
+    }
+
+}
+
 // eslint-disable-next-line import/no-anonymous-default-export
 export default {
     getFiles,
     deleteFiles, transferFile,
-    uploadFile, createFolder
+    uploadFile, createFolder, deleteFolder
 }

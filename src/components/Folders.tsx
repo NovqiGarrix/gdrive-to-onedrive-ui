@@ -1,6 +1,14 @@
-import { FunctionComponent, useEffect, useRef, useState } from "react";
+import {
+  Fragment,
+  FunctionComponent,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
+import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
+
 import type { GlobalItemTypes } from "../types";
 
 import useGetFolders from "../hooks/useGetFolders";
@@ -12,6 +20,8 @@ import LoadingIcon from "./LoadingIcon";
 import BeautifulError from "./BeautifulError";
 import FoldersSkeletonLoading from "./FoldersSkeletonLoading";
 
+const DeleteFolderModal = dynamic(() => import("./DeleteFolderModal"));
+
 const Folders: FunctionComponent = () => {
   const router = useRouter();
 
@@ -22,6 +32,8 @@ const Folders: FunctionComponent = () => {
   const enabled = providerId !== "google_photos";
 
   const folderContainerRef = useRef<HTMLDivElement>(null);
+
+  const [openModal, setOpenModal] = useState(false);
   const [selectedFolder, setSelectedFolder] = useState<GlobalItemTypes | null>(
     null
   );
@@ -62,43 +74,66 @@ const Folders: FunctionComponent = () => {
     };
   }, []);
 
+  useEffect(() => {
+    function onDeleteKeydown(event: KeyboardEvent) {
+      if (event.key === "Delete" && selectedFolder?.id) {
+        setOpenModal(true);
+      }
+    }
+
+    document.addEventListener("keydown", onDeleteKeydown);
+
+    return () => {
+      document.removeEventListener("keydown", onDeleteKeydown);
+    };
+  }, [selectedFolder?.id]);
+
   if (!enabled || (!data?.files.length && !isLoading)) return null;
 
   return (
-    <div className="w-full mt-[30px]" id="folders-container">
-      <div className="flex items-center space-x-3">
-        <h2 className="font-medium font-inter text-fontBlack2 text-2xl">
-          Folders
-        </h2>
-        {isFetching ? <LoadingIcon fill="#313132" className="w-4 h-4" /> : null}
-      </div>
-
-      {isLoading ? (
-        <FoldersSkeletonLoading />
-      ) : isError && error?.message !== "Unauthorized" ? (
-        <BeautifulError.Root>
-          <BeautifulError.Title title="Something went wrong" />
-          <BeautifulError.Message
-            message={error?.message || "Something went wrong"}
-          />
-        </BeautifulError.Root>
-      ) : (
-        <div
-          ref={folderContainerRef}
-          className="grid grid-cols-5 gap-5 mt-[30px]"
-        >
-          {data?.files.map((folder) => (
-            <Folder
-              key={folder.id}
-              folder={folder}
-              onDoubleClick={onDoubleClick}
-              selectedFolder={selectedFolder}
-              setSelectedFolder={setSelectedFolder}
-            />
-          ))}
+    <Fragment>
+      <DeleteFolderModal
+        open={openModal}
+        setOpen={setOpenModal}
+        selectedFolder={selectedFolder}
+      />
+      <div className="w-full mt-[30px]">
+        <div className="flex items-center space-x-3">
+          <h2 className="font-medium font-inter text-fontBlack2 text-2xl">
+            Folders
+          </h2>
+          {isFetching ? (
+            <LoadingIcon fill="#313132" className="w-4 h-4" />
+          ) : null}
         </div>
-      )}
-    </div>
+
+        {isLoading ? (
+          <FoldersSkeletonLoading />
+        ) : isError && error?.message !== "Unauthorized" ? (
+          <BeautifulError.Root>
+            <BeautifulError.Title title="Something went wrong" />
+            <BeautifulError.Message
+              message={error?.message || "Something went wrong"}
+            />
+          </BeautifulError.Root>
+        ) : (
+          <div
+            ref={folderContainerRef}
+            className="grid grid-cols-5 gap-5 mt-[30px]"
+          >
+            {data?.files.map((folder) => (
+              <Folder
+                key={folder.id}
+                folder={folder}
+                onDoubleClick={onDoubleClick}
+                selectedFolder={selectedFolder}
+                setSelectedFolder={setSelectedFolder}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </Fragment>
   );
 };
 
