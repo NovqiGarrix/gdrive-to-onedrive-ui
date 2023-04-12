@@ -155,7 +155,7 @@ const UploadArea: FunctionComponent = () => {
   );
 
   const uploadFiles = useCallback(
-    async (droppedFiles: Array<File>, path?: string, revalidate?: boolean) => {
+    async (droppedFiles: Array<File>, path?: string, revalidate = true) => {
       const uploadFuncUtil = async (params: IUploadFuncUtilParams) => {
         const { file, id, onUploadProgress, signal } = params;
 
