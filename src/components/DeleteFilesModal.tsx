@@ -12,12 +12,12 @@ import googledriveApi from "../apis/googledrive.api";
 import type { IDeleteFilesParam } from "../types";
 import { HttpErrorExeption } from "../exeptions/httpErrorExeption";
 
+import useGetFiles from "../hooks/useGetFiles";
 import useSelectedFiles from "../hooks/useSelectedFiles";
 import useCloudProvider from "../hooks/useCloudProvider";
 import useDeleteFilesModalState from "../hooks/useDeleteFilesModalState";
 
 import LoadingIcon from "./LoadingIcon";
-import useGetFiles from "../hooks/useGetFiles";
 
 const DeleteFilesModal: FunctionComponent = () => {
   const cancelButtonRef = useRef(null);
@@ -140,7 +140,6 @@ const DeleteFilesModal: FunctionComponent = () => {
                 <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
                   <button
                     type="button"
-                    data-id="delete-files-modal-delete-button"
                     onClick={() => {
                       toast.promise(onDelete(), {
                         loading: "Deleting...",
@@ -152,20 +151,13 @@ const DeleteFilesModal: FunctionComponent = () => {
                     className="inline-flex w-full justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 sm:ml-3 sm:w-auto focus:outline-none"
                   >
                     {isLoading ? (
-                      <LoadingIcon
-                        data-id="delete-files-modal-delete-button-loading"
-                        fill="#fff"
-                        className="w-5 h-5"
-                      />
+                      <LoadingIcon fill="#fff" className="w-5 h-5" />
                     ) : (
-                      <span data-id="delete-files-modal-delete-button-span">
-                        Delete
-                      </span>
+                      <span>Delete</span>
                     )}
                   </button>
                   <button
                     type="button"
-                    data-id="delete-files-modal-cancel-button"
                     disabled={isLoading}
                     onClick={closeModal}
                     ref={cancelButtonRef}
