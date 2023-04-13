@@ -4,6 +4,7 @@ module.exports = {
   images: {
     domains: [
       "127.0.0.1",
+      "ui-avatars.com",
       "docs.google.com",
       "drive.google.com",
       "cdn.discordapp.com",

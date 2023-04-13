@@ -3,6 +3,7 @@ export interface User {
     name: string;
     email: string;
     avatar: string;
+    defaultProviderId: Provider;
 }
 
 export type Provider = 'google_drive' | 'google_photos' | 'onedrive';

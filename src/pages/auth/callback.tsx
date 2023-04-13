@@ -19,7 +19,7 @@ const CallbackAuthPage: NextPage = () => {
       return;
     }
 
-    document.location.href = "/login";
+    document.location.href = "/signin";
   }, [router]);
 
   return (

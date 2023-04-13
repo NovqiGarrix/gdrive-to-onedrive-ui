@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import authApi from "../apis/auth.api";
@@ -11,6 +12,8 @@ export default function useGetProviderAccountInfo() {
 
     const setLoginUrl = useProviderAccountLoginUrl((s) => s.setUrl);
     const accountProviderId = useCloudProvider((s) => s.provider.accountId);
+
+    const queryKey = useMemo(() => ["accountInfo", accountProviderId], [accountProviderId]);
 
     const { data, isLoading, isError, error } = useQuery<
         AccountObject,
@@ -29,13 +32,13 @@ export default function useGetProviderAccountInfo() {
             // If the account is not connected, then we need to get the login url
             switch (data.id) {
                 case 'microsoft': {
-                    const authUrl = await authApi.getMicorosftAuthUrl();
+                    const authUrl = await authApi.getMicorosftAuthUrl(false);
                     setLoginUrl(authUrl);
                     break;
                 }
 
                 case 'google': {
-                    const authUrl = await authApi.getAuthURL();
+                    const authUrl = await authApi.getGoogleAuthUrl(false);
                     setLoginUrl(authUrl);
                     break;
                 }
@@ -50,6 +53,7 @@ export default function useGetProviderAccountInfo() {
         data,
         error,
         isError,
+        queryKey,
         isLoading,
     }
 

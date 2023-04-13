@@ -78,7 +78,10 @@ function useGetFiles() {
 
         async onError(err) {
             // Already handled in the home page with useGetProviderAccountInfo
-            if (err.message === "Unauthorized") return;
+            if (err.message === "Unauthorized") {
+                toast.dismiss("switching-provider");
+                return;
+            }
 
             toast.error(err.message, { id: "switching-provider" });
         },

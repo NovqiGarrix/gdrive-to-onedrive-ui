@@ -1,20 +1,24 @@
 import { FunctionComponent } from "react";
 
 import Image from "next/image";
-import { toast } from "react-hot-toast";
 import { useRouter } from "next/router";
+
+import { toast } from "react-hot-toast";
+import { useQueryClient } from "@tanstack/react-query";
 
 import authApi from "../apis/auth.api";
 import type { AccountObject } from "../types";
-import useGetLinkedAccounts from "../hooks/useGetLinkedAccounts";
 import signInWithRedirectUrl from "../utils/signInWithRedirectUrl";
 
-interface ILinkedAccountsProps {}
+import useGetLinkedAccounts from "../hooks/useGetLinkedAccounts";
+import useGetProviderAccountInfo from "../hooks/useGetProviderAccountInfo";
 
-const LinkedAccounts: FunctionComponent<ILinkedAccountsProps> = (props) => {
-  const {} = props;
-
+const LinkedAccounts: FunctionComponent = () => {
   const router = useRouter();
+
+  const queryClient = useQueryClient();
+  const { queryKey: getProviderAccountInfoQueryKey } =
+    useGetProviderAccountInfo();
 
   const {
     data: linkedAccounts,
@@ -36,6 +40,7 @@ const LinkedAccounts: FunctionComponent<ILinkedAccountsProps> = (props) => {
             });
 
             await authApi.logoutFromMicrosoft();
+            await queryClient.refetchQueries(getProviderAccountInfoQueryKey);
 
             toast.success("Disconnected from Microsoft.", { id: TOAST_ID });
             return;
@@ -43,6 +48,27 @@ const LinkedAccounts: FunctionComponent<ILinkedAccountsProps> = (props) => {
 
           // Get Microsoft login url
           const authURL = await authApi.getMicorosftAuthUrl();
+          signInWithRedirectUrl(authURL);
+          break;
+        }
+
+        case "google": {
+          if (account.isConnected) {
+            toast.loading(`Disconnecting from ${account.name}...`, {
+              id: TOAST_ID,
+            });
+
+            await authApi.logoutFromGoogle();
+            await queryClient.refetchQueries(getProviderAccountInfoQueryKey);
+
+            toast.success(`Disconnected from ${account.name}.`, {
+              id: TOAST_ID,
+            });
+            return;
+          }
+
+          // Get Google login url
+          const authURL = await authApi.getGoogleAuthUrl();
           signInWithRedirectUrl(authURL);
           break;
         }
@@ -116,7 +142,6 @@ const LinkedAccounts: FunctionComponent<ILinkedAccountsProps> = (props) => {
 
               <button
                 type="button"
-                disabled={account.id === "google"}
                 onClick={() => connectOrDisconnect(account)}
                 className="rounded-md cursor-pointer border border-gray-300 bg-white py-1.5 px-2.5 text-sm font-semibold text-gray-500 shadow-sm hover:bg-gray-50 disabled:opacity-70 disabled:cursor-not-allowed"
               >

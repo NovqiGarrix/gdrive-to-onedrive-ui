@@ -14,10 +14,10 @@ const fetchOptions = (cookie: string): RequestInit => ({
     credentials: 'include'
 });
 
-async function getAuthURL(): Promise<string> {
+async function getGoogleAuthUrl(isPrimary = true): Promise<string> {
 
     try {
-        const resp = await fetch(`${API_URL}/api/google/auth/url`, defaultOptions);
+        const resp = await fetch(`${API_URL}/api/google/auth/url?isPrimary=${isPrimary}`, defaultOptions);
         const { data } = await resp.json();
 
         return data;
@@ -66,10 +66,28 @@ async function logout(token?: string): Promise<void> {
 
 }
 
-async function getMicorosftAuthUrl(): Promise<string> {
+async function logoutFromGoogle(token?: string): Promise<void> {
 
     try {
-        const resp = await fetch(`${API_URL}/api/microsoft/auth/url`, defaultOptions);
+        const resp = await fetch(`${API_URL}/api/google/auth/logout`, {
+            ...fetchOptions(`qid=${token}`),
+            method: 'DELETE'
+        });
+
+        const { errors } = await resp.json();
+        if (!resp.ok) {
+            throw new HttpErrorExeption(resp.status, errors[0].error);
+        }
+    } catch (error) {
+        throw handleHttpError(error);
+    }
+
+}
+
+async function getMicorosftAuthUrl(isPrimary = true): Promise<string> {
+
+    try {
+        const resp = await fetch(`${API_URL}/api/microsoft/auth/url?isPrimary=${isPrimary}`, defaultOptions);
         const { data, errors } = await resp.json();
 
         if (!resp.ok) {
@@ -177,9 +195,8 @@ async function getAccountInfo(accountId: string): Promise<AccountObject> {
 
 // eslint-disable-next-line import/no-anonymous-default-export
 export default {
-    getAuthURL,
-    getMe, logout,
-    getMicorosftAuthUrl,
-    logoutFromMicrosoft, getLinkedAccounts,
-    getAccountInfo
+    getGoogleAuthUrl,
+    getMe, logoutFromGoogle,
+    getMicorosftAuthUrl, logoutFromMicrosoft,
+    getLinkedAccounts, getAccountInfo, logout
 }

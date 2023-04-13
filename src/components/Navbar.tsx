@@ -25,7 +25,7 @@ const Navbar: FunctionComponent = () => {
   async function logout() {
     try {
       await authApi.logout();
-      await router.replace("/login");
+      await router.replace("/signin");
     } catch (error) {
       router.reload();
     }

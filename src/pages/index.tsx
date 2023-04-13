@@ -160,7 +160,7 @@ export const getServerSideProps: GetServerSideProps = async ({
     if (!me) {
       return {
         redirect: {
-          destination: "/login",
+          destination: "/signin",
           permanent: false,
         },
       };
@@ -176,7 +176,7 @@ export const getServerSideProps: GetServerSideProps = async ({
       props: {
         me,
         path: query.path || null,
-        provider: query.provider || null,
+        provider: query.provider || me.defaultProviderId || null,
       },
     };
   } catch (error: any) {

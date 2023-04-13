@@ -2,15 +2,17 @@ import type { GetServerSideProps, NextPage } from "next";
 
 import Head from "next/head";
 import Link from "next/link";
-import authApi from "../apis/auth.api";
 import Image from "next/image";
 
+import authApi from "../apis/auth.api";
+
 interface ILoginPageProps {
-  authURL: string;
+  googleAuthURL: string;
+  microsoftAuthURL: string;
 }
 
 const LoginPage: NextPage<ILoginPageProps> = (props) => {
-  const { authURL } = props;
+  const { googleAuthURL, microsoftAuthURL } = props;
 
   return (
     <div className="min-h-screen grid grid-cols-2 w-full">
@@ -43,10 +45,10 @@ const LoginPage: NextPage<ILoginPageProps> = (props) => {
           </p>
 
           <Link
-            href={authURL}
             passHref
+            href={googleAuthURL}
             referrerPolicy="no-referrer"
-            className="mt-8 w-full h-[66px] rounded-[10px] border border-[#E2E8F0] flex items-center justify-center hover:bg-gray-100"
+            className="mt-8 w-full h-[66px] select-none rounded-[10px] border border-[#E2E8F0] flex items-center justify-center hover:bg-gray-100"
           >
             <Image
               src="/google.webp"
@@ -62,10 +64,10 @@ const LoginPage: NextPage<ILoginPageProps> = (props) => {
           </Link>
 
           <Link
-            href={authURL}
             passHref
+            href={microsoftAuthURL}
             referrerPolicy="no-referrer"
-            className="mt-4 w-full h-[66px] rounded-[10px] border border-[#E2E8F0] flex items-center justify-center hover:bg-gray-100"
+            className="mt-4 w-full h-[66px] select-none rounded-[10px] border border-[#E2E8F0] flex items-center justify-center hover:bg-gray-100"
           >
             <Image
               src="/microsoft.png"
@@ -80,11 +82,10 @@ const LoginPage: NextPage<ILoginPageProps> = (props) => {
             </p>
           </Link>
 
-          <p className="mt-5 text-center">
-            Don&apos;t have an account?{" "}
-            <Link href="/register" passHref className="text-[#2563EB]">
-              Create an account
-            </Link>
+          <p className="mt-5 text-center text-sm text-[#6C707C]">
+            If you don&apos;t have an account, you can sign up with{" "}
+            <b className="text-primary">Google</b> or{" "}
+            <b className="text-primary">Microsoft</b>
           </p>
         </div>
       </div>
@@ -124,11 +125,15 @@ export const getServerSideProps: GetServerSideProps = async ({ req }) => {
     };
   }
 
-  const authURL = await authApi.getAuthURL();
+  const [googleAuthURL, microsoftAuthURL] = await Promise.all([
+    authApi.getGoogleAuthUrl(),
+    authApi.getMicorosftAuthUrl(),
+  ]);
 
   return {
     props: {
-      authURL,
+      googleAuthURL,
+      microsoftAuthURL,
     },
   };
 };
