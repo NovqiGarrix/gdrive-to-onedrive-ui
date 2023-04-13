@@ -11,7 +11,8 @@ const useUser = create<UseUser>((set) => ({
         id: '',
         name: '',
         email: '',
-        avatar: ''
+        avatar: '',
+        defaultProviderId: 'google_drive'
     },
 
     setUser: (user) => set((state) => ({ user: { ...state.user, ...user } })),
