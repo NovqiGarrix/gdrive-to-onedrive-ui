@@ -14,9 +14,8 @@ const LoginPage: NextPage<ILoginPageProps> = (props) => {
   return (
     <div className="bg-bg min-h-screen flex items-center justify-center w-full">
       <Head>
-        <title>Login | infile.io</title>
-        <meta name="description" content="Login to infile.io" />
-        <link rel="icon" href="/favicon.ico" />
+        <title>Login | Cloudtransfer.io</title>
+        <meta name="description" content="Login to cloudtransfer.io" />
       </Head>
 
       <div>

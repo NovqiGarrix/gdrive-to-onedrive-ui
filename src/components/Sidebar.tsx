@@ -3,24 +3,23 @@ import Image from "next/image";
 
 import SidebarMenu from "./SidebarMenu";
 import SelectProvider from "./SelectProvider";
+import Link from "next/link";
 
 const Sidebar: FunctionComponent = () => {
   return (
-    <section className="w-[294px] flex-shrink-0 min-h-screen h-full border-r border-[#E2E3E5] py-[40px]">
+    <section className="w-[294px] flex-shrink-0 min-h-screen h-full border-r border-[#E2E3E5] py-[45px]">
       {/* Company Logo and Name */}
-      <div className="px-[34px] flex items-center">
-        <div className="w-[50px] h-[50px] rounded-full overflow-hidden">
+      <Link href="/" passHref>
+        <div className="w-60 pl-[30px]">
           <Image
+            width={1080}
+            height={720}
             src="/logo.png"
-            alt="infile.io Logo"
-            width={500}
-            height={500}
-            className="rounded-full"
+            className="object-cover"
+            alt="cloudtransfer.io Logo"
           />
         </div>
-
-        <h2 className="font-medium text-xl ml-[14px]">infile.io</h2>
-      </div>
+      </Link>
 
       {/* ========== Sidebar Menus ========= */}
 

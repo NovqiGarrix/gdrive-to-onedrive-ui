@@ -107,7 +107,6 @@ const Home: NextPage<IHomePageProps> = (props) => {
       <Head>
         <title>Dashboard | cloudtransfer.io</title>
         <meta name="robots" content="noindex" />
-        <link rel="icon" href="/favicon.ico" />
       </Head>
 
       <Sidebar />

@@ -13,7 +13,7 @@ const ErrorPage: NextPage<IErrorPageProps> = (props) => {
   return (
     <>
       <Head>
-        <title>Something went wrong | infile.io</title>
+        <title>Something went wrong | cloudtransfer.io</title>
         <link rel="icon" href="/favicon.ico" />
         <meta name="robots" content="noindex" />
       </Head>
