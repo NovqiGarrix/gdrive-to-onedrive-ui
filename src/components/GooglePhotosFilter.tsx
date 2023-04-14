@@ -3,6 +3,7 @@ import { shallow } from "zustand/shallow";
 
 import useGetFiles from "../hooks/useGetFiles";
 import useGooglePhotosFilter from "../hooks/useGooglePhotosFilter";
+import useGetProviderAccountInfo from "../hooks/useGetProviderAccountInfo";
 
 import LoadingIcon from "./LoadingIcon";
 import GooglePhotosMediaTypes from "./GooglePhotosMediaTypes";
@@ -13,6 +14,9 @@ import GooglePhotosContentCategories from "./GooglePhotosContentCategories";
 const GooglePhotosFilter: FunctionComponent = () => {
   // I guest the loading is not coming from here
   const { isFetching } = useGetFiles();
+
+  const { data: accountInfo, isLoading: isGettingProviderAccountInfo } =
+    useGetProviderAccountInfo();
 
   const includeArchivedMedia = useGooglePhotosFilter(
     (s) => s.isIncludeArchived
@@ -35,6 +39,7 @@ const GooglePhotosFilter: FunctionComponent = () => {
   );
 
   const isLoading = Boolean(isFetching && googlePhotosFilters);
+  const isDisabled = !accountInfo?.isConnected || isGettingProviderAccountInfo;
 
   function onSubmit() {
     setFormmatedFilters({
@@ -52,21 +57,21 @@ const GooglePhotosFilter: FunctionComponent = () => {
   return (
     <div className="grid grid-cols-3 gap-3 items-center w-full">
       {/* Content Categories */}
-      <GooglePhotosContentCategories />
+      <GooglePhotosContentCategories isDisabled={isDisabled} />
 
       {/* Media Types */}
-      <GooglePhotosMediaTypes />
+      <GooglePhotosMediaTypes isDisabled={isDisabled} />
 
       {/* Feature Filter */}
-      <GooglePhotosFeatureFilter />
+      <GooglePhotosFeatureFilter isDisabled={isDisabled} />
 
       {/* Date Ranges */}
-      <GooglePhotosDateRanges />
+      <GooglePhotosDateRanges isDisabled={isDisabled} />
 
       {/* Submit Button */}
       <button
         type="button"
-        disabled={isFetching}
+        disabled={isDisabled || isFetching}
         onClick={onSubmit}
         className="group relative flex w-full justify-center rounded-md bg-indigo-600 py-2 px-3 text-sm font-semibold text-white hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-70 disabled:cursor-not-allowed"
       >

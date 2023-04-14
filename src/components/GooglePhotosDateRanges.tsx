@@ -6,7 +6,13 @@ import type { DateValueType } from "react-tailwindcss-datepicker/dist/types";
 
 import useGooglePhotosFilter from "../hooks/useGooglePhotosFilter";
 
-const GooglePhotosDateRanges: FunctionComponent = () => {
+interface GooglePhotosDateRangesProps {
+  isDisabled: boolean;
+}
+
+const GooglePhotosDateRanges: FunctionComponent<
+  GooglePhotosDateRangesProps
+> = ({ isDisabled }) => {
   const endDate = useGooglePhotosFilter((s) => s.endDate, shallow);
   const setEndDate = useGooglePhotosFilter((s) => s.setEndDate);
 
@@ -25,6 +31,7 @@ const GooglePhotosDateRanges: FunctionComponent = () => {
       <Datepicker
         maxDate={maxDate}
         onChange={onChange}
+        disabled={isDisabled}
         value={{ startDate, endDate }}
       />
     </div>

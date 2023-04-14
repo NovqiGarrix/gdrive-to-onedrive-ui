@@ -11,7 +11,13 @@ import LoadingIcon from "./LoadingIcon";
 import CheckboxWithSearch from "./CheckboxWithSearch";
 import useGooglePhotosFilter from "../hooks/useGooglePhotosFilter";
 
-const GooglePhotosContentCategories: FunctionComponent = () => {
+interface GooglePhotosContentCategoriesProps {
+  isDisabled: boolean;
+}
+
+const GooglePhotosContentCategories: FunctionComponent<
+  GooglePhotosContentCategoriesProps
+> = ({ isDisabled }) => {
   const { data, isLoading, isError, error } = useQuery<
     Array<string>,
     HttpErrorExeption
@@ -51,6 +57,7 @@ const GooglePhotosContentCategories: FunctionComponent = () => {
       ) : (
         <CheckboxWithSearch
           data={data}
+          isDisabled={isDisabled}
           selectedData={selectedData}
           addSelectedData={addSelectedData}
           inputPlaceholder="Content Categories"

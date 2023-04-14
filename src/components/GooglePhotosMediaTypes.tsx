@@ -11,7 +11,13 @@ import { HttpErrorExeption } from "../exeptions/httpErrorExeption";
 import LoadingIcon from "./LoadingIcon";
 import CheckboxWithSearch from "./CheckboxWithSearch";
 
-const GooglePhotosMediaTypes: FunctionComponent = () => {
+interface GooglePhotosMediaTypesProps {
+  isDisabled: boolean;
+}
+
+const GooglePhotosMediaTypes: FunctionComponent<
+  GooglePhotosMediaTypesProps
+> = ({ isDisabled }) => {
   const { data, isLoading, isError, error } = useQuery<
     Array<string>,
     HttpErrorExeption
@@ -54,6 +60,7 @@ const GooglePhotosMediaTypes: FunctionComponent = () => {
       ) : (
         <CheckboxWithSearch
           data={data}
+          isDisabled={isDisabled}
           selectedData={selectedData}
           inputPlaceholder="Media Types"
           addSelectedData={addSelectedData}
