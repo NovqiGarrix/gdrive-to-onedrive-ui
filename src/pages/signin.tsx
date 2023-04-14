@@ -9,10 +9,12 @@ import authApi from "../apis/auth.api";
 interface ILoginPageProps {
   googleAuthURL: string;
   microsoftAuthURL: string;
+
+  message: string | null;
 }
 
 const LoginPage: NextPage<ILoginPageProps> = (props) => {
-  const { googleAuthURL, microsoftAuthURL } = props;
+  const { googleAuthURL, microsoftAuthURL, message: errorMessage } = props;
 
   return (
     <div className="min-h-screen grid grid-cols-2 w-full">
@@ -40,9 +42,13 @@ const LoginPage: NextPage<ILoginPageProps> = (props) => {
             Sign in to your account
           </h2>
 
-          <p className="mt-4 font-poppins text-[#6C707C]">
-            Welcome back to CloudTransfer.io
-          </p>
+          {!errorMessage ? (
+            <p className="mt-4 font-poppins text-[#6C707C]">
+              Welcome back to CloudTransfer.io
+            </p>
+          ) : (
+            <p className="text-red-500 mt-4 text-sm">{errorMessage}</p>
+          )}
 
           <Link
             passHref
@@ -114,7 +120,10 @@ const LoginPage: NextPage<ILoginPageProps> = (props) => {
 
 export default LoginPage;
 
-export const getServerSideProps: GetServerSideProps = async ({ req }) => {
+export const getServerSideProps: GetServerSideProps = async ({
+  req,
+  query,
+}) => {
   const me = await authApi.getMe(req.cookies.qid);
   if (me) {
     return {
@@ -134,6 +143,10 @@ export const getServerSideProps: GetServerSideProps = async ({ req }) => {
     props: {
       googleAuthURL,
       microsoftAuthURL,
+      message:
+        query.state === "NOTOK"
+          ? query.message || "Something went wrong"
+          : null,
     },
   };
 };
