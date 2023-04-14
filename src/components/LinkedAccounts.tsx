@@ -1,4 +1,4 @@
-import { FunctionComponent } from "react";
+import { FunctionComponent, useMemo } from "react";
 
 import Image from "next/image";
 import { useRouter } from "next/router";
@@ -10,6 +10,7 @@ import authApi from "../apis/auth.api";
 import type { AccountObject } from "../types";
 import signInWithRedirectUrl from "../utils/signInWithRedirectUrl";
 
+import useUser from "../hooks/useUser";
 import useGetLinkedAccounts from "../hooks/useGetLinkedAccounts";
 import useGetProviderAccountInfo from "../hooks/useGetProviderAccountInfo";
 
@@ -19,6 +20,8 @@ const LinkedAccounts: FunctionComponent = () => {
   const queryClient = useQueryClient();
   const { queryKey: getProviderAccountInfoQueryKey } =
     useGetProviderAccountInfo();
+
+  const userDefaultProviderId = useUser((s) => s.user.defaultProviderId);
 
   const {
     data: linkedAccounts,
@@ -83,11 +86,31 @@ const LinkedAccounts: FunctionComponent = () => {
     }
   }
 
+  const sortedLinkedAccounts = useMemo(() => {
+    const accounts = linkedAccounts || [];
+
+    const defaultProviderAccountIndex = accounts.findIndex((acc) =>
+      acc.providers.includes(userDefaultProviderId)
+    );
+
+    if (defaultProviderAccountIndex !== -1) {
+      const defaultProviderAccount = accounts[defaultProviderAccountIndex];
+      accounts.splice(defaultProviderAccountIndex, 1);
+      accounts.unshift(defaultProviderAccount);
+    }
+
+    return accounts.sort((a, b) => {
+      if (a.isConnected && !b.isConnected) return -1;
+      if (!a.isConnected && b.isConnected) return 1;
+      return 0;
+    });
+  }, [linkedAccounts, userDefaultProviderId]);
+
   return (
     <div className="pt-4 pb-5">
       <h3 className="font-bold text-base text-gray-600">Linked accounts</h3>
       <p className="text-sm text-gray-400">
-        We use this to let you sign in and see all your files
+        We use this to let you sign in and retrieve all your files
       </p>
 
       {isLoading ? (
@@ -121,7 +144,7 @@ const LinkedAccounts: FunctionComponent = () => {
         </div>
       ) : (
         <div className="space-y-4 mt-5">
-          {linkedAccounts.map((account) => (
+          {sortedLinkedAccounts.map((account) => (
             <div key={account.id} className="flex items-center justify-between">
               <div className="flex items-center">
                 <div className="avatar">
@@ -136,12 +159,18 @@ const LinkedAccounts: FunctionComponent = () => {
                   </div>
                 </div>
                 <span className="ml-4 block text-gray-500 text-sm">
-                  Sign in with {account.name}
+                  Sign in with {account.name}{" "}
+                  {account.providers.includes(userDefaultProviderId) ? (
+                    <span className="text-primary text-sm font-medium">
+                      (Default)
+                    </span>
+                  ) : null}
                 </span>
               </div>
 
               <button
                 type="button"
+                disabled={account.providers.includes(userDefaultProviderId)}
                 onClick={() => connectOrDisconnect(account)}
                 className="rounded-md cursor-pointer border border-gray-300 bg-white py-1.5 px-2.5 text-sm font-semibold text-gray-500 shadow-sm hover:bg-gray-50 disabled:opacity-70 disabled:cursor-not-allowed"
               >

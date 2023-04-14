@@ -30,13 +30,15 @@ export const ACCOUNTS: Array<AccountObject> = [
         id: 'google',
         name: 'Google',
         image: '/google.webp',
-        isConnected: false
+        isConnected: false,
+        providers: ['google_drive', 'google_photos']
     },
     {
         id: 'microsoft',
         name: 'Microsoft',
         image: '/microsoft.webp',
-        isConnected: false
+        isConnected: false,
+        providers: ['onedrive']
     }
 ]
 

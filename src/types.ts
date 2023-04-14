@@ -176,6 +176,7 @@ export interface AccountObject {
     name: string,
     image: string;
     isConnected: boolean;
+    providers: Array<Provider>;
 }
 
 export type UploadInfoProgress = TransferFileSchema & {
