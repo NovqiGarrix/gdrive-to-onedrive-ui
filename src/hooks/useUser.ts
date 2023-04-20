@@ -24,12 +24,9 @@ let isInitialized = false;
 
 export function initUserStore(user: User) {
 
-    if (isInitialized) {
-        return;
-    }
-
     if (!user) return;
     useUser.setState({ user });
+
     isInitialized = true;
 
 }
