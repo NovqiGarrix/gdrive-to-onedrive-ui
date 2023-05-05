@@ -10,6 +10,7 @@ import {
 
 import Link from "next/link";
 import Image from "next/image";
+import dynamic from "next/dynamic";
 
 import XMarkIcon from "@heroicons/react/24/outline/XMarkIcon";
 import ChevronUpIcon from "@heroicons/react/24/outline/ChevronUpIcon";
@@ -18,7 +19,6 @@ import CheckCircleIcon from "@heroicons/react/24/solid/CheckCircleIcon";
 import ChevronDownIcon from "@heroicons/react/24/outline/ChevronDownIcon";
 import ExclamationTriangleIcon from "@heroicons/react/24/outline/ExclamationTriangleIcon";
 
-import dynamic from "next/dynamic";
 import { toast } from "react-hot-toast";
 import { Transition, Dialog } from "@headlessui/react";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
@@ -51,6 +51,15 @@ const UploadProgressInfo: FunctionComponent = () => {
     () => uploadInfoProgress.filter((info) => info.isLoading).length,
     [uploadInfoProgress]
   );
+
+  const allFailed = useMemo(() => {
+    const errorUpload = uploadInfoProgress.filter((info) => !!info.error);
+
+    /**
+     * If all upload is failed, returns how many of them are failed.
+     */
+    return errorUpload.length === uploadInfoProgress.length ? errorUpload.length : 0;
+  }, [uploadInfoProgress]);
 
   function onCancelAllUpload() {
     const isAllDone =
@@ -98,7 +107,7 @@ const UploadProgressInfo: FunctionComponent = () => {
           {/* Header */}
           <div className="flex items-center justify-between space-x-1">
             <h5 className="text-center font-inter text-gray-700 font-medium text-lg">
-              {completedLength
+              {allFailed > 0 ? `${allFailed} failed` : completedLength
                 ? `${completedLength} Upload Completed`
                 : `Uploading ${loadingLength}`}
             </h5>
