@@ -1,6 +1,7 @@
 import { HttpErrorExeption } from "../exeptions/httpErrorExeption";
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL!;
+export const CL_UPLOADER_API_URL = `${process.env.NEXT_PUBLIC_CL_UPLOADER!}/api/v1`;
 
 export const defaultOptions: RequestInit = {
     headers: {

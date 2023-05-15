@@ -6,14 +6,13 @@ import type {
 } from '../types';
 
 import toGlobalTypes from '../utils/toGlobalTypes';
-import getFileBuffer from '../utils/getFileBuffer';
 import handleHttpError from '../utils/handleHttpError';
 import formatGooglePhotosFilter from '../utils/formatGooglePhotosFilter';
 
 import googlephotosClient from '../lib/googlephotos.client';
 import { HttpErrorExeption } from '../exeptions/httpErrorExeption';
 
-import { API_URL, cancelGoogleUploadSession, completeGoogleUploadSession, createGoogleUploadSession, defaultOptions } from '.';
+import { API_URL, CL_UPLOADER_API_URL, cancelGoogleUploadSession, completeGoogleUploadSession, createGoogleUploadSession, defaultOptions } from '.';
 
 async function getFiles(nextPageToken?: string, filter?: GooglePhotosFilter): Promise<GetFilesReturn> {
 
@@ -86,56 +85,22 @@ async function getContentCategories(): Promise<Array<string>> {
 
 async function transferFile(params: ITransferFileParams): Promise<void> {
 
-    const { file, signal, providerId, onUploadProgress, onDownloadProgress } = params;
-
-    let _sessionId: string | undefined = undefined;
-
     try {
 
-        const arrayBuffer = await getFileBuffer({
-            signal,
-            providerId,
-            onDownloadProgress,
-            downloadUrl: file.downloadUrl
-        });
-
-        googlephotosClient.validateFile(file.name, arrayBuffer.byteLength);
-
-        const registerResp = await fetch(`${API_URL}/api/google/files/uploadSessions`, {
+        const resp = await fetch(`${CL_UPLOADER_API_URL}/googlephotos/files`, {
             ...defaultOptions,
-            method: "POST",
-            signal
+            method: 'POST',
+            body: JSON.stringify(params)
         });
 
-        const registerRespData = await registerResp.json();
-        if (!registerResp.ok) {
-            throw new HttpErrorExeption(registerResp.status, registerRespData.errors[0].error);
+        const { errors } = await resp.json();
+        if (!resp.ok) {
+            if (errors[0].error) {
+                throw new HttpErrorExeption(resp.status, errors[0].error);
+            }
         }
-
-        const { sessionId, fileId } = registerRespData.data;
-        const accessToken = fileId.split(':')[1];
-
-        _sessionId = sessionId;
-
-        await googlephotosClient.uploadFile({
-            signal,
-            accessToken,
-            onUploadProgress,
-            filename: file.name,
-            buffer: Buffer.from(arrayBuffer)
-        });
-
-        await completeGoogleUploadSession(sessionId, signal);
 
     } catch (error) {
-        if (_sessionId) {
-            const cancelResp = await fetch(`${API_URL}/api/google/files/uploadSessions/${_sessionId}/cancel`, {
-                ...defaultOptions,
-                method: "PUT"
-            });
-
-            await cancelResp.body?.cancel();
-        }
         throw handleHttpError(error);
     }
 

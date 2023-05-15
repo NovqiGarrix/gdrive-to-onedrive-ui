@@ -4,11 +4,10 @@ import type {
     IDeleteFilesParam,
     ITransferFileParams,
     IUploadFileParams,
+    Provider,
 } from '../types';
 
-import getFilename from '../utils/getFilename';
 import toGlobalTypes from '../utils/toGlobalTypes';
-import getFileBuffer from '../utils/getFileBuffer';
 import handleHttpError from '../utils/handleHttpError';
 import getParentIdFromPath from '../utils/getParentIdFromPath';
 
@@ -17,7 +16,7 @@ import onedriveClient from '../lib/onedrive.client';
 import { HttpErrorExeption } from '../exeptions/httpErrorExeption';
 
 import type { IGetFoldersOnlyParams } from './types';
-import { API_URL, cancelMicrosoftUploadSession, completeMicrosoftUploadSession, createMicorosftUploadSession, defaultOptions } from '.';
+import { API_URL, CL_UPLOADER_API_URL, cancelMicrosoftUploadSession, completeMicrosoftUploadSession, createMicorosftUploadSession, defaultOptions } from '.';
 
 interface IGetFilesParams {
     path?: string;
@@ -104,51 +103,22 @@ async function getFoldersOnly(params: IGetFoldersOnlyParams): Promise<GetFilesRe
 
 async function transferFile(params: ITransferFileParams): Promise<void> {
 
-    const { file, signal, providerId, onUploadProgress, onDownloadProgress, path } = params;
-
-    let _sessionId: string | undefined = undefined;
-
     try {
 
-        const arrayBuffer = await getFileBuffer({
-            signal,
-            providerId,
-            onDownloadProgress,
-            mimeType: file.mimeType,
-            downloadUrl: file.downloadUrl
+        const resp = await fetch(`${CL_UPLOADER_API_URL}/onedrive/files`, {
+            ...defaultOptions,
+            method: 'POST',
+            body: JSON.stringify(params)
         });
 
-        const { sessionId, accessToken } = await createMicorosftUploadSession(signal);
-        _sessionId = sessionId;
-
-        const filename = getFilename(file.name, file.mimeType);
-
-        if (arrayBuffer.byteLength > UPLOAD_CHUNK_SIZE) {
-            await onedriveClient.uploadLargeFile({
-                signal,
-                filename,
-                accessToken,
-                onUploadProgress,
-                buffer: Buffer.from(arrayBuffer),
-                onedrivePath: cleanPathFromFolderId(path)
-            });
-        } else {
-            await onedriveClient.uploadFile({
-                signal,
-                filename,
-                accessToken,
-                onUploadProgress,
-                buffer: Buffer.from(arrayBuffer),
-                onedrivePath: cleanPathFromFolderId(path)
-            });
+        const { errors } = await resp.json();
+        if (!resp.ok) {
+            if (errors[0].error) {
+                throw new HttpErrorExeption(resp.status, errors[0].error);
+            }
         }
-
-        await completeMicrosoftUploadSession(sessionId, signal);
 
     } catch (error) {
-        if (_sessionId) {
-            await cancelMicrosoftUploadSession(_sessionId);
-        }
         throw handleHttpError(error);
     }
 

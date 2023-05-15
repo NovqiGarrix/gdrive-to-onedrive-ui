@@ -25,6 +25,7 @@ import useProviderPath, {
 import useSelectedFiles from "../hooks/useSelectedFiles";
 import { initializeCloudProvider } from "../hooks/useCloudProvider";
 import useGetProviderAccountInfo from "../hooks/useGetProviderAccountInfo";
+import useSocketIo from "../hooks/useSocketIo";
 
 const Settings = dynamic(() => import("../components/Settings"));
 const DisconnectedProviderAccount = dynamic(
@@ -38,6 +39,8 @@ interface IHomePageProps {
 
 const Home: NextPage<IHomePageProps> = (props) => {
   const { path, provider } = props;
+
+  useSocketIo();
 
   const router = useRouter();
   const rightComponentRef = useRef<HTMLDivElement>(null);
@@ -182,9 +185,8 @@ export const getServerSideProps: GetServerSideProps = async ({
   } catch (error: any) {
     return {
       redirect: {
-        destination: `/error?code=${error.status || 500}&message=${
-          error.message
-        }`,
+        destination: `/error?code=${error.status || 500}&message=${error.message
+          }`,
         permanent: false,
       },
     };

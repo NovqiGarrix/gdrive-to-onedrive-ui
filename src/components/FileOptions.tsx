@@ -18,7 +18,6 @@ import { toast } from "react-hot-toast";
 import { shallow } from "zustand/shallow";
 import { Popover, Transition } from "@headlessui/react";
 
-// import StarIcon from "@heroicons/react/24/outline/StarIcon";
 import BoltIcon from "@heroicons/react/24/outline/BoltIcon";
 import TrashIcon from "@heroicons/react/24/outline/TrashIcon";
 import PaperClipIcon from "@heroicons/react/24/outline/PaperClipIcon";
@@ -27,9 +26,7 @@ import ArrowSmallDownIcon from "@heroicons/react/24/outline/ArrowSmallDownIcon";
 
 import type {
   ITransferFileParams,
-  Provider,
   ProviderObject,
-  TransferFileSchema,
   UploadInfoProgress,
 } from "../types";
 import { PROVIDERS } from "../constants";
@@ -144,44 +141,9 @@ const FileOptions: FunctionComponent = () => {
 
   const transferFileFunc = useCallback(
     (
-      file: TransferFileSchema,
-      providerTarget: Provider,
-      signal: AbortSignal,
-      updateUploadInfoProgress: (
-        uploadInfoProgress: Partial<UploadInfoProgress> & {
-          id: string;
-        }
-      ) => void
+      params: ITransferFileParams
     ) => {
-      function onUploadProgress(progress: number) {
-        const uploadInfoProgress =
-          useUploadInfoProgress.getState().uploadInfoProgress;
-        const f = uploadInfoProgress.find((f) => f.id === file.id);
-        if (!f) return;
-
-        updateUploadInfoProgress({ ...f, uploadProgress: progress });
-      }
-
-      function onDownloadProgress(progress: number) {
-        const uploadInfoProgress =
-          useUploadInfoProgress.getState().uploadInfoProgress;
-        const f = uploadInfoProgress.find((f) => f.id === file.id);
-        if (!f) return;
-
-        updateUploadInfoProgress({ ...f, downloadProgress: progress });
-      }
-
-      const params: ITransferFileParams = {
-        file,
-        signal,
-        onUploadProgress,
-        onDownloadProgress,
-        providerId: provider.id,
-
-        path: transferToPath,
-      };
-
-      switch (providerTarget) {
+      switch (provider.id) {
         case "onedrive": {
           return onedriveApi.transferFile(params);
         }
@@ -198,7 +160,7 @@ const FileOptions: FunctionComponent = () => {
           throw new Error("Unsupported Provider!");
       }
     },
-    [provider.id, transferToPath]
+    [provider.id]
   );
 
   const transferFiles = useCallback(
@@ -213,58 +175,15 @@ const FileOptions: FunctionComponent = () => {
       const updateUploadInfoProgress =
         useUploadInfoProgress.getState().updateUploadInfoProgress;
 
-      // Func to upload each file
-      const upload = async (
-        file: UploadInfoProgress,
-        providerTarget: ProviderObject,
-        transferFileToastId: string
-      ) => {
-        console.log(file, "upload");
-
-        try {
-          await transferFileFunc(
-            file,
-            providerTarget.id,
-            file.abortController.signal,
-            updateUploadInfoProgress
-          );
-
-          updateUploadInfoProgress({
-            id: file.id,
-            isLoading: false,
-          });
-          return true;
-        } catch (error: any) {
-          if (error.message === "cancelled") {
-            toast.success(`${file.name}: Transfer cancelled!`, {
-              id: transferFileToastId,
-            });
-          }
-
-          updateUploadInfoProgress({
-            id: file.id,
-            isLoading: false,
-            error: error.message,
-          });
-
-          return false;
-        }
-      };
-
       try {
         // Initiate upload info progress
         const selectedFilesWithAbortController = selectedFiles.map((file) => {
-          const abortController = new AbortController();
-
           const requiredParams: UploadInfoProgress = {
             ...file,
-            abortController,
-            isLoading: true,
-            uploadProgress: 0,
-            downloadProgress: 0,
+            progress: 0,
+            status: 'in_progress',
             providerId: file.from,
-            upload: () =>
-              upload(requiredParams, providerTarget, transferFileToastId),
+            upload: () => transferFileFunc({ id: file.id, providerTargetId: providerTarget.id, path: transferToPath }),
           };
 
           const isExist = useUploadInfoProgress
@@ -304,7 +223,7 @@ const FileOptions: FunctionComponent = () => {
         const isAllError =
           useUploadInfoProgress
             .getState()
-            .uploadInfoProgress.filter((info) => info.error).length ===
+            .uploadInfoProgress.filter((info) => info.status === 'failed').length ===
           selectedFilesWithAbortController.length;
 
         if (isAllError) {

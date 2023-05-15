@@ -42,13 +42,13 @@ const UploadProgressInfo: FunctionComponent = () => {
 
   const completedLength = useMemo(
     () =>
-      uploadInfoProgress.filter((info) => !info.isLoading && !info.error)
+      uploadInfoProgress.filter((info) => info.status === "completed")
         .length,
     [uploadInfoProgress]
   );
 
   const loadingLength = useMemo(
-    () => uploadInfoProgress.filter((info) => info.isLoading).length,
+    () => uploadInfoProgress.filter((info) => info.status === 'in_progress').length,
     [uploadInfoProgress]
   );
 
@@ -63,7 +63,7 @@ const UploadProgressInfo: FunctionComponent = () => {
 
   function onCancelAllUpload() {
     const isAllDone =
-      uploadInfoProgress.filter((info) => !info.isLoading && !info.error)
+      uploadInfoProgress.filter((info) => info.status === 'completed')
         .length === uploadInfoProgress.length;
 
     const isAllError =
@@ -181,22 +181,19 @@ const IndividualFileInfo = memo<IIndividualFileInfoProps>(
     const { info, uploadInfoProgress } = props;
 
     const isError = !!info.error;
-    const isLoading = info.isLoading;
+    const isLoading = info.status === 'in_progress';
     const isDone = !isLoading && !isError;
 
     const removeUploadInfoProgress = useUploadInfoProgress(
       (s) => s.removeUploadInfoProgress
     );
+
     const updateUploadInfoProgress = useUploadInfoProgress(
       (s) => s.updateUploadInfoProgress
     );
 
-    const percentage = Math.round(
-      (info.downloadProgress + info.uploadProgress) / 2
-    );
-
     function cancelUpload() {
-      info.abortController.abort("Cancel");
+      // socket?.emit(CANCEL_UPLOAD_EVENT, info.id);
       removeUploadInfoProgress(info.id);
 
       if (uploadInfoProgress.length === 1) {
@@ -207,12 +204,13 @@ const IndividualFileInfo = memo<IIndividualFileInfoProps>(
     async function retryUpload() {
       try {
         updateUploadInfoProgress({
-          ...info,
-          isLoading: true,
+          id: info.id,
+          progress: 0,
           error: undefined,
+          status: 'in_progress'
         });
         await info.upload();
-      } catch (error) {}
+      } catch (error) { }
     }
 
     return (
@@ -243,7 +241,7 @@ const IndividualFileInfo = memo<IIndividualFileInfoProps>(
             ) : (
               <div className="relative mt-1.5">
                 <div
-                  style={{ width: `${percentage}%` }}
+                  style={{ width: `${info.progress}%` }}
                   className="ring-1 absolute inset-0 z-10 ring-primary/70"
                 ></div>
                 <div className="ring-1 absolute inset-0 w-full ring-gray-200"></div>
@@ -256,7 +254,7 @@ const IndividualFileInfo = memo<IIndividualFileInfoProps>(
         <div className="flex items-center space-x-3 pr-1 flex-shrink-0">
           {isLoading ? (
             <span className="font-inter font-medium text-xs text-gray-500">
-              {percentage}%
+              {info.progress}%
             </span>
           ) : null}
 
@@ -269,7 +267,7 @@ const IndividualFileInfo = memo<IIndividualFileInfoProps>(
             <LoadingIcon className="w-5 h-5" fill="#2F80ED" />
           ) : null}
 
-          {info.isLoading ? (
+          {isLoading ? (
             <button type="button" onClick={cancelUpload}>
               <XMarkIcon className="w-5 h-5 text-gray-500" aria-hidden="true" />
             </button>
@@ -296,105 +294,104 @@ const WarningModal = memo<IWaringModalProps>(function WarningModal({
   open,
   setOpen,
 }) {
-  {
-    const cancelButtonRef = useRef<HTMLButtonElement>(null);
-    const clearUploadInfoProgress = useUploadInfoProgress(
-      (s) => s.clearUploadInfoProgress
-    );
-    const uploadInfoProgress = useUploadInfoProgress(
-      (s) => s.uploadInfoProgress
-    );
 
-    const cancelAllUploads = () => {
-      uploadInfoProgress.forEach(({ abortController }) => {
-        abortController.abort();
-      });
+  const cancelButtonRef = useRef<HTMLButtonElement>(null);
+  const clearUploadInfoProgress = useUploadInfoProgress(
+    (s) => s.clearUploadInfoProgress
+  );
+  // const uploadInfoProgress = useUploadInfoProgress(
+  //   (s) => s.uploadInfoProgress
+  // );
 
-      setOpen(false);
-      clearUploadInfoProgress();
+  const cancelAllUploads = () => {
+    // uploadInfoProgress.forEach(({ id }) => {
+    //   io?.emit('CANCEL_UPLOAD', id);
+    // });
 
-      toast.success("Uploads cancelled");
-    };
+    setOpen(false);
+    clearUploadInfoProgress();
 
-    return (
-      <Transition.Root show={open} as={Fragment}>
-        <Dialog
-          as="div"
-          className="relative z-10"
-          initialFocus={cancelButtonRef}
-          onClose={setOpen}
+    toast.success("Uploads cancelled");
+  };
+
+  return (
+    <Transition.Root show={open} as={Fragment}>
+      <Dialog
+        as="div"
+        className="relative z-10"
+        initialFocus={cancelButtonRef}
+        onClose={setOpen}
+      >
+        <Transition.Child
+          as={Fragment}
+          enter="ease-out duration-300"
+          enterFrom="opacity-0"
+          enterTo="opacity-100"
+          leave="ease-in duration-200"
+          leaveFrom="opacity-100"
+          leaveTo="opacity-0"
         >
-          <Transition.Child
-            as={Fragment}
-            enter="ease-out duration-300"
-            enterFrom="opacity-0"
-            enterTo="opacity-100"
-            leave="ease-in duration-200"
-            leaveFrom="opacity-100"
-            leaveTo="opacity-0"
-          >
-            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
-          </Transition.Child>
+          <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+        </Transition.Child>
 
-          <div className="fixed inset-0 z-10 overflow-y-auto">
-            <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-              <Transition.Child
-                as={Fragment}
-                enter="ease-out duration-300"
-                enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                enterTo="opacity-100 translate-y-0 sm:scale-100"
-                leave="ease-in duration-200"
-                leaveFrom="opacity-100 translate-y-0 sm:scale-100"
-                leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-              >
-                <Dialog.Panel className="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
-                  <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                    <div className="sm:flex sm:items-start">
-                      <div className="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
-                        <ExclamationTriangleIcon
-                          className="h-6 w-6 text-red-600"
-                          aria-hidden="true"
-                        />
-                      </div>
-                      <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-                        <Dialog.Title
-                          as="h3"
-                          className="text-base font-semibold leading-6 text-gray-900"
-                        >
-                          Cancel Upload
-                        </Dialog.Title>
-                        <div className="mt-2">
-                          <p className="text-sm text-gray-500">
-                            Are you sure you want to cancel the transfer
-                            process? This action cannot be undone.
-                          </p>
-                        </div>
+        <div className="fixed inset-0 z-10 overflow-y-auto">
+          <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-300"
+              enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+              enterTo="opacity-100 translate-y-0 sm:scale-100"
+              leave="ease-in duration-200"
+              leaveFrom="opacity-100 translate-y-0 sm:scale-100"
+              leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+            >
+              <Dialog.Panel className="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
+                <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                  <div className="sm:flex sm:items-start">
+                    <div className="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                      <ExclamationTriangleIcon
+                        className="h-6 w-6 text-red-600"
+                        aria-hidden="true"
+                      />
+                    </div>
+                    <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                      <Dialog.Title
+                        as="h3"
+                        className="text-base font-semibold leading-6 text-gray-900"
+                      >
+                        Cancel Upload
+                      </Dialog.Title>
+                      <div className="mt-2">
+                        <p className="text-sm text-gray-500">
+                          Are you sure you want to cancel the transfer
+                          process? This action cannot be undone.
+                        </p>
                       </div>
                     </div>
                   </div>
-                  <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
-                    <button
-                      type="button"
-                      onClick={cancelAllUploads}
-                      className="inline-flex w-full justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 sm:ml-3 sm:w-auto focus:outline-none"
-                    >
-                      <span>{`Yes, I'm`}</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setOpen(false)}
-                      ref={cancelButtonRef}
-                      className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto"
-                    >
-                      Close
-                    </button>
-                  </div>
-                </Dialog.Panel>
-              </Transition.Child>
-            </div>
+                </div>
+                <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+                  <button
+                    type="button"
+                    onClick={cancelAllUploads}
+                    className="inline-flex w-full justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 sm:ml-3 sm:w-auto focus:outline-none"
+                  >
+                    <span>{`Yes, I'm`}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setOpen(false)}
+                    ref={cancelButtonRef}
+                    className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto"
+                  >
+                    Close
+                  </button>
+                </div>
+              </Dialog.Panel>
+            </Transition.Child>
           </div>
-        </Dialog>
-      </Transition.Root>
-    );
-  }
+        </div>
+      </Dialog>
+    </Transition.Root>
+  );
 });

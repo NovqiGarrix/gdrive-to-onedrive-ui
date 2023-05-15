@@ -9,12 +9,12 @@ import googledrive from '../lib/googledrive.client';
 import { HttpErrorExeption } from '../exeptions/httpErrorExeption';
 
 import toGlobalTypes from '../utils/toGlobalTypes';
-import getFileBuffer from '../utils/getFileBuffer';
 import handleHttpError from '../utils/handleHttpError';
 import getParentIdFromPath from '../utils/getParentIdFromPath';
 
 import {
     API_URL,
+    CL_UPLOADER_API_URL,
     cancelGoogleUploadSession,
     completeGoogleUploadSession,
     createGoogleUploadSession,
@@ -152,38 +152,22 @@ async function deleteFiles(files: Array<IDeleteFilesParam>): Promise<void> {
 
 async function transferFile(params: ITransferFileParams): Promise<void> {
 
-    const { file, signal, providerId, onUploadProgress, onDownloadProgress, path } = params;
-
-    let _sessionId: string | undefined = undefined;
-
     try {
 
-        const arrayBuffer = await getFileBuffer({
-            signal,
-            providerId,
-            onDownloadProgress,
-            downloadUrl: file.downloadUrl
+        const resp = await fetch(`${CL_UPLOADER_API_URL}/googledrive/files`, {
+            ...defaultOptions,
+            method: 'POST',
+            body: JSON.stringify(params)
         });
 
-        const { sessionId, accessToken } = await createGoogleUploadSession(signal);
-        _sessionId = sessionId;
-
-        await googledrive.uploadFile({
-            signal,
-            accessToken,
-            arrayBuffer,
-            onUploadProgress,
-            filename: file.name,
-
-            folderId: getParentIdFromPath(path)
-        });
-
-        await completeGoogleUploadSession(sessionId, signal);
+        const { errors } = await resp.json();
+        if (!resp.ok) {
+            if (errors[0].error) {
+                throw new HttpErrorExeption(resp.status, errors[0].error);
+            }
+        }
 
     } catch (error) {
-        if (_sessionId) {
-            await cancelGoogleUploadSession(_sessionId);
-        }
         throw handleHttpError(error);
     }
 

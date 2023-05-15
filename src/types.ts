@@ -179,12 +179,12 @@ export interface AccountObject {
     providers: Array<Provider>;
 }
 
+export type UploadStatus = 'failed' | 'completed' | 'canceled' | 'in_progress';
+
 export type UploadInfoProgress = TransferFileSchema & {
-    isLoading: boolean;
-    uploadProgress: number;
-    downloadProgress: number;
-    upload: () => Promise<boolean>;
-    abortController: AbortController;
+    progress: number;
+    status: UploadStatus;
+    upload: () => Promise<void>;
 
     error?: string;
 };
@@ -194,13 +194,9 @@ export type OnUploadProgress = (progress: number) => void;
 export type OnDownloadProgress = (progress: number) => void;
 
 export interface ITransferFileParams {
-    signal: AbortSignal;
-    providerId: Provider;
-    file: TransferFileSchema;
-    onUploadProgress: OnUploadProgress;
-    onDownloadProgress: OnDownloadProgress;
-
+    id: string;
     path: string | undefined;
+    providerTargetId: Provider;
 }
 
 export interface IUploadFileParams {

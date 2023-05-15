@@ -4,6 +4,7 @@ import mime from 'mime-types';
 import type { OnUploadProgress } from '../types';
 import { HttpErrorExeption } from "../exeptions/httpErrorExeption";
 import getPercentageUploadProgress from '../utils/getPercentageUploadProgress';
+import isGoogleDocsFile from '../utils/isGoogleDocsFile';
 
 const MAX_PHOTO_SIZE = 1024 * 1024 * 200 // 200MB;
 const MAX_VIDEO_SIZE = 1024 * 1024 * 1024 * 20 // 20GB;
@@ -43,8 +44,6 @@ class GooglePhotos {
     async uploadFile(params: IUploadFileParams): Promise<void> {
 
         const { accessToken, filename, buffer, onUploadProgress, signal } = params;
-
-        this.validateFile(filename, buffer.byteLength);
         const mimeType = mime.lookup(filename) as string;
 
         try {
@@ -100,20 +99,30 @@ class GooglePhotos {
 
     }
 
-    validateFile(filename: string, byteLength: number) {
+    private checkAllowedGoogleMimeTypes(mimeType: string) {
+        return mimeType === 'application/vnd.google-apps.photo';
+    }
+
+    validateFileSize(ext: string, byteLength: number) {
+        if (byteLength > MAX_PHOTO_SIZE && ALLOWEED_PHOTO_EXTENSIONS.includes(ext)) {
+            throw new HttpErrorExeption(400, 'Exceeded maximum file size for a photo');
+        }
+
+        if (byteLength > MAX_VIDEO_SIZE && ALLOWEED_VIDEO_EXTENSIONS.includes(ext)) {
+            throw new HttpErrorExeption(400, 'Exceeded maximum file size for a video');
+        }
+    }
+
+    validateFileTypes(filename: string, mimeType?: string): string {
+        if (mimeType && !this.checkAllowedGoogleMimeTypes(mimeType)) throw new HttpErrorExeption(400, 'Invalid file extension');
+
         const ext = filename.split('.').pop()?.toLowerCase();
         if (!ext || (!ALLOWEED_PHOTO_EXTENSIONS.includes(ext) && !ALLOWEED_VIDEO_EXTENSIONS.includes(ext))
         ) {
             throw new HttpErrorExeption(400, 'Invalid file extension');
         }
 
-        if (byteLength > MAX_PHOTO_SIZE && ALLOWEED_PHOTO_EXTENSIONS.includes(ext)) {
-            throw new HttpErrorExeption(400, 'Exceeded maximum file size for photo');
-        }
-
-        if (byteLength > MAX_VIDEO_SIZE && ALLOWEED_VIDEO_EXTENSIONS.includes(ext)) {
-            throw new HttpErrorExeption(400, 'Exceeded maximum file size for video');
-        }
+        return ext;
     }
 
 }
