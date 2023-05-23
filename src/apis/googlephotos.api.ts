@@ -8,11 +8,31 @@ import type {
 import toGlobalTypes from '../utils/toGlobalTypes';
 import handleHttpError from '../utils/handleHttpError';
 import formatGooglePhotosFilter from '../utils/formatGooglePhotosFilter';
+import getParentIdOrPathOfFolder from '../utils/getParentIdOrPathOfFolder';
 
 import googlephotosClient from '../lib/googlephotos.client';
 import { HttpErrorExeption } from '../exeptions/httpErrorExeption';
 
-import { API_URL, CL_UPLOADER_API_URL, cancelGoogleUploadSession, completeGoogleUploadSession, createGoogleUploadSession, defaultOptions } from '.';
+import { API_URL, CL_UPLOADER_API_URL, GetFileFunction, cancelGoogleUploadSession, completeGoogleUploadSession, createGoogleUploadSession, defaultOptions } from '.';
+
+const getFile: GetFileFunction = async (fileId) => {
+
+    try {
+
+        const resp = await fetch(`${API_URL}/api/google/photos/files/${fileId}?fields=*`, defaultOptions);
+        const { data, errors } = await resp.json();
+
+        if (!resp.ok) {
+            throw new HttpErrorExeption(resp.status, errors[0].error);
+        }
+
+        return toGlobalTypes(data, 'google_photos');
+
+    } catch (error) {
+        throw handleHttpError(error);
+    }
+
+}
 
 async function getFiles(nextPageToken?: string, filter?: GooglePhotosFilter): Promise<GetFilesReturn> {
 
@@ -83,9 +103,11 @@ async function getContentCategories(): Promise<Array<string>> {
     }
 }
 
-async function transferFile(params: ITransferFileParams): Promise<void> {
+async function transferFile(params: ITransferFileParams): Promise<string> {
 
     try {
+
+        params.path = getParentIdOrPathOfFolder(params.path, params.providerTargetId);
 
         const resp = await fetch(`${CL_UPLOADER_API_URL}/googlephotos/files`, {
             ...defaultOptions,
@@ -93,12 +115,14 @@ async function transferFile(params: ITransferFileParams): Promise<void> {
             body: JSON.stringify(params)
         });
 
-        const { errors } = await resp.json();
+        const { errors, data } = await resp.json();
         if (!resp.ok) {
             if (errors[0].error) {
                 throw new HttpErrorExeption(resp.status, errors[0].error);
             }
         }
+
+        return data._id;
 
     } catch (error) {
         throw handleHttpError(error);
@@ -143,5 +167,6 @@ export default {
     getFiles,
     getMediaTypes,
     getContentCategories,
-    transferFile, uploadFile
+    transferFile, uploadFile,
+    getFile
 }

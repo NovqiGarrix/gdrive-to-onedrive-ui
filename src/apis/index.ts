@@ -1,4 +1,5 @@
 import { HttpErrorExeption } from "../exeptions/httpErrorExeption";
+import { GlobalItemTypes } from "../types";
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL!;
 export const CL_UPLOADER_API_URL = `${process.env.NEXT_PUBLIC_CL_UPLOADER!}/api/v1`;
@@ -14,6 +15,8 @@ interface ICreateGoogleUploadSessionReturn {
     sessionId: string;
     accessToken: string;
 }
+
+export type GetFileFunction = (fileId: string) => Promise<GlobalItemTypes>;
 
 export async function createGoogleUploadSession(signal: AbortSignal): Promise<ICreateGoogleUploadSessionReturn> {
 

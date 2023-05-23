@@ -8,7 +8,7 @@ interface UseUploadInfoProgress {
     uploadInfoProgress: UploadInfoProgress[];
     addUploadInfoProgress: (uploadInfoProgress: UploadInfoProgress) => void;
     removeUploadInfoProgress: (id: string) => void;
-    updateUploadInfoProgress: (uploadInfoProgress: Partial<UploadInfoProgress> & { id: string }) => void;
+    updateUploadInfoProgress: (uploadInfoProgress: Partial<UploadInfoProgress> & { fileId: string }) => void;
 
     clearUploadInfoProgress: () => void;
 }
@@ -33,14 +33,14 @@ const useUploadInfoProgress = create<UseUploadInfoProgress>((set) => ({
     updateUploadInfoProgress(uploadInfoProgress) {
         set((state) => ({
             uploadInfoProgress: state.uploadInfoProgress.map((item) =>
-                item.id === uploadInfoProgress.id ? { ...item, ...uploadInfoProgress } : item
+                item.fileId === uploadInfoProgress.fileId ? { ...item, ...uploadInfoProgress } : item
             ),
         }));
     },
 
     removeUploadInfoProgress(id) {
         set((state) => ({
-            uploadInfoProgress: state.uploadInfoProgress.filter((item) => item.id !== id),
+            uploadInfoProgress: state.uploadInfoProgress.filter((item) => item.fileId !== id),
         }));
     },
 

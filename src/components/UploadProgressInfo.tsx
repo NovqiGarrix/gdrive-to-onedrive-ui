@@ -48,7 +48,7 @@ const UploadProgressInfo: FunctionComponent = () => {
   );
 
   const loadingLength = useMemo(
-    () => uploadInfoProgress.filter((info) => info.status === 'in_progress').length,
+    () => uploadInfoProgress.filter((info) => info.status === 'in_progress' || info.status === 'starting').length,
     [uploadInfoProgress]
   );
 
@@ -159,7 +159,7 @@ const UploadProgressInfo: FunctionComponent = () => {
             {uploadInfoProgress.map((info) => (
               <IndividualFileInfo
                 info={info}
-                key={info.id}
+                key={info.fileId}
                 uploadInfoProgress={uploadInfoProgress}
               />
             ))}
@@ -181,7 +181,7 @@ const IndividualFileInfo = memo<IIndividualFileInfoProps>(
     const { info, uploadInfoProgress } = props;
 
     const isError = !!info.error;
-    const isLoading = info.status === 'in_progress';
+    const isLoading = info.status === 'in_progress' || info.status === 'starting';
     const isDone = !isLoading && !isError;
 
     const removeUploadInfoProgress = useUploadInfoProgress(
@@ -194,7 +194,7 @@ const IndividualFileInfo = memo<IIndividualFileInfoProps>(
 
     function cancelUpload() {
       // socket?.emit(CANCEL_UPLOAD_EVENT, info.id);
-      removeUploadInfoProgress(info.id);
+      removeUploadInfoProgress(info.fileId);
 
       if (uploadInfoProgress.length === 1) {
         useUploadInfoProgress.getState().setShow(false);
@@ -204,8 +204,8 @@ const IndividualFileInfo = memo<IIndividualFileInfoProps>(
     async function retryUpload() {
       try {
         updateUploadInfoProgress({
-          id: info.id,
           progress: 0,
+          fileId: info.fileId,
           error: undefined,
           status: 'in_progress'
         });
@@ -225,14 +225,14 @@ const IndividualFileInfo = memo<IIndividualFileInfoProps>(
             <Image
               width={500}
               height={500}
-              alt={`${info.name} icon`}
+              alt={`${info.filename} icon`}
               src={info.iconLink}
             />
           </div>
           <div className="ml-2 -mt-1 w-full">
             <Link href="/" passHref>
               <h3 className="text-gray-500 w-full font-inter text-sm text-ellipsis overflow-hidden whitespace-nowrap hover:text-gray-700">
-                {info.name}
+                {info.filename}
               </h3>
             </Link>
 

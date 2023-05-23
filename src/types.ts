@@ -3,6 +3,7 @@ export interface User {
     name: string;
     email: string;
     avatar: string;
+    realmQid: string;
     defaultProviderId: Provider;
 }
 
@@ -179,12 +180,18 @@ export interface AccountObject {
     providers: Array<Provider>;
 }
 
-export type UploadStatus = 'failed' | 'completed' | 'canceled' | 'in_progress';
+export type UploadStatus = 'starting' | 'failed' | 'completed' | 'canceled' | 'in_progress';
 
-export type UploadInfoProgress = TransferFileSchema & {
+export type UploadInfoProgress = {
+    id: string;
+    fileId: string;
+    filename: string;
+    iconLink: string;
     progress: number;
     status: UploadStatus;
-    upload: () => Promise<void>;
+    providerSourceId: Provider;
+    providerTargetId: Provider;
+    upload: () => Promise<string>;
 
     error?: string;
 };
@@ -205,4 +212,18 @@ export interface IUploadFileParams {
     onUploadProgress: OnUploadProgress;
 
     path: string | undefined;
+}
+
+export interface TransferSession {
+    _id: string;
+    userId: string;
+    fileId: string;
+    filename: string;
+    fileMimeType: string;
+    providerTargetId: Provider;
+    providerSourceId: Provider;
+    progress: number;
+    status: UploadStatus;
+    error?: string;
+    transferToPath?: string;
 }

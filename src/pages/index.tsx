@@ -6,7 +6,6 @@ import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
 import { shallow } from "zustand/shallow";
 
-import authApi from "../apis/auth.api";
 import {
   Navbar,
   Sidebar,
@@ -19,18 +18,20 @@ import {
   ScrollToTop,
 } from "../components";
 
+import authApi from "../apis/auth.api";
+
 import useProviderPath, {
   initializedProviderPath,
 } from "../hooks/useProviderPath";
 import useSelectedFiles from "../hooks/useSelectedFiles";
 import { initializeCloudProvider } from "../hooks/useCloudProvider";
 import useGetProviderAccountInfo from "../hooks/useGetProviderAccountInfo";
-import useSocketIo from "../hooks/useSocketIo";
+import useUpdateUploadInfo from "../hooks/useUpdateUploadInfo";
 
-const Settings = dynamic(() => import("../components/Settings"));
 const DisconnectedProviderAccount = dynamic(
   () => import("../components/DisconnectedProviderAccount")
 );
+const Settings = dynamic(() => import("../components/Settings"));
 
 interface IHomePageProps {
   path: string | null;
@@ -40,9 +41,8 @@ interface IHomePageProps {
 const Home: NextPage<IHomePageProps> = (props) => {
   const { path, provider } = props;
 
-  useSocketIo();
-
   const router = useRouter();
+
   const rightComponentRef = useRef<HTMLDivElement>(null);
 
   const providerPath = useProviderPath((s) => s.path);
@@ -50,6 +50,8 @@ const Home: NextPage<IHomePageProps> = (props) => {
 
   const selectedFiles = useSelectedFiles((s) => s.files, shallow);
   const cleanSelectedFiles = useSelectedFiles((s) => s.cleanFiles);
+
+  useUpdateUploadInfo();
 
   const {
     data: providerAccountInfo,

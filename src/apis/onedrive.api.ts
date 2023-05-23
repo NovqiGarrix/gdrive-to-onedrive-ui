@@ -4,29 +4,47 @@ import type {
     IDeleteFilesParam,
     ITransferFileParams,
     IUploadFileParams,
-    Provider,
 } from '../types';
 
 import toGlobalTypes from '../utils/toGlobalTypes';
 import handleHttpError from '../utils/handleHttpError';
 import getParentIdFromPath from '../utils/getParentIdFromPath';
+import cleanPathFromFolderId from '../utils/cleanPathFromFolderId';
+import getParentIdOrPathOfFolder from '../utils/getParentIdOrPathOfFolder';
 
 import { UPLOAD_CHUNK_SIZE } from '../constants';
 import onedriveClient from '../lib/onedrive.client';
 import { HttpErrorExeption } from '../exeptions/httpErrorExeption';
 
 import type { IGetFoldersOnlyParams } from './types';
-import { API_URL, CL_UPLOADER_API_URL, cancelMicrosoftUploadSession, completeMicrosoftUploadSession, createMicorosftUploadSession, defaultOptions } from '.';
+import { API_URL, CL_UPLOADER_API_URL, GetFileFunction, cancelMicrosoftUploadSession, completeMicrosoftUploadSession, createMicorosftUploadSession, defaultOptions } from '.';
+
+const defaultFields = 'id,name,webUrl,@microsoft.graph.downloadUrl,video,file,folder,createdDateTime';
+
+const getFile: GetFileFunction = async (fileId) => {
+
+    try {
+
+        const resp = await fetch(`${API_URL}/api/microsoft/files/${fileId}?fields=${defaultFields}`, defaultOptions);
+        const { data, errors } = await resp.json();
+
+        if (!resp.ok) {
+            throw new HttpErrorExeption(resp.status, errors[0].error);
+        }
+
+        return toGlobalTypes(data, 'onedrive');
+
+    } catch (error) {
+        throw handleHttpError(error);
+    }
+
+}
 
 interface IGetFilesParams {
     path?: string;
     query?: string;
     foldersOnly?: boolean;
     nextPageToken?: string;
-}
-
-function cleanPathFromFolderId(path: string | undefined): string | undefined {
-    return path?.split("/").map((p) => p.split("~")[0]).join("/");
 }
 
 async function getFiles(params: IGetFilesParams): Promise<GetFilesReturn> {
@@ -38,7 +56,7 @@ async function getFiles(params: IGetFilesParams): Promise<GetFilesReturn> {
     try {
 
         const urlInURL = new URL(`${API_URL}/api/microsoft/files`);
-        urlInURL.searchParams.append('fields', 'id,name,webUrl,@microsoft.graph.downloadUrl,video,file,folder,createdDateTime');
+        urlInURL.searchParams.append('fields', defaultFields);
 
         Object.entries({ query, path: cleanPathFromFolderId(path), next_token: nextPageToken }).forEach(([key, value]) => {
             if (value) {
@@ -101,22 +119,28 @@ async function getFoldersOnly(params: IGetFoldersOnlyParams): Promise<GetFilesRe
 
 }
 
-async function transferFile(params: ITransferFileParams): Promise<void> {
+async function transferFile(params: ITransferFileParams): Promise<string> {
 
     try {
+
+        params.path = getParentIdOrPathOfFolder(params.path, params.providerTargetId);
 
         const resp = await fetch(`${CL_UPLOADER_API_URL}/onedrive/files`, {
             ...defaultOptions,
             method: 'POST',
+            // Get the parent id from the path
+            // That's how to upload a file under a certain folder
             body: JSON.stringify(params)
         });
 
-        const { errors } = await resp.json();
+        const { errors, data } = await resp.json();
         if (!resp.ok) {
             if (errors[0].error) {
                 throw new HttpErrorExeption(resp.status, errors[0].error);
             }
         }
+
+        return data._id;
 
     } catch (error) {
         throw handleHttpError(error);
@@ -248,5 +272,6 @@ async function deleteFolder(folderId: string): Promise<void> {
 export default {
     getFiles,
     transferFile, deleteFiles,
-    uploadFile, createFolder, deleteFolder
+    uploadFile, createFolder, deleteFolder,
+    getFile
 }

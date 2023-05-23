@@ -58,6 +58,12 @@ export default function Document() {
         <link
           rel="icon"
           type="image/png"
+          sizes="144x144"
+          href="/favicons/android-icon-144x144.png"
+        />
+        <link
+          rel="icon"
+          type="image/png"
           sizes="32x32"
           href="/favicons/favicon-32x32.png"
         />

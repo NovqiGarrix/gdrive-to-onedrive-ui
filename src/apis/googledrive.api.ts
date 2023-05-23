@@ -11,10 +11,12 @@ import { HttpErrorExeption } from '../exeptions/httpErrorExeption';
 import toGlobalTypes from '../utils/toGlobalTypes';
 import handleHttpError from '../utils/handleHttpError';
 import getParentIdFromPath from '../utils/getParentIdFromPath';
+import getParentIdOrPathOfFolder from '../utils/getParentIdOrPathOfFolder';
 
 import {
     API_URL,
     CL_UPLOADER_API_URL,
+    GetFileFunction,
     cancelGoogleUploadSession,
     completeGoogleUploadSession,
     createGoogleUploadSession,
@@ -40,6 +42,25 @@ function getParentQuery(parentId: string | undefined, foldersOnly?: boolean): st
     return parentId
         ? `'${parentId}' in parents`
         : `'root' in parents or sharedWithMe = true`
+}
+
+const getFile: GetFileFunction = async (fileId) => {
+
+    try {
+
+        const resp = await fetch(`${API_URL}/api/google/drive/files/${fileId}?fields=*`, defaultOptions);
+        const { data, errors } = await resp.json();
+
+        if (!resp.ok) {
+            throw new HttpErrorExeption(resp.status, errors[0].error);
+        }
+
+        return toGlobalTypes(data, 'google_drive');
+
+    } catch (error) {
+        throw handleHttpError(error);
+    }
+
 }
 
 async function getFiles(params: IGetFilesParams): Promise<GetFilesReturn> {
@@ -150,9 +171,11 @@ async function deleteFiles(files: Array<IDeleteFilesParam>): Promise<void> {
 
 }
 
-async function transferFile(params: ITransferFileParams): Promise<void> {
+async function transferFile(params: ITransferFileParams): Promise<string> {
 
     try {
+
+        params.path = getParentIdOrPathOfFolder(params.path, params.providerTargetId);
 
         const resp = await fetch(`${CL_UPLOADER_API_URL}/googledrive/files`, {
             ...defaultOptions,
@@ -160,12 +183,14 @@ async function transferFile(params: ITransferFileParams): Promise<void> {
             body: JSON.stringify(params)
         });
 
-        const { errors } = await resp.json();
+        const { errors, data } = await resp.json();
         if (!resp.ok) {
             if (errors[0].error) {
                 throw new HttpErrorExeption(resp.status, errors[0].error);
             }
         }
+
+        return data._id;
 
     } catch (error) {
         throw handleHttpError(error);
@@ -259,5 +284,6 @@ async function deleteFolder(folderId: string): Promise<void> {
 export default {
     getFiles,
     deleteFiles, transferFile,
-    uploadFile, createFolder, deleteFolder
+    uploadFile, createFolder, deleteFolder,
+    getFile
 }

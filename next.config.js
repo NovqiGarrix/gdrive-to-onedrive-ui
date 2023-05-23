@@ -1,6 +1,11 @@
 /** @type {import('next').NextConfig} */
 module.exports = {
   reactStrictMode: true,
+  env: {
+    JWT_PUBLIC_KEY: process.env.JWT_PUBLIC_KEY,
+    JWT_PRIVATE_KEY: process.env.JWT_PRIVATE_KEY,
+    MONGODB_REALM_ID: process.env.MONGODB_REALM_ID
+  },
   images: {
     domains: [
       "127.0.0.1",
