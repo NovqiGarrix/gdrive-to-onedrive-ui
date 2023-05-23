@@ -12,6 +12,7 @@ const useUser = create<UseUser>((set) => ({
         name: '',
         email: '',
         avatar: '',
+        realmQid: '',
         defaultProviderId: 'google_drive'
     },
 
