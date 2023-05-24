@@ -205,10 +205,7 @@ const FileOptions: FunctionComponent = () => {
             id: transferFileToastId,
           });
         }
-      } catch (error: any) {
-        toast.error(error.message, {
-          id: transferFileToastId,
-        });
+      } catch (_error) {
       } finally {
         setTransferToPath(undefined);
       }

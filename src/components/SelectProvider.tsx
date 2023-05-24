@@ -11,8 +11,8 @@ import { PROVIDERS } from "../constants";
 import classNames from "../utils/classNames";
 import type { ProviderObject } from "../types";
 
-import useCloudProvider from "../hooks/useCloudProvider";
 import useProviderPath from "../hooks/useProviderPath";
+import useCloudProvider from "../hooks/useCloudProvider";
 import useSelectedFiles from "../hooks/useSelectedFiles";
 
 const SelectProvider: FunctionComponent = () => {

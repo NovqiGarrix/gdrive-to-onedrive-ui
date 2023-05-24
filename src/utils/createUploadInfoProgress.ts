@@ -61,14 +61,15 @@ export default function createUploadInfoProgress(params: CreateUploadInfoProgres
                 updateUploadInfoProgress({
                     fileId,
                     id: transferSessionId,
-                    status: 'in_progress'
                 });
             } catch (error: any) {
-                updateUploadInfoProgress({
-                    fileId,
-                    status: 'failed',
-                    error: error.message
-                });
+                if (error.message !== 'No response. Please try again.') {
+                    updateUploadInfoProgress({
+                        fileId,
+                        status: 'failed',
+                        error: error.message
+                    });
+                }
 
                 throw error;
             }

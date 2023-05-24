@@ -10,8 +10,8 @@ const FilesContainerWrapper: FunctionComponent = () => {
 
   return (
     <div ref={ref} className="w-full">
-      <FilesContainer />
       <DeleteFilesModal />
+      <FilesContainer />
     </div>
   );
 };

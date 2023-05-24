@@ -181,7 +181,8 @@ const IndividualFileInfo = memo<IIndividualFileInfoProps>(
     const { info, uploadInfoProgress } = props;
 
     const isError = !!info.error;
-    const isLoading = info.status === 'in_progress' || info.status === 'starting';
+    const isStarting = info.status === 'starting';
+    const isLoading = info.status === 'in_progress';
     const isDone = !isLoading && !isError;
 
     const removeUploadInfoProgress = useUploadInfoProgress(
@@ -193,11 +194,11 @@ const IndividualFileInfo = memo<IIndividualFileInfoProps>(
     );
 
     function cancelUpload() {
+      // TODO: Handle cancel upload
       // socket?.emit(CANCEL_UPLOAD_EVENT, info.id);
-      removeUploadInfoProgress(info.fileId);
-
       if (uploadInfoProgress.length === 1) {
         useUploadInfoProgress.getState().setShow(false);
+        removeUploadInfoProgress(info.fileId);
       }
     }
 
@@ -238,7 +239,7 @@ const IndividualFileInfo = memo<IIndividualFileInfoProps>(
 
             {isError ? (
               <p className="text-red-500 font-medium text-xs">{info.error}</p>
-            ) : (
+            ) : isLoading ? (
               <div className="relative mt-1.5">
                 <div
                   style={{ width: `${info.progress}%` }}
@@ -246,39 +247,50 @@ const IndividualFileInfo = memo<IIndividualFileInfoProps>(
                 ></div>
                 <div className="ring-1 absolute inset-0 w-full ring-gray-200"></div>
               </div>
-            )}
+            ) : isStarting ? (
+              <div className="mt-1.5 relative overflow-hidden h-1">
+                <div
+                  className="absolute z-10 ring-2 w-56 ring-primary/70 progress-starting"
+                ></div>
+                <div className="ring-1 absolute inset-0 w-full ring-gray-200"></div>
+              </div>
+            ) : null}
           </div>
         </div>
 
         {/* Percentage, Loading Icon, and Cancel button */}
         <div className="flex items-center space-x-3 pr-1 flex-shrink-0">
-          {isLoading ? (
-            <span className="font-inter font-medium text-xs text-gray-500">
-              {info.progress}%
-            </span>
-          ) : null}
+          {isStarting ? null : (
+            <Fragment>
+              {isLoading ? (
+                <span className="font-inter font-medium text-xs text-gray-500">
+                  {info.progress}%
+                </span>
+              ) : null}
 
-          {isDone ? (
-            <CheckCircleIcon
-              aria-hidden="true"
-              className="w-6 h-6 -mr-0.5 text-green-500"
-            />
-          ) : !isError ? (
-            <LoadingIcon className="w-5 h-5" fill="#2F80ED" />
-          ) : null}
+              {isDone ? (
+                <CheckCircleIcon
+                  aria-hidden="true"
+                  className="w-6 h-6 -mr-0.5 text-green-500"
+                />
+              ) : !isError ? (
+                <LoadingIcon className="w-5 h-5" fill="#2F80ED" />
+              ) : null}
 
-          {isLoading ? (
-            <button type="button" onClick={cancelUpload}>
-              <XMarkIcon className="w-5 h-5 text-gray-500" aria-hidden="true" />
-            </button>
-          ) : isError ? (
-            <button type="button" className="group" onClick={retryUpload}>
-              <ArrowPathIcon
-                aria-hidden="true"
-                className="w-5 h-5 text-gray-500 group-hover:text-primary"
-              />
-            </button>
-          ) : null}
+              {isLoading ? (
+                <button type="button" onClick={cancelUpload}>
+                  <XMarkIcon className="w-5 h-5 text-gray-500" aria-hidden="true" />
+                </button>
+              ) : isError ? (
+                <button type="button" className="group" onClick={retryUpload}>
+                  <ArrowPathIcon
+                    aria-hidden="true"
+                    className="w-5 h-5 text-gray-500 group-hover:text-primary"
+                  />
+                </button>
+              ) : null}
+            </Fragment>
+          )}
         </div>
       </div>
     );

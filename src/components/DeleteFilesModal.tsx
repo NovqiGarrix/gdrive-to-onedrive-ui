@@ -51,7 +51,7 @@ const DeleteFilesModal: FunctionComponent = () => {
   const { mutateAsync, isLoading } = useMutation<void, HttpErrorExeption>({
     mutationFn: () =>
       deleteFileFunc(selectedFiles.map((s) => ({ id: s.id, name: s.name }))),
-    mutationKey: ["deleteFiles", selectedFiles],
+    mutationKey: ["deleteFiles", selectedFiles.length],
 
     onError(error) {
       try {

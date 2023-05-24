@@ -27,7 +27,7 @@ function useGetFolders(enabled: boolean) {
         retry: false,
         enabled,
         refetchOnMount: true,
-        refetchOnWindowFocus: process.env.NODE_ENV === "production"
+        refetchOnWindowFocus: false
     });
 
     return {

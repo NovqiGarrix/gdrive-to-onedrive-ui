@@ -54,7 +54,7 @@ function useGetFiles() {
         queryKey,
         retry: false,
         keepPreviousData: true,
-        refetchOnWindowFocus: process.env.NODE_ENV === "production",
+        refetchOnWindowFocus: false,
 
         behavior: {
             onFetch() {

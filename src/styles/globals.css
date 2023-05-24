@@ -8,7 +8,7 @@
   border: 1px solid red;
 }
 
-html > body {
+html>body {
   font-family: "Poppins", sans-serif;
 }
 
@@ -29,4 +29,22 @@ html > body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #555;
+}
+
+@keyframes walking {
+  0% {
+    transform: translateX(-110%);
+  }
+
+  50% {
+    transform: translateX(100%);
+  }
+
+  100% {
+    transform: translateX(500%);
+  }
+}
+
+.progress-starting {
+  animation: walking 1s infinite linear;
 }

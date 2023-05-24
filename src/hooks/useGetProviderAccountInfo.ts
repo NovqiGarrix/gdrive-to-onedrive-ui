@@ -24,7 +24,7 @@ export default function useGetProviderAccountInfo() {
 
         retry: false,
         refetchOnMount: false,
-        refetchOnWindowFocus: process.env.NODE_ENV === "production",
+        refetchOnWindowFocus: false,
 
         async onSuccess(data) {
             if (data.isConnected) return;
