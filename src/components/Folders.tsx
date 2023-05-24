@@ -18,10 +18,9 @@ import useCloudProvider from "../hooks/useCloudProvider";
 import BeautifulError from "./BeautifulError";
 import FoldersSkeletonLoading from "./FoldersSkeletonLoading";
 
+const Folder = dynamic(() => import("./Folder"));
 const LoadingIcon = dynamic(() => import("./LoadingIcon"));
 const DeleteFolderModal = dynamic(() => import("./DeleteFolderModal"));
-
-const Folder = dynamic(() => import("./Folder"));
 
 const Folders: FunctionComponent = () => {
   const router = useRouter();
@@ -51,6 +50,7 @@ const Folders: FunctionComponent = () => {
       router.query as Record<string, string>
     );
     urlParams.set("path", newPath);
+    setSelectedFolder(null);
 
     await router.push(`/?${urlParams.toString()}`, undefined, {
       shallow: true,
@@ -78,6 +78,7 @@ const Folders: FunctionComponent = () => {
   useEffect(() => {
     function onDeleteKeydown(event: KeyboardEvent) {
       if (event.key === "Delete" && selectedFolder?.id) {
+        console.log('hello from Folders.tsx');
         setOpenModal(true);
       }
     }

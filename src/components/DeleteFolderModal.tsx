@@ -21,8 +21,8 @@ import useCloudProvider from "../hooks/useCloudProvider";
 import LoadingIcon from "./LoadingIcon";
 
 interface IDeleteFolderModalProps {
-  selectedFolder: GlobalItemTypes | null;
   open: boolean;
+  selectedFolder: GlobalItemTypes | null;
   setOpen: Dispatch<SetStateAction<boolean>>;
 }
 
@@ -92,10 +92,10 @@ const DeleteFolderModal: FunctionComponent<IDeleteFolderModalProps> = (
     <Transition.Root show={open} as={Fragment}>
       <Dialog
         as="div"
-        className="relative z-10"
-        initialFocus={cancelButtonRef}
         onClose={setOpen}
-        id="delete-files-modal"
+        className="relative z-10"
+        id="delete-folders-modal"
+        initialFocus={cancelButtonRef}
       >
         <Transition.Child
           as={Fragment}
