@@ -16,7 +16,7 @@ export default function useUpdateUploadInfo() {
         setShow: s.setShow,
         clear: s.clearUploadInfoProgress,
         update: s.updateUploadInfoProgress,
-    }));
+    }), shallow);
     const { realmQid, userId } = useUser((s) => ({ realmQid: s.user.realmQid, userId: s.user.id }), shallow);
 
     useEffect(() => {
@@ -29,7 +29,7 @@ export default function useUpdateUploadInfo() {
                 const realmUser = await realm.signin(realmQid);
                 const uploadsCollection = realmUser.mongoClient('mongodb-atlas').db('cl-uploader').collection<TransferSession>('uploads');
 
-                const unfinishedTransfers = await uploadsCollection.find({ userId, status: 'in_progress' });
+                const unfinishedTransfers = await uploadsCollection.find({ userId, status: { $in: ['in_progress', 'starting'] } }, { projection: { createdAt: 0, updatedAt: 0 } });
 
                 // Get current transfer session from state
                 // to check whether the transfer sessions already added to the state
