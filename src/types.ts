@@ -191,7 +191,7 @@ export type UploadInfoProgress = {
     status: UploadStatus;
     providerSourceId: Provider;
     providerTargetId: Provider;
-    upload: () => Promise<string>;
+    upload: () => Promise<void>;
 
     error?: string;
 };

@@ -42,6 +42,8 @@ export default function createUploadInfoProgress(params: CreateUploadInfoProgres
 
     const { providerTargetId, transferToPath, fileId, fileProviderId, fileIconLink, fileName } = params;
 
+    const { uploadInfoProgress, updateUploadInfoProgress, addUploadInfoProgress } = useUploadInfoProgress.getState();
+
     const requiredParams: UploadInfoProgress = {
         // Set to empty string for now
         // Will be updated when FileOptions.transferFiles call the `upload` function
@@ -53,10 +55,25 @@ export default function createUploadInfoProgress(params: CreateUploadInfoProgres
         filename: fileName,
         iconLink: fileIconLink,
         providerSourceId: fileProviderId,
-        upload: () => transferFileFunc(fileProviderId, { id: fileId, providerTargetId, path: transferToPath }),
-    };
+        upload: async function upload() {
+            try {
+                const transferSessionId = await transferFileFunc(fileProviderId, { id: fileId, providerTargetId, path: transferToPath });
+                updateUploadInfoProgress({
+                    fileId,
+                    id: transferSessionId,
+                    status: 'in_progress'
+                });
+            } catch (error: any) {
+                updateUploadInfoProgress({
+                    fileId,
+                    status: 'failed',
+                    error: error.message
+                });
 
-    const { uploadInfoProgress, updateUploadInfoProgress, addUploadInfoProgress } = useUploadInfoProgress.getState();
+                throw error;
+            }
+        },
+    };
 
     const isExist = uploadInfoProgress.find((f) => f.fileId === fileId);
     if (isExist) {

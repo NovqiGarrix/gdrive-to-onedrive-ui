@@ -147,7 +147,7 @@ const FileOptions: FunctionComponent = () => {
         .substring(7)}`;
 
       // Func to update upload info progress
-      const { setShow: setShowUploadInfoProgress, updateUploadInfoProgress } =
+      const { setShow: setShowUploadInfoProgress } =
         useUploadInfoProgress.getState();
 
       try {
@@ -175,35 +175,20 @@ const FileOptions: FunctionComponent = () => {
         if (providerTarget.id === "google_photos") {
           // Google Photos only support upload one by one
           for await (const info of selectedFilesWithAbortController) {
-            try {
-              const transferSessionId = await info.upload();
-              updateUploadInfoProgress({
-                id: transferSessionId,
-                fileId: info.fileId,
-                status: 'in_progress'
-              });
-            } catch (error: any) {
-              updateUploadInfoProgress({
-                fileId: info.fileId,
-                error: error.message
-              });
-            }
+            await info.upload();
           }
         } else {
           await Promise.all(
             selectedFilesWithAbortController.map(async (info) => {
               try {
-                const transferSessionId = await info.upload();
-                updateUploadInfoProgress({
-                  id: transferSessionId,
-                  fileId: info.fileId,
-                  status: 'in_progress'
-                });
+                await info.upload();
               } catch (error: any) {
-                updateUploadInfoProgress({
-                  fileId: info.fileId,
-                  error: error.message
-                });
+                // Server timeout for some reason?
+                if (error.message === 'No response. Please try again.') {
+                  // Retry the transfer automatically for one time
+                  console.log(`Retrying timeout for: ${info.filename}`);
+                  await info.upload();
+                }
               }
             })
           );

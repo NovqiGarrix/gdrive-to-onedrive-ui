@@ -109,10 +109,16 @@ async function transferFile(params: ITransferFileParams): Promise<string> {
 
         params.path = getParentIdOrPathOfFolder(params.path, params.providerTargetId);
 
+        const abortController = new AbortController();
+        const timeout = setTimeout(() => {
+            abortController.abort();
+        }, 5000);
+
         const resp = await fetch(`${CL_UPLOADER_API_URL}/googlephotos/files`, {
             ...defaultOptions,
             method: 'POST',
-            body: JSON.stringify(params)
+            body: JSON.stringify(params),
+            signal: abortController.signal
         });
 
         const { errors, data } = await resp.json();
@@ -122,9 +128,13 @@ async function transferFile(params: ITransferFileParams): Promise<string> {
             }
         }
 
+        clearTimeout(timeout);
         return data._id;
 
-    } catch (error) {
+    } catch (error: any) {
+        if (error.message.includes('The user aborted a request.')) {
+            throw new Error('No response. Please try again.');
+        }
         throw handleHttpError(error);
     }
 
