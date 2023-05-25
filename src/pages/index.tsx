@@ -24,9 +24,9 @@ import useProviderPath, {
   initializedProviderPath,
 } from "../hooks/useProviderPath";
 import useSelectedFiles from "../hooks/useSelectedFiles";
+import useUpdateUploadInfo from "../hooks/useUpdateUploadInfo";
 import { initializeCloudProvider } from "../hooks/useCloudProvider";
 import useGetProviderAccountInfo from "../hooks/useGetProviderAccountInfo";
-import useUpdateUploadInfo from "../hooks/useUpdateUploadInfo";
 
 const DisconnectedProviderAccount = dynamic(
   () => import("../components/DisconnectedProviderAccount")
@@ -90,12 +90,14 @@ const Home: NextPage<IHomePageProps> = (props) => {
         "transfer-files-modal"
       );
       const deleteFilesModal = document.getElementById("delete-files-modal");
+      const deleteFoldersModal = document.getElementById("delete-folders-modal");
 
       const shouldClean =
         !target.getAttribute("data-id") &&
         !fileOptionsEl?.contains(target) &&
         !transferFilesModalEl?.contains(target) &&
         !deleteFilesModal?.contains(target);
+      !deleteFoldersModal?.contains(target);
       if (!shouldClean || !selectedFiles.length) return;
       cleanSelectedFiles();
     };
@@ -110,7 +112,7 @@ const Home: NextPage<IHomePageProps> = (props) => {
   return (
     <main className="bg-white pb-8 relative inline-flex overflow-x-hidden w-full">
       <Head>
-        <title>Dashboard | cloudtransfer.io</title>
+        <title>Dashboard | CloudTransfer.io</title>
         <meta name="robots" content="noindex" />
       </Head>
 

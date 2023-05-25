@@ -172,27 +172,20 @@ const FileOptions: FunctionComponent = () => {
         // Show upload info progress,
         setShowUploadInfoProgress(true);
 
-        if (providerTarget.id === "google_photos") {
-          // Google Photos only support upload one by one
-          for await (const info of selectedFilesWithAbortController) {
-            await info.upload();
-          }
-        } else {
-          await Promise.all(
-            selectedFilesWithAbortController.map(async (info) => {
-              try {
+        await Promise.all(
+          selectedFilesWithAbortController.map(async (info) => {
+            try {
+              await info.upload();
+            } catch (error: any) {
+              // Server timeout for some reason?
+              if (error.message === 'No response. Please try again.') {
+                // Retry the transfer automatically for one time
+                console.log(`Retrying timeout for: ${info.filename}`);
                 await info.upload();
-              } catch (error: any) {
-                // Server timeout for some reason?
-                if (error.message === 'No response. Please try again.') {
-                  // Retry the transfer automatically for one time
-                  console.log(`Retrying timeout for: ${info.filename}`);
-                  await info.upload();
-                }
               }
-            })
-          );
-        }
+            }
+          })
+        );
 
         const isAllError =
           useUploadInfoProgress

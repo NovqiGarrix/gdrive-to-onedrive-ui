@@ -6,9 +6,5 @@ export default function handleHttpError(error: any) {
         throw error;
     }
 
-    if (error.name === "AbortError" || error.name === "CanceledError") {
-        throw new Error("Transfer cancelled");
-    }
-
     throw new Error(ERROR_500_MESSAGE);
 }
