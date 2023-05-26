@@ -14,6 +14,7 @@ import type { GlobalItemTypes } from "../types";
 import useGetFolders from "../hooks/useGetFolders";
 import useProviderPath from "../hooks/useProviderPath";
 import useCloudProvider from "../hooks/useCloudProvider";
+import useNewFolderModal from "../hooks/useNewFolderModal";
 
 import BeautifulError from "./BeautifulError";
 import FoldersSkeletonLoading from "./FoldersSkeletonLoading";
@@ -40,6 +41,10 @@ const Folders: FunctionComponent = () => {
 
   const { isLoading, isError, error, isFetching, data } =
     useGetFolders(enabled);
+
+  function openNewFolderModal() {
+    useNewFolderModal.setState({ open: true });
+  }
 
   async function onDoubleClick(folder: GlobalItemTypes) {
     const newPath = path
@@ -100,13 +105,19 @@ const Folders: FunctionComponent = () => {
         selectedFolder={selectedFolder}
       />
       <div className="w-full mt-[30px]">
-        <div className="flex items-center space-x-3">
-          <h2 className="font-medium font-inter text-fontBlack2 text-2xl">
-            Folders
-          </h2>
-          {isFetching ? (
-            <LoadingIcon fill="#313132" className="w-4 h-4" />
-          ) : null}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <h2 className="font-medium font-inter text-fontBlack2 text-2xl">
+              Folders
+            </h2>
+            {isFetching ? (
+              <LoadingIcon fill="#313132" className="w-4 h-4" />
+            ) : null}
+          </div>
+
+          <button type="button" onClick={openNewFolderModal} className="py-2 px-4 text-sm bg-slate-800 text-slate-100 font-medium hover:bg-slate-900 hover:text-slate-50 rounded-md">
+            New Folder
+          </button>
         </div>
 
         {isLoading ? (

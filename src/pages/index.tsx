@@ -32,6 +32,7 @@ const DisconnectedProviderAccount = dynamic(
   () => import("../components/DisconnectedProviderAccount")
 );
 const Settings = dynamic(() => import("../components/Settings"));
+const NewFolderModal = dynamic(() => import("../components/NewFolderModal"));
 
 interface IHomePageProps {
   path: string | null;
@@ -143,6 +144,7 @@ const Home: NextPage<IHomePageProps> = (props) => {
           <DisconnectedProviderAccount accountInfo={providerAccountInfo!} />
         ) : (
           <Fragment>
+            <NewFolderModal />
             <UploadArea />
             <Breadcrumbs path={providerPath} setPath={setProviderPath} />
             <Folders />

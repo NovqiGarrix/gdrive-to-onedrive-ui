@@ -250,7 +250,6 @@ async function createFolder(foldername: string, path?: string): Promise<GlobalIt
         return toGlobalTypes(data, 'onedrive');
 
     } catch (error) {
-        console.log(error);
         throw handleHttpError(error);
     }
 
