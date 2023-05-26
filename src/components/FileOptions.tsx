@@ -37,6 +37,8 @@ import useCloudProvider from "../hooks/useCloudProvider";
 import useUploadInfoProgress from "../hooks/useUploadInfoProgress";
 import useTransferFilesModal from "../hooks/useTransferFilesModal";
 import useDeleteFilesModalState from "../hooks/useDeleteFilesModalState";
+import useGetProviderAccountInfo from "../hooks/useGetProviderAccountInfo";
+import useUnConnectedTranferModal from "../hooks/useUnConnectedTransferModal";
 
 const TransferFilesModal = dynamic(() => import("./TransferFilesModal"));
 
@@ -47,8 +49,8 @@ const FileOptions: FunctionComponent = () => {
   const [coord, setCoord] = useState({ x: 0, y: 0 });
   const [isShowingOptions, setIsShowingOptions] = useState(false);
 
-  const [transferToPath, setTransferToPath] = useState<string | undefined>("");
   const [openTransferModal, setOpenTransferModal] = useState(false);
+  const [transferToPath, setTransferToPath] = useState<string | undefined>("");
 
   const selectedFiles = useSelectedFiles((s) => s.files, shallow);
   const replaceAllSelectedFiles = useSelectedFiles((s) => s.replaceAllFiles);
@@ -56,6 +58,8 @@ const FileOptions: FunctionComponent = () => {
   const provider = useCloudProvider((s) => s.provider, shallow);
 
   const openDeleteModal = useDeleteFilesModalState((s) => s.openModal);
+
+  const { data: providerAccountInfo } = useGetProviderAccountInfo();
 
   const downloadFiles = useCallback(async () => {
     setIsShowingOptions(false);
@@ -203,6 +207,13 @@ const FileOptions: FunctionComponent = () => {
   );
 
   function onTransferClick(providerTarget: ProviderObject) {
+    // Check if the user account is connected to the choosen provider
+    if (!providerAccountInfo?.providers.find((providerId) => providerId === providerTarget.id)) {
+      setIsShowingOptions(false);
+      useUnConnectedTranferModal.setState({ open: true, unConnectedProviderId: providerTarget.id });
+      return;
+    }
+
     if (providerTarget.id === "google_photos") {
       return transferFiles(providerTarget);
     }

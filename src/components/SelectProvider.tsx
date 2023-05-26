@@ -8,40 +8,18 @@ import { Listbox, Transition } from "@headlessui/react";
 import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/20/solid";
 
 import { PROVIDERS } from "../constants";
-import classNames from "../utils/classNames";
-import type { ProviderObject } from "../types";
-
-import useProviderPath from "../hooks/useProviderPath";
 import useCloudProvider from "../hooks/useCloudProvider";
-import useSelectedFiles from "../hooks/useSelectedFiles";
+
+import classNames from "../utils/classNames";
+import onProviderChange from "../utils/onProviderChange";
+
 
 const SelectProvider: FunctionComponent = () => {
   const router = useRouter();
-
   const selected = useCloudProvider((s) => s.provider, shallow);
-  const setProvider = useCloudProvider((s) => s.setProvider);
-
-  const setProviderPath = useProviderPath((s) => s.setPath);
-  const clearSelectedFiles = useSelectedFiles((s) => s.cleanFiles);
-
-  async function onProviderChange(provider: ProviderObject) {
-    const queryParams = new URLSearchParams(
-      router.query as Record<string, string>
-    );
-
-    queryParams.delete("path");
-    setProviderPath(undefined);
-
-    queryParams.set("provider", provider.id);
-    await router.push(`/?${queryParams.toString()}`, undefined, {
-      shallow: true,
-    });
-    clearSelectedFiles();
-    setProvider(provider);
-  }
 
   return (
-    <Listbox value={selected} onChange={onProviderChange}>
+    <Listbox value={selected} onChange={(provider) => onProviderChange(router, provider)}>
       {({ open }) => (
         <>
           <div className="relative w-full mt-[30px] pl-[24px] pr-[34px]">

@@ -21,7 +21,6 @@ import type {
 import { HttpErrorExeption } from "../exeptions/httpErrorExeption";
 
 import useGetFilesFunc from "../hooks/useGetFilesFunc";
-import useSelectedFiles from "../hooks/useSelectedFiles";
 import useTransferFilesModal from "../hooks/useTransferFilesModal";
 
 import Folder from "./Folder";
