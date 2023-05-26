@@ -34,10 +34,10 @@ import createUploadInfoProgress from "../utils/createUploadInfoProgress";
 import useGetFiles from "../hooks/useGetFiles";
 import useSelectedFiles from "../hooks/useSelectedFiles";
 import useCloudProvider from "../hooks/useCloudProvider";
+import useGetLinkedAccounts from "../hooks/useGetLinkedAccounts";
 import useUploadInfoProgress from "../hooks/useUploadInfoProgress";
 import useTransferFilesModal from "../hooks/useTransferFilesModal";
 import useDeleteFilesModalState from "../hooks/useDeleteFilesModalState";
-import useGetProviderAccountInfo from "../hooks/useGetProviderAccountInfo";
 import useUnConnectedTranferModal from "../hooks/useUnConnectedTransferModal";
 
 const TransferFilesModal = dynamic(() => import("./TransferFilesModal"));
@@ -59,7 +59,7 @@ const FileOptions: FunctionComponent = () => {
 
   const openDeleteModal = useDeleteFilesModalState((s) => s.openModal);
 
-  const { data: providerAccountInfo } = useGetProviderAccountInfo();
+  const { data: providerAccountInfo } = useGetLinkedAccounts();
 
   const downloadFiles = useCallback(async () => {
     setIsShowingOptions(false);
@@ -208,7 +208,7 @@ const FileOptions: FunctionComponent = () => {
 
   function onTransferClick(providerTarget: ProviderObject) {
     // Check if the user account is connected to the choosen provider
-    if (!providerAccountInfo?.providers.find((providerId) => providerId === providerTarget.id)) {
+    if (!providerAccountInfo?.find((account) => account.providers.includes(providerTarget.id))) {
       setIsShowingOptions(false);
       useUnConnectedTranferModal.setState({ open: true, unConnectedProviderId: providerTarget.id });
       return;
