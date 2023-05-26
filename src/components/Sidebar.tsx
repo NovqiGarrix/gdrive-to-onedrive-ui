@@ -12,9 +12,10 @@ const Sidebar: FunctionComponent = () => {
       <Link href="/" passHref>
         <div className="w-60 pl-[30px]">
           <Image
+            priority
             width={1080}
             height={720}
-            src="/logo.png"
+            src="/logo.webp"
             className="object-cover"
             alt="cloudtransfer.io Logo"
           />

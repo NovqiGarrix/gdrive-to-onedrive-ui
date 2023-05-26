@@ -30,9 +30,10 @@ const LoginPage: NextPage<ILoginPageProps> = (props) => {
         <div className="w-full max-w-sm">
           <div className="w-52">
             <Image
+              priority
               width={1080}
               height={720}
-              src="/logo.png"
+              src="/logo.webp"
               className="object-cover"
               alt="CloudTransfer.io Logo"
             />
