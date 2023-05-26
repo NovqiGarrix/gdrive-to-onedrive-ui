@@ -1,10 +1,12 @@
 import { FunctionComponent } from "react";
-import { shallow } from "zustand/shallow";
 
 import dynamic from "next/dynamic";
 import Image from "next/legacy/image";
 import { useRouter } from "next/router";
-import { BellIcon } from "@heroicons/react/24/outline";
+
+import { shallow } from "zustand/shallow";
+import { useMutation } from "@tanstack/react-query";
+import BellIcon from "@heroicons/react/24/outline/BellIcon";
 
 import authApi from "../apis/auth.api";
 import classNames from "../utils/classNames";
@@ -14,6 +16,7 @@ import useCloudProvider from "../hooks/useCloudProvider";
 
 import Search from "./Search";
 
+const LoadingIcon = dynamic(() => import("./LoadingIcon"));
 const GooglePhotosFilter = dynamic(() => import("./GooglePhotosFilter"));
 
 const Navbar: FunctionComponent = () => {
@@ -30,6 +33,11 @@ const Navbar: FunctionComponent = () => {
       router.reload();
     }
   }
+
+  const { isLoading: isLoggingOut, mutate: logUserOut } = useMutation({
+    mutationKey: ['logout'],
+    mutationFn: logout
+  });
 
   return (
     <div
@@ -69,10 +77,14 @@ const Navbar: FunctionComponent = () => {
           {/* Logout */}
           <button
             type="button"
-            className="focus:outline-none text-sm"
-            onClick={logout}
+            disabled={isLoggingOut}
+            onClick={() => logUserOut()}
+            className="flex items-center space-x-3 focus:outline-none text-sm disabled:cursor-not-allowed disabled:opacity-70"
           >
-            Sign Out
+            <span>Sign Out</span>
+            {isLoggingOut ? (
+              <LoadingIcon fill="rgb(15 23 42 / 1)" className="w-5 h-5" />
+            ) : null}
           </button>
         </div>
       </div>
