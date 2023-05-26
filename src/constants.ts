@@ -38,7 +38,7 @@ export const ACCOUNTS: Array<AccountObject> = [
     {
         id: 'microsoft',
         name: 'Microsoft',
-        image: '/microsoft.webp',
+        image: '/microsoft.png',
         isConnected: false,
         providers: ['onedrive']
     }

@@ -9,19 +9,14 @@ import {
 } from "react";
 
 import Image from "next/legacy/image";
-import { toast } from "react-hot-toast";
 import { shallow } from "zustand/shallow";
-import { useMutation } from "@tanstack/react-query";
 import { Transition, Dialog } from "@headlessui/react";
-import PencilSquareIcon from "@heroicons/react/24/outline/PencilSquareIcon";
 
-import userApi from "../apis/user.api";
 import classNames from "../utils/classNames";
 
 import useUser from "../hooks/useUser";
 import useShowSettingsModal from "../hooks/useShowSettingsModal";
 
-import LoadingIcon from "./LoadingIcon";
 import AccountSettings from "./AccountSettings";
 
 const settings = [
@@ -134,26 +129,6 @@ export default Settings;
 const ProfileComponent = memo(function ProfileComponent() {
   const user = useUser((s) => s.user, shallow);
 
-  const setUser = useUser((s) => s.setUser);
-
-  async function handleAvatarChange(event: ChangeEvent<HTMLInputElement>) {
-    event.preventDefault();
-
-    const file = event.target.files?.item(0);
-    if (!file) {
-      toast.error("No file selected", { id: "upload-avatar" });
-      return;
-    }
-
-    const newAvatar = await userApi.changeAvatar(file);
-    setUser({ avatar: newAvatar });
-  }
-
-  const { mutateAsync, isLoading } = useMutation({
-    mutationKey: [user.id, "change-avatar"],
-    mutationFn: handleAvatarChange,
-  });
-
   return (
     <div className="flex items-center absolute -top-[3.5rem]">
       <div className="bg-gray-100 group w-40 h-40 relative p-1 rounded-full shadow-lg">
@@ -165,46 +140,6 @@ const ProfileComponent = memo(function ProfileComponent() {
           objectFit="cover"
           className="rounded-full"
         />
-
-        <label
-          htmlFor="change-avatar"
-          className={classNames(
-            "absolute top-[2px] left-[2px] rounded-full w-[156px] h-[156px] group-hover:opacity-40 group-hover:z-10 bg-gray-600",
-            isLoading
-              ? "cursor-not-allowed opacity-40 z-10"
-              : "cursor-pointer opacity-0 -z-10"
-          )}
-        >
-          <input
-            type="file"
-            id="change-avatar"
-            disabled={isLoading}
-            onChange={(event) => {
-              toast.promise(mutateAsync(event), {
-                loading: "Uploading...",
-                success: <b>Done.</b>,
-                error: <b>Something went wrong</b>,
-              });
-            }}
-            className="w-0 h-0 opacity-0"
-          />
-        </label>
-
-        <label
-          htmlFor="change-avatar"
-          className={classNames(
-            "absolute w-10 h-10 rounded-full group-hover:z-20 group-hover:opacity-100 p-2 bg-gray-100 inset-1/2 -translate-x-1/2 -translate-y-1/2",
-            isLoading
-              ? "cursor-not-allowed opacity-100 z-20"
-              : "cursor-pointer opacity-0 -z-10"
-          )}
-        >
-          {isLoading ? (
-            <LoadingIcon className="w-full h-full" fill="rgb(31 41 55 / 1)" />
-          ) : (
-            <PencilSquareIcon className="w-full h-full text-gray-800" />
-          )}
-        </label>
       </div>
 
       <div className="ml-[1rem] mt-[3.2rem]">
