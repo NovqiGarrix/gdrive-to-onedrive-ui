@@ -55,7 +55,7 @@ export default function createUploadInfoProgress(params: CreateUploadInfoProgres
         filename: fileName,
         iconLink: fileIconLink,
         providerSourceId: fileProviderId,
-        upload: async function upload() {
+        async upload() {
             try {
                 const transferSessionId = await transferFileFunc(fileProviderId, { id: fileId, providerTargetId, path: transferToPath });
                 updateUploadInfoProgress({

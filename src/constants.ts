@@ -2,6 +2,8 @@ import type { AccountObject, ProviderObject } from "./types";
 
 export const MAX_PER_PAGE = 20;
 
+export const TRANSFER_CONCURRENT_LIMIT = 5;
+
 export const ERROR_500_MESSAGE = 'Something went wrong';
 
 export const PROVIDERS: Array<ProviderObject> = [

@@ -24,8 +24,8 @@ import PaperClipIcon from "@heroicons/react/24/outline/PaperClipIcon";
 import ArrowDownTrayIcon from "@heroicons/react/24/outline/ArrowDownTrayIcon";
 import ArrowSmallDownIcon from "@heroicons/react/24/outline/ArrowSmallDownIcon";
 
-import { PROVIDERS } from "../constants";
-import type { ProviderObject } from "../types";
+import { PROVIDERS, TRANSFER_CONCURRENT_LIMIT } from "../constants";
+import type { ProviderObject, UploadInfoProgress } from "../types";
 
 import classNames from "../utils/classNames";
 import zipAndDownloadFiles from "../utils/zipAndDownloadFiles";
@@ -150,9 +150,22 @@ const FileOptions: FunctionComponent = () => {
       const { setShow: setShowUploadInfoProgress } =
         useUploadInfoProgress.getState();
 
+      async function each(info: UploadInfoProgress) {
+        try {
+          await info.upload();
+        } catch (error: any) {
+          // Server timeout for some reason?
+          if (error.message === 'No response. Please try again.') {
+            // Retry the transfer automatically for one time
+            console.log(`Retrying timeout for: ${info.filename}`);
+            await info.upload();
+          }
+        }
+      }
+
       try {
         // Initiate upload info progress
-        const selectedFilesWithAbortController = selectedFiles.map((file) => createUploadInfoProgress({
+        const uploadInfoProgress = selectedFiles.map((file) => createUploadInfoProgress({
           transferToPath,
           fileId: file.id,
           fileName: file.name,
@@ -162,7 +175,7 @@ const FileOptions: FunctionComponent = () => {
         }));
 
         toast.loading(
-          `Transferring ${selectedFilesWithAbortController.length} files to ${providerTarget.name}`,
+          `Transferring ${uploadInfoProgress.length} files to ${providerTarget.name}`,
           {
             duration: 3000,
             id: transferFileToastId,
@@ -172,33 +185,16 @@ const FileOptions: FunctionComponent = () => {
         // Show upload info progress,
         setShowUploadInfoProgress(true);
 
-        await Promise.all(
-          selectedFilesWithAbortController.map(async (info) => {
-            try {
-              await info.upload();
-            } catch (error: any) {
-              // Server timeout for some reason?
-              if (error.message === 'No response. Please try again.') {
-                // Retry the transfer automatically for one time
-                console.log(`Retrying timeout for: ${info.filename}`);
-                await info.upload();
-              }
-            }
-          })
-        );
-
-        const isAllError =
-          useUploadInfoProgress
-            .getState()
-            .uploadInfoProgress.filter((info) => info.status === 'failed').length ===
-          selectedFilesWithAbortController.length;
-
-        if (isAllError) {
-          toast.error(`Transfer failed`, {
-            id: transferFileToastId,
-          });
+        /**
+         * Transfer the files concurrently
+         * with maximum transfer limit
+         */
+        const first5Files = uploadInfoProgress.slice(0, TRANSFER_CONCURRENT_LIMIT);
+        for await (const info of first5Files) {
+          await each(info);
         }
-      } catch (_error) {
+      } catch (error: any) {
+        toast.error(error.message, { id: transferFileToastId });
       } finally {
         setTransferToPath(undefined);
       }

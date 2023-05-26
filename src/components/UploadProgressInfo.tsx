@@ -203,15 +203,15 @@ const IndividualFileInfo = memo<IIndividualFileInfoProps>(
     }
 
     async function retryUpload() {
-      try {
-        updateUploadInfoProgress({
-          progress: 0,
-          fileId: info.fileId,
-          error: undefined,
-          status: 'in_progress'
-        });
-        await info.upload();
-      } catch (error) { }
+      updateUploadInfoProgress({
+        progress: 0,
+        fileId: info.fileId,
+        error: undefined,
+        // TODO: How to handle this if the app already reach
+        // transfer concurrent limit
+        status: 'in_progress'
+      });
+      await info.upload();
     }
 
     return (
