@@ -3,7 +3,7 @@ import { ChangeEvent, FunctionComponent, useEffect, useMemo, useState } from "re
 import { toast } from "react-hot-toast";
 import { shallow } from "zustand/shallow";
 import { Switch } from "@headlessui/react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import userApi from "../apis/user.api";
 import classNames from "../utils/classNames";
@@ -16,7 +16,8 @@ import LoadingIcon from "./LoadingIcon";
 
 const TransferSettings: FunctionComponent = () => {
 
-    const { data: userSettings } = useGetUserSettings();
+    const queryClient = useQueryClient();
+    const { data: userSettings, queryKey } = useGetUserSettings();
 
     const [options, setOptions] = useState({
         move: false,
@@ -95,8 +96,9 @@ const TransferSettings: FunctionComponent = () => {
                 { enableMoveDelay: options.enableDelay })
         }),
 
-        onSuccess() {
+        async onSuccess() {
             toast.success('Settings updated.');
+            await queryClient.prefetchQuery(queryKey);
         },
 
         onError(error) {

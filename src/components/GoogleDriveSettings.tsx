@@ -2,7 +2,7 @@ import { FunctionComponent, useMemo, useState } from "react";
 
 import { toast } from "react-hot-toast";
 import { shallow } from "zustand/shallow";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import classNames from "../utils/classNames";
 import { HttpErrorExeption } from "../exeptions/httpErrorExeption";
@@ -23,13 +23,14 @@ const defaultValue: GetSupportedExportMimeTypesReturn = {
 
 const GoogleDriveSettings: FunctionComponent = () => {
 
+    const queryClient = useQueryClient();
+    const { data: userSettings, queryKey } = useGetUserSettings();
+
     const [googleDoc, setGoogleDoc] = useState<GetSupportedExportMimeTypesReturn>(defaultValue);
     const [googleSheet, setGoogleSheet] = useState<GetSupportedExportMimeTypesReturn>(defaultValue);
     const [googleSlide, setGoogleSlide] = useState<GetSupportedExportMimeTypesReturn>(defaultValue);
     const [googleDrawing, setGoogleDrawing] = useState<GetSupportedExportMimeTypesReturn>(defaultValue);
     const [googleScript, setGoogleScript] = useState<GetSupportedExportMimeTypesReturn>(defaultValue);
-
-    const { data: userSettings } = useGetUserSettings();
 
     const canSave = useMemo(() => {
         return !shallow({
@@ -68,8 +69,9 @@ const GoogleDriveSettings: FunctionComponent = () => {
             script: googleScript.name
         }),
 
-        onSuccess() {
+        async onSuccess() {
             toast.success('Settings updated.');
+            await queryClient.prefetchQuery(queryKey);
         },
 
         onError(error) {
