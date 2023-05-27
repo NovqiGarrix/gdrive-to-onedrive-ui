@@ -33,7 +33,7 @@ export default function toGlobalTypes(data: any, provider: Provider): GlobalItem
                     }
 
                 })(),
-                iconLink: getIconExtensionUrl(d.name),
+                iconLink: getIconExtensionUrl(d.name, d.mimeType),
                 downloadUrl: d.webContentLink,
                 createdAt: new Date(d.createdTime)
             }
@@ -65,7 +65,7 @@ export default function toGlobalTypes(data: any, provider: Provider): GlobalItem
                 name: d.name,
                 type: d.folder ? 'folder' : 'file',
                 webUrl: d.webUrl,
-                iconLink: getIconExtensionUrl(d.name),
+                iconLink: getIconExtensionUrl(d.name, d.file?.mimeType),
                 createdAt: new Date(d.createdDateTime),
                 downloadUrl: d["@microsoft.graph.downloadUrl"],
                 image: d.file?.mimeType.includes("image") || extension === "webp" ? d["@microsoft.graph.downloadUrl"] : undefined,
