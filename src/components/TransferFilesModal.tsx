@@ -3,6 +3,7 @@ import {
   FunctionComponent,
   memo,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -15,7 +16,6 @@ import { ArrowsRightLeftIcon } from "@heroicons/react/24/outline";
 import type {
   GetFilesReturn,
   GlobalItemTypes,
-  Provider,
   ProviderObject,
 } from "../types";
 import { HttpErrorExeption } from "../exeptions/httpErrorExeption";
@@ -27,6 +27,7 @@ import Folder from "./Folder";
 import LoadingIcon from "./LoadingIcon";
 import Breadcrumbs from "./Breadcrumbs";
 import BeautifulError from "./BeautifulError";
+import useNewFolderModal from "../hooks/useNewFolderModal";
 import FoldersSkeletonLoading from "./FoldersSkeletonLoading";
 
 interface ITransferFilesModalProps {
@@ -129,7 +130,7 @@ const TransferFilesModal = memo<ITransferFilesModalProps>(
                       <Folders
                         path={path}
                         setPath={setPath}
-                        providerTargetId={providerTarget.id}
+                        providerTarget={providerTarget}
                       />
                     </div>
                   </div>
@@ -165,32 +166,37 @@ export default TransferFilesModal;
 interface IFoldersProps {
   path: string | undefined;
   setPath: (path: string | undefined) => void;
-  providerTargetId: Provider;
+  providerTarget: ProviderObject;
 }
 
 const Folders: FunctionComponent<IFoldersProps> = (props) => {
-  const { path, setPath, providerTargetId } = props;
+  const { path, setPath, providerTarget } = props;
 
-  const enabled = providerTargetId !== "google_photos";
+  const enabled = providerTarget.id !== "google_photos";
 
   const folderContainerRef = useRef<HTMLDivElement>(null);
   const [selectedFolder, setSelectedFolder] = useState<GlobalItemTypes | null>(
     null
   );
 
-  const getFiles = useGetFilesFunc(providerTargetId);
+  const getFiles = useGetFilesFunc(providerTarget.id);
+  const queryKey = useMemo(() => ["transfer_files_folders", providerTarget.id, path], [path, providerTarget.id]);
 
   const { isLoading, isError, error, isFetching, data } = useQuery<
     GetFilesReturn,
     HttpErrorExeption
   >({
     queryFn: () => getFiles({ path, foldersOnly: true }),
-    queryKey: ["transfer_files_folders", providerTargetId, path],
-    retry: false,
     enabled,
+    queryKey,
+    retry: false,
     refetchOnMount: true,
     refetchOnWindowFocus: process.env.NODE_ENV === "production",
   });
+
+  function openNewFolderModal() {
+    useNewFolderModal.setState({ open: true, provider: providerTarget, queryKey });
+  }
 
   async function onDoubleClick(folder: GlobalItemTypes) {
     const newPath = path
@@ -220,11 +226,19 @@ const Folders: FunctionComponent<IFoldersProps> = (props) => {
 
   return (
     <div className="w-full mt-[30px]">
-      <div className="flex items-center space-x-3">
-        <h2 className="font-medium font-inter text-fontBlack2 text-xl">
-          Folders
-        </h2>
-        {isFetching ? <LoadingIcon fill="#313132" className="w-4 h-4" /> : null}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-3">
+          <h2 className="font-medium font-inter text-fontBlack2 text-2xl">
+            Folders
+          </h2>
+          {isFetching ? (
+            <LoadingIcon fill="#313132" className="w-4 h-4" />
+          ) : null}
+        </div>
+
+        <button type="button" onClick={openNewFolderModal} className="py-2 px-4 text-sm bg-slate-800 text-slate-100 font-medium hover:bg-slate-900 hover:text-slate-50 rounded-md">
+          New Folder
+        </button>
       </div>
 
       {isLoading ? (

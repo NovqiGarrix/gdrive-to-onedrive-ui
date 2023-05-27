@@ -1,9 +1,12 @@
 import { create } from "zustand";
-import type { Provider } from "../types";
+import type { ProviderObject } from "../types";
 
 interface UseNewFolderModal {
     open: boolean;
     setOpen: (open: boolean) => void;
+
+    queryKey?: Array<any>;
+    provider?: ProviderObject;
 }
 
 const useNewFolderModal = create<UseNewFolderModal>((set) => ({
@@ -13,6 +16,10 @@ const useNewFolderModal = create<UseNewFolderModal>((set) => ({
     setOpen(open) {
         set({ open })
     },
+
+    queryKey: undefined,
+
+    provider: undefined
 
 }));
 

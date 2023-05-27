@@ -39,13 +39,13 @@ const NewFolderModal = memo(function WarningModal() {
     const queryClient = useQueryClient();
 
     const [error, setError] = useState('');
-    const { open, setOpen } = useNewFolderModal((s) => s, shallow);
+    const { open, setOpen, provider: _provider, queryKey: _queryKey } = useNewFolderModal((s) => s, shallow);
 
     const formRef = useRef<HTMLFormElement>(null);
     const cancelButtonRef = useRef<HTMLButtonElement>(null);
 
     const path = useProviderPath((s) => s.path);
-    const provider = useCloudProvider((s) => s.provider, shallow);
+    const provider = useCloudProvider((s) => _provider || s.provider, shallow);
 
     const { queryKey } = useGetFolders(false);
 
@@ -65,7 +65,7 @@ const NewFolderModal = memo(function WarningModal() {
         }
 
         await createFolderFunc(provider, foldername.toString(), path);
-        await queryClient.prefetchQuery(queryKey);
+        await queryClient.prefetchQuery(_queryKey || queryKey);
     }
 
     const { mutateAsync: onSubmit, isLoading } = useMutation<void, HttpErrorExeption, FormEvent<HTMLFormElement>>({
