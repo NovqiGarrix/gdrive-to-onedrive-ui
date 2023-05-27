@@ -103,6 +103,7 @@ const Folders: FunctionComponent = () => {
         open={openModal}
         setOpen={setOpenModal}
         selectedFolder={selectedFolder}
+        setSelectedFolder={setSelectedFolder}
       />
       <div className="w-full mt-[30px]">
         <div className="flex items-center justify-between">

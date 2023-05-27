@@ -22,14 +22,16 @@ import LoadingIcon from "./LoadingIcon";
 
 interface IDeleteFolderModalProps {
   open: boolean;
-  selectedFolder: GlobalItemTypes | null;
   setOpen: Dispatch<SetStateAction<boolean>>;
+
+  selectedFolder: GlobalItemTypes | null;
+  setSelectedFolder: Dispatch<SetStateAction<GlobalItemTypes | null>>;
 }
 
 const DeleteFolderModal: FunctionComponent<IDeleteFolderModalProps> = (
   props
 ) => {
-  const { open, setOpen, selectedFolder } = props;
+  const { open, setOpen, selectedFolder, setSelectedFolder } = props;
 
   const cancelButtonRef = useRef(null);
   const queryClient = useQueryClient();
@@ -67,6 +69,10 @@ const DeleteFolderModal: FunctionComponent<IDeleteFolderModalProps> = (
   const { mutateAsync, isLoading } = useMutation<void, HttpErrorExeption>({
     mutationFn: deleteFolder,
     mutationKey: ["deleteFolder", selectedFolder?.id],
+
+    onSuccess() {
+      setSelectedFolder(null);
+    },
 
     onError(error) {
       try {
