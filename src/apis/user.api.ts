@@ -1,21 +1,14 @@
-import { API_URL } from ".";
-import { HttpErrorExeption } from "../exeptions/httpErrorExeption";
-import handleHttpError from "../utils/handleHttpError";
+import { API_URL, defaultOptions } from ".";
+import type { UserSettings } from "../types";
 
-async function changeAvatar(file: File): Promise<string> {
+import handleHttpError from "../utils/handleHttpError";
+import { HttpErrorExeption } from "../exeptions/httpErrorExeption";
+
+async function getSettings(uid: string): Promise<UserSettings> {
 
     try {
 
-        const arrayBuffer = await file.arrayBuffer();
-
-        const resp = await fetch(`${API_URL}/api/me/avatar?filename=${file.name}`, {
-            headers: {
-                "Content-Type": "application/octet-stream"
-            },
-            method: "PUT",
-            body: arrayBuffer,
-            credentials: "include"
-        });
+        const resp = await fetch(`${API_URL}/api/users/${uid}?fields=googledriveSettings,transferSettings&include={"googledriveSettings": true, "transferSettings": true}`, defaultOptions);
 
         const { errors, data } = await resp.json();
 
@@ -23,7 +16,66 @@ async function changeAvatar(file: File): Promise<string> {
             throw new HttpErrorExeption(resp.status, errors[0].error);
         }
 
-        return data.avatar;
+        return data;
+
+    } catch (error) {
+        throw handleHttpError(error);
+    }
+
+}
+
+interface UpdateGdriveSettingsParams {
+    drawing?: string;
+    document?: string;
+    spreadsheet?: string;
+    presentation?: string;
+    script?: string;
+}
+
+async function updateGdriveSettings(data: UpdateGdriveSettingsParams): Promise<void> {
+
+    try {
+
+        const resp = await fetch(`${API_URL}/api/me/settings/googledrive`, {
+            ...defaultOptions,
+            method: 'PUT',
+            body: JSON.stringify(data)
+        });
+
+        const { errors } = await resp.json();
+
+        if (!resp.ok) {
+            throw new HttpErrorExeption(resp.status, JSON.stringify(errors));
+        }
+
+    } catch (error) {
+        throw handleHttpError(error);
+    }
+
+}
+
+interface UpdateTransferSettingsParams {
+    moveFile?: boolean;
+    moveDelay?: number;
+    moveDelayKind?: string;
+    enableMoveDelay?: boolean;
+}
+
+async function updateTransferSettings(data: UpdateTransferSettingsParams): Promise<void> {
+
+    try {
+
+        const resp = await fetch(`${API_URL}/api/me/settings/transfer`, {
+            ...defaultOptions,
+            method: 'PUT',
+            body: JSON.stringify(data)
+        });
+
+        const { errors } = await resp.json();
+
+        if (!resp.ok) {
+            throw new HttpErrorExeption(resp.status, JSON.stringify(errors));
+        }
 
     } catch (error) {
         throw handleHttpError(error);
@@ -33,5 +85,6 @@ async function changeAvatar(file: File): Promise<string> {
 
 // eslint-disable-next-line import/no-anonymous-default-export
 export default {
-    changeAvatar
+    getSettings,
+    updateGdriveSettings, updateTransferSettings
 }

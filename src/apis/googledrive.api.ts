@@ -290,10 +290,35 @@ async function deleteFolder(folderId: string): Promise<void> {
 
 }
 
+export interface GetSupportedExportMimeTypesReturn {
+    name: string;
+    mimeType: string;
+}
+
+async function getSupportedExportMimeTypes(mimeType: string): Promise<Array<GetSupportedExportMimeTypesReturn>> {
+
+    try {
+
+        const resp = await fetch(`${CL_UPLOADER_API_URL}/googledrive/export_mime_types?mimeType=${mimeType}`, defaultOptions);
+
+        const { errors, data } = await resp.json();
+
+        if (!resp.ok) {
+            throw new HttpErrorExeption(resp.status, errors[0].error);
+        }
+
+        return data;
+
+    } catch (error) {
+        throw handleHttpError(error);
+    }
+
+}
+
 // eslint-disable-next-line import/no-anonymous-default-export
 export default {
     getFiles,
     deleteFiles, transferFile,
     uploadFile, createFolder, deleteFolder,
-    getFile
+    getFile, getSupportedExportMimeTypes
 }

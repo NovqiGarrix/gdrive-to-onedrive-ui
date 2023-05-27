@@ -227,3 +227,27 @@ export interface TransferSession {
     error?: string;
     transferToPath?: string;
 }
+
+export interface GoogleDriveSettings {
+    id: string;
+    userId: string;
+    drawing: string;
+    script: string;
+    spreadsheet: string;
+    document: string;
+    presentation: string;
+}
+
+export interface TransferSettings {
+    id: string;
+    userId: string;
+    moveFile: boolean;
+    moveDelayKind: string;
+    moveDelay: number;
+    enableMoveDelay: boolean;
+}
+
+export interface UserSettings {
+    transferSettings: TransferSettings;
+    googledriveSettings: GoogleDriveSettings;
+}

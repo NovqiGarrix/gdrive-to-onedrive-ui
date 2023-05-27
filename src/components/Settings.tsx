@@ -1,5 +1,4 @@
 import {
-  ChangeEvent,
   Fragment,
   FunctionComponent,
   memo,
@@ -8,6 +7,7 @@ import {
   useState,
 } from "react";
 
+import dynamic from "next/dynamic";
 import Image from "next/legacy/image";
 import { shallow } from "zustand/shallow";
 import { Transition, Dialog } from "@headlessui/react";
@@ -16,15 +16,9 @@ import classNames from "../utils/classNames";
 
 import useUser from "../hooks/useUser";
 import useShowSettingsModal from "../hooks/useShowSettingsModal";
-
-import AccountSettings from "./AccountSettings";
-
-const settings = [
-  {
-    title: "Accounts",
-    Component: () => <AccountSettings />,
-  },
-];
+import useGetLinkedAccounts from "../hooks/useGetLinkedAccounts";
+import useGetUserSettings from "../hooks/useGetUserSettings";
+import LoadingIcon from "./LoadingIcon";
 
 const Settings: FunctionComponent = () => {
   const { open, setOpen } = useShowSettingsModal((state) => state, shallow);
@@ -33,10 +27,39 @@ const Settings: FunctionComponent = () => {
 
   const [activeSetting, setActiveSetting] = useState(0);
 
-  const { Component: SettingComponent } = useMemo(
-    () => settings[activeSetting],
-    [activeSetting]
+  const { data: linkedAccounts } = useGetLinkedAccounts();
+
+  const { Component: SettingComponent, settings } = useMemo(
+    () => {
+
+      const settings = [
+        {
+          title: "Accounts",
+          Component: dynamic(() => import("./AccountSettings")),
+          disabled: false,
+        },
+        {
+          title: "Transfer",
+          Component: dynamic(() => import("./TransferSettings")),
+          disabled: false,
+        },
+        {
+          title: "Google Drive",
+          Component: dynamic(() => import("./GoogleDriveSettings")),
+          disabled: !linkedAccounts?.find((account) => account.id === 'google')
+        },
+      ];
+
+      return {
+        settings,
+        Component: settings[activeSetting].Component,
+      };
+
+    },
+    [activeSetting, linkedAccounts]
   );
+
+  const { isLoading: isGettingUserSettings, isError: isGetUserSettingsError, error: getUserSettingsError } = useGetUserSettings();
 
   return (
     <Transition.Root show={open} as={Fragment}>
@@ -69,7 +92,7 @@ const Settings: FunctionComponent = () => {
               leaveFrom="opacity-100 translate-y-0 sm:scale-100"
               leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
             >
-              <Dialog.Panel className="relative transform overflow-hidden rounded-3xl bg-white text-left shadow-xl transition-all my-8 w-screen max-w-4xl">
+              <Dialog.Panel className="relative transform overflow-hidden rounded-3xl bg-white text-left shadow-xl transition-all my-8 w-screen max-w-3xl">
                 <div className="">
                   {/* Header */}
                   <div
@@ -93,9 +116,10 @@ const Settings: FunctionComponent = () => {
                           <button
                             type="button"
                             key={setting.title}
+                            disabled={setting.disabled}
                             onClick={() => setActiveSetting(index)}
                             className={classNames(
-                              "relative hover:font-medium group",
+                              "relative hover:font-medium group disabled:opacity-70 disabled:cursor-not-allowed",
                               isActive ? "font-medium" : "font-normal"
                             )}
                           >
@@ -112,7 +136,16 @@ const Settings: FunctionComponent = () => {
                       })}
                     </div>
 
-                    <SettingComponent />
+                    {isGetUserSettingsError ? (
+                      <p className="text-red-500 text-sm mt-2">{getUserSettingsError?.message}</p>
+                    ) : isGettingUserSettings ? (
+                      <div className="flex items-center justify-center w-full h-28">
+                        <LoadingIcon className="w-8 h-8" fill="rgb(55 65 81 / 1)" />
+                      </div>
+                    ) : (
+                      <SettingComponent />
+                    )}
+
                   </div>
                 </div>
               </Dialog.Panel>

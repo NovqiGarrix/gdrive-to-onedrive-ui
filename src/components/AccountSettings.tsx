@@ -12,8 +12,8 @@ const AccountSettings: FunctionComponent = () => {
         <div className="w-8/12">
           <h3 className="font-bold text-base text-gray-600">Delete account</h3>
           <p className="text-sm text-gray-400">
-            This action is can not be undone. You will not lose any of your
-            files.
+            This action can not be undone. You will not lose any of your
+            files though.
           </p>
         </div>
 

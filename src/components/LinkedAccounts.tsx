@@ -108,7 +108,7 @@ const LinkedAccounts: FunctionComponent = () => {
 
   return (
     <div className="pt-4 pb-5">
-      <h3 className="font-bold text-base text-gray-600">Linked accounts</h3>
+      <h3 className="font-semibold text-gray-700">Linked accounts</h3>
       <p className="text-sm text-gray-400">
         We use this to let you sign in and retrieve all your files
       </p>
