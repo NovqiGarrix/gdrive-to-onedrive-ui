@@ -7,7 +7,9 @@ import { shallow } from "zustand/shallow";
 import EllipsisHorizontalIcon from "@heroicons/react/20/solid/EllipsisHorizontalIcon";
 
 import type { GlobalItemTypes } from "../types";
+
 import useSelectedFiles from "../hooks/useSelectedFiles";
+import useIsShowingOptions from "../hooks/useIsShowingOptions";
 
 import classNames from "../utils/classNames";
 import dateFromNow from "../utils/dateFromNow";
@@ -58,6 +60,10 @@ const File: FunctionComponent<IFileProps> = (props) => {
 
   function onDoubleClick() {
     window.open(file.webUrl, "_blank");
+  }
+
+  function onEllipsisClick() {
+    useIsShowingOptions.setState({ show: true });
   }
 
   return (
@@ -117,7 +123,7 @@ const File: FunctionComponent<IFileProps> = (props) => {
           >
             {file.name}
           </Link>
-          <button type="button" data-id={file.id}>
+          <button type="button" data-id={file.id} onClick={onEllipsisClick}>
             <EllipsisHorizontalIcon
               aria-hidden="true"
               data-id={file.id}

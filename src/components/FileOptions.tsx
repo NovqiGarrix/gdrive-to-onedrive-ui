@@ -29,17 +29,18 @@ import type { ProviderObject, UploadInfoProgress } from "../types";
 
 import classNames from "../utils/classNames";
 import zipAndDownloadFiles from "../utils/zipAndDownloadFiles";
+import createExportDownloadUrl from "../utils/createExportDownloadUrl";
 import createUploadInfoProgress from "../utils/createUploadInfoProgress";
 
 import useGetFiles from "../hooks/useGetFiles";
 import useSelectedFiles from "../hooks/useSelectedFiles";
 import useCloudProvider from "../hooks/useCloudProvider";
+import useIsShowingOptions from "../hooks/useIsShowingOptions";
 import useGetLinkedAccounts from "../hooks/useGetLinkedAccounts";
 import useUploadInfoProgress from "../hooks/useUploadInfoProgress";
 import useTransferFilesModal from "../hooks/useTransferFilesModal";
 import useDeleteFilesModalState from "../hooks/useDeleteFilesModalState";
 import useUnConnectedTranferModal from "../hooks/useUnConnectedTransferModal";
-import createExportDownloadUrl from "../utils/createExportDownloadUrl";
 
 const TransferFilesModal = dynamic(() => import("./TransferFilesModal"));
 
@@ -48,7 +49,7 @@ const FileOptions: FunctionComponent = () => {
   const { data: allFiles } = useGetFiles();
 
   const [coord, setCoord] = useState({ x: 0, y: 0 });
-  const [isShowingOptions, setIsShowingOptions] = useState(false);
+  const { show: isShowingOptions, setShow: setIsShowingOptions } = useIsShowingOptions();
 
   const [openTransferModal, setOpenTransferModal] = useState(false);
   const [transferToPath, setTransferToPath] = useState<string | undefined>("");
@@ -221,7 +222,7 @@ const FileOptions: FunctionComponent = () => {
 
   function onTransferClick(providerTarget: ProviderObject) {
     // Check if the user account is connected to the choosen provider
-    if (!providerAccountInfo?.find((account) => account.providers.includes(providerTarget.id))) {
+    if (!providerAccountInfo?.find((account) => account.providers.includes(providerTarget.id) && account.isConnected)) {
       setIsShowingOptions(false);
       useUnConnectedTranferModal.setState({ open: true, unConnectedProviderId: providerTarget.id });
       return;
@@ -301,7 +302,7 @@ const FileOptions: FunctionComponent = () => {
         }
 
         if (outsideWindow.bottom > window.innerHeight) {
-          newCoord.y = window.innerHeight - ref.current.clientHeight;
+          newCoord.y = window.innerHeight - ref.current.clientHeight - 50;
         }
       }
 
