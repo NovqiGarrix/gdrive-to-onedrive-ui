@@ -70,10 +70,10 @@ const FileOptions: FunctionComponent = () => {
       const toastId = "zipAndDownloadFiles";
       toast.loading("Zipping files...", { id: toastId });
       try {
-        await zipAndDownloadFiles(selectedFiles, toastId);
 
+        await zipAndDownloadFiles(selectedFiles, toastId);
         toast.success("Downloading files...", { id: toastId });
-        return;
+
       } catch (error: any) {
         toast.error(error.message, { id: toastId });
       }
@@ -88,7 +88,11 @@ const FileOptions: FunctionComponent = () => {
 
     }
 
-    return window.open(selectedFiles[0].downloadUrl, "_blank", "no-referer");
+    const file = selectedFiles[0];
+    const downloadUrlInUrl = new URL(file.downloadUrl);
+    downloadUrlInUrl.searchParams.set('filename', file.name);
+
+    return window.open(downloadUrlInUrl, "_blank");
   }, [selectedFiles, setIsShowingOptions]);
 
   const getFileLink = useCallback(async () => {

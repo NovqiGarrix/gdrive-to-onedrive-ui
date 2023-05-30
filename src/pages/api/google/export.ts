@@ -19,7 +19,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (req.method !== "GET") return res.status(405).json({ error: "Method not allowed" });
 
     const { url, mimeType, uid, filename } = req.query;
-    if (typeof uid !== "string" || typeof url !== "string" || typeof mimeType !== "string") return res.status(400).json({ error: "Missing required query params." });
+    if (typeof uid !== "string" || typeof url !== "string" || typeof mimeType !== "string")
+        return res.status(400).json({ error: "Missing required query params." });
 
     if (!isUrl(url)) return res.status(400).json({ error: "Invalid URL." });
 
