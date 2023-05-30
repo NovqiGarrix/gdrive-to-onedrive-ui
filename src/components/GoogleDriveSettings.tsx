@@ -18,7 +18,8 @@ import SelectExportMimeType from "./SelectExportMimeType";
 
 const defaultValue: GetSupportedExportMimeTypesReturn = {
     name: '',
-    mimeType: ''
+    mimeType: '',
+    extension: ''
 }
 
 const GoogleDriveSettings: FunctionComponent = () => {
