@@ -292,14 +292,21 @@ async function deleteFolder(folderId: string): Promise<void> {
 
 export interface GetSupportedExportMimeTypesReturn {
     name: string;
+    extension: string;
     mimeType: string;
 }
 
-async function getSupportedExportMimeTypes(mimeType: string): Promise<Array<GetSupportedExportMimeTypesReturn>> {
+async function getSupportedExportMimeTypes(mimeType: string, qid?: string): Promise<Array<GetSupportedExportMimeTypesReturn>> {
 
     try {
 
-        const resp = await fetch(`${CL_UPLOADER_API_URL}/googledrive/export_mime_types?mimeType=${mimeType}`, defaultOptions);
+        const resp = await fetch(`${CL_UPLOADER_API_URL}/googledrive/export_mime_types?mimeType=${mimeType}`, {
+            ...defaultOptions,
+            headers: {
+                ...defaultOptions.headers,
+                ...(qid ? { Cookie: `qid=${qid}` } : {})
+            }
+        });
 
         const { errors, data } = await resp.json();
 

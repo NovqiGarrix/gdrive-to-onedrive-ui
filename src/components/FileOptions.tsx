@@ -39,6 +39,7 @@ import useUploadInfoProgress from "../hooks/useUploadInfoProgress";
 import useTransferFilesModal from "../hooks/useTransferFilesModal";
 import useDeleteFilesModalState from "../hooks/useDeleteFilesModalState";
 import useUnConnectedTranferModal from "../hooks/useUnConnectedTransferModal";
+import createExportDownloadUrl from "../utils/createExportDownloadUrl";
 
 const TransferFilesModal = dynamic(() => import("./TransferFilesModal"));
 
@@ -77,9 +78,17 @@ const FileOptions: FunctionComponent = () => {
         toast.error(error.message, { id: toastId });
       }
       return;
+    } else if (selectedFiles[0].mimeType?.startsWith('application/vnd.google-apps')) {
+
+      const file = selectedFiles[0];
+
+      // Ask the server for the export 
+      const downloadUrl = createExportDownloadUrl(file.mimeType!, file.downloadUrl, file.name);
+      return window.open(downloadUrl, "_blank");
+
     }
 
-    return window.open(selectedFiles[0].downloadUrl, "_blank");
+    return window.open(selectedFiles[0].downloadUrl, "_blank", "no-referer");
   }, [selectedFiles, setIsShowingOptions]);
 
   const getFileLink = useCallback(async () => {

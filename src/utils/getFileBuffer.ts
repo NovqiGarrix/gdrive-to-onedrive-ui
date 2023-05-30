@@ -1,8 +1,10 @@
+import useUser from "../hooks/useUser";
 import { NEXT_PUBLIC_INFILE_HELPER_URL } from "../constants";
-import { HttpErrorExeption } from "../exeptions/httpErrorExeption";
 import type { OnDownloadProgress, Provider } from "../types";
+import { HttpErrorExeption } from "../exeptions/httpErrorExeption";
 
 import downloadFile from "./downloadFile";
+import createExportDownloadUrl from "./createExportDownloadUrl";
 
 interface IGetFileBufferParams {
     downloadUrl: string;
@@ -44,7 +46,12 @@ export default async function getFileBuffer(params: IGetFileBufferParams): Promi
          * in order to download them.
          */
         if (mimeType?.startsWith('application/vnd.google-apps')) {
-            downloadUlrInString = `/api/google/export?url=${encodeURIComponent(googleDownloadUrl)}&mimeType=${encodeURIComponent(mimeType)}`;
+            const uid = useUser.getState().user.id;
+            if (!uid) {
+                throw new HttpErrorExeption(400, 'You need to login first.');
+            }
+
+            downloadUlrInString = createExportDownloadUrl(mimeType, downloadUrl);
         }
 
         arrayBuffer = await downloadFile({

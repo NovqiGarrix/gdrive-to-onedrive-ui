@@ -4,11 +4,17 @@ import type { UserSettings } from "../types";
 import handleHttpError from "../utils/handleHttpError";
 import { HttpErrorExeption } from "../exeptions/httpErrorExeption";
 
-async function getSettings(uid: string): Promise<UserSettings> {
+async function getSettings(uid: string, fields?: string, qid?: string): Promise<UserSettings> {
 
     try {
 
-        const resp = await fetch(`${API_URL}/api/users/${uid}?fields=googledriveSettings,transferSettings&include={"googledriveSettings": true, "transferSettings": true}`, defaultOptions);
+        const resp = await fetch(`${API_URL}/api/users/${uid}?fields=${fields || "googledriveSettings,transferSettings"}&include={"googledriveSettings": true, "transferSettings": true}`, {
+            ...defaultOptions,
+            headers: {
+                ...defaultOptions.headers,
+                ...(qid ? { Cookie: `qid=${qid}` } : {})
+            }
+        });
 
         const { errors, data } = await resp.json();
 

@@ -1,4 +1,8 @@
+import path from 'path';
 import { NextApiRequest, NextApiResponse } from 'next';
+
+import userApi from '../../../apis/user.api';
+import googledriveApi from '../../../apis/googledrive.api';
 import { HttpErrorExeption } from '../../../exeptions/httpErrorExeption';
 
 function isUrl(url: string) {
@@ -10,30 +14,12 @@ function isUrl(url: string) {
     }
 }
 
-function getGoogleExportMimeType(mimeType: string): string {
-
-    switch (mimeType) {
-        case 'application/vnd.google-apps.document':
-            return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-
-        case 'application/vnd.google-apps.spreadsheet':
-            return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-
-        case 'application/vnd.google-apps.presentation':
-            return 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
-
-        default:
-            throw new HttpErrorExeption(400, `Invalid mimeType: ${mimeType}`);
-    }
-
-}
-
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
 
     if (req.method !== "GET") return res.status(405).json({ error: "Method not allowed" });
 
-    const { url, mimeType } = req.query;
-    if (typeof url !== "string" || typeof mimeType !== "string") return res.status(400).json({ error: "Missing required query params." });
+    const { url, mimeType, uid, filename } = req.query;
+    if (typeof uid !== "string" || typeof url !== "string" || typeof mimeType !== "string") return res.status(400).json({ error: "Missing required query params." });
 
     if (!isUrl(url)) return res.status(400).json({ error: "Invalid URL." });
 
@@ -55,7 +41,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     try {
 
         const exportPathnameUrl = new URL(`https://www.googleapis.com/drive/v3/files/${fileId}/export`);
-        exportPathnameUrl.searchParams.append('mimeType', getGoogleExportMimeType(mimeType));
+
+        const [supportedExportMimeTypes, userSettings] = await Promise.all([
+            // Get the mimeType export options
+            googledriveApi.getSupportedExportMimeTypes(mimeType, req.cookies.qid),
+
+            // Get user's googledrive settings
+            userApi.getSettings(uid, "googledriveSettings", req.cookies.qid)
+        ]);
+
+        const endOf = mimeType.split(".").pop()!;
+        // @ts-ignore - Ignore it
+        const selected = supportedExportMimeTypes.find((mt) => mt.name === userSettings.googledriveSettings[endOf]);
+        if (!selected) {
+            throw new HttpErrorExeption(400, 'Invalid mime type.');
+        }
+
+        exportPathnameUrl.searchParams.append('mimeType', selected.mimeType);
 
         const resp = await fetch(exportPathnameUrl, {
             headers: {
@@ -63,18 +65,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             }
         });
 
-        const arrayBuffer = await resp.arrayBuffer();
-        const contentType = resp.headers.get('content-type')!;
-
-        if (contentType === 'application/json') {
-            const { error } = JSON.parse(new TextDecoder().decode(arrayBuffer));
+        if (!resp.ok) {
+            const { error } = await resp.json();
             return res.status(resp.status).send(error);
         }
 
-        if (!resp.ok) return res.status(resp.status).send({ error: resp.statusText });
+        const arrayBuffer = await resp.arrayBuffer();
 
-        res.setHeader('Content-Type', contentType);
+        res.setHeader('Content-Type', resp.headers.get('content-type')!);
         res.setHeader('Content-Length', arrayBuffer.byteLength);
+        if (typeof filename === "string") {
+            const name = path.extname(filename) ? filename : `${filename}${selected.extension}`;
+            res.setHeader('Content-Disposition', `attachment; filename=${name}`);
+        }
 
         return res.status(200).send(Buffer.from(arrayBuffer));
 
@@ -83,7 +86,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             return res.status(error.status).send({ error: error.message });
         }
 
-        console.log(error, 'in src/pages/api/google/export.ts');
         return res.status(500).send({ error: "Internal server error." });
     }
 
