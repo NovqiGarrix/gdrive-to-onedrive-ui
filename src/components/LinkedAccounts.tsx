@@ -71,7 +71,7 @@ const LinkedAccounts: FunctionComponent = () => {
           }
 
           // Get Google login url
-          const authURL = await authApi.getGoogleAuthUrl();
+          const authURL = await authApi.getGoogleAuthUrl(false);
           signInWithRedirectUrl(authURL);
           break;
         }
