@@ -69,7 +69,7 @@ async function logout(token?: string): Promise<void> {
 async function logoutFromGoogle(token?: string): Promise<void> {
 
     try {
-        const resp = await fetch(`${API_URL}/api/google/auth/logout`, {
+        const resp = await fetch(`${API_URL}/api/google/auth/disconnect`, {
             ...fetchOptions(`qid=${token}`),
             method: 'DELETE'
         });
