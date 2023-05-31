@@ -14,11 +14,11 @@ module.exports = {
       "drive.google.com",
       "cdn.discordapp.com",
       "infile-helper.deno.dev",
+      "public.bn.files.1drv.com",
       "lh3.googleusercontent.com",
       "lh4.googleusercontent.com",
       "lh6.googleusercontent.com",
       "lh5.googleusercontent.com",
-      "yptorid-my.sharepoint.com",
       "drive-thirdparty.googleusercontent.com"
     ]
   }
